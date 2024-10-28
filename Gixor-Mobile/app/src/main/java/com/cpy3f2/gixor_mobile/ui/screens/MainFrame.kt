@@ -10,13 +10,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 
 import com.cpy3f2.gixor_mobile.R
 import com.cpy3f2.gixor_mobile.model.entity.NavigationItem
 
 
 @Composable
-fun MainFrame() {
+fun MainFrame(navController: NavController) {
     var currentSelectedItem by remember { mutableIntStateOf(0) }
     val navigationItems = listOf(
         NavigationItem("首页", painterResource(id = R.mipmap.front)),
@@ -50,7 +51,7 @@ fun MainFrame() {
 @Preview
 @Composable
 fun MainFramePreview() {
-    MainFrame()
+//    MainFrame()
 }
 
 

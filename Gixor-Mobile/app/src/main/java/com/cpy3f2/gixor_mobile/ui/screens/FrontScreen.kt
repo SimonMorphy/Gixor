@@ -28,14 +28,15 @@ import androidx.compose.ui.res.painterResource
 
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cpy3f2.gixor_mobile.R
 import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
 import kotlinx.coroutines.launch
 
 
 @Composable
-fun FrontScreen() {
-    HorizontalPagerWithIndicator()
+fun FrontScreen(vm:MainViewModel = viewModel()) {
+    HorizontalPagerWithIndicator(vm)
 }
 
 
@@ -49,13 +50,15 @@ fun FrontScreenPreview(){
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HorizontalPagerWithIndicator() {
-    val pages = listOf("动态", "推荐", "热点")
+fun HorizontalPagerWithIndicator(vm: MainViewModel) {
+    val pages = vm.categories
     // 更新 PagerState 的创建方式
     val pagerState = rememberPagerState { pages.size }
     val scope = rememberCoroutineScope()
-
-    Column(Modifier.fillMaxWidth().fillMaxHeight()) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -66,7 +69,7 @@ fun HorizontalPagerWithIndicator() {
             ) {
                 pages.forEachIndexed { index, title ->
                     Tab(
-                        text = { Text(text = title) },
+                        text = { Text(text = pages[index].name) },
                         selected = pagerState.currentPage == index,
                         onClick = {
                             scope.launch {
@@ -89,7 +92,9 @@ fun HorizontalPagerWithIndicator() {
 
         // 更新 HorizontalPager 的使用方式
         HorizontalPager(
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(),
             state = pagerState,
         ) { page ->
             when(page) {
