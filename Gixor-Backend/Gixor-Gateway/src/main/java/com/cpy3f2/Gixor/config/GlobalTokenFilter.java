@@ -3,6 +3,8 @@ package com.cpy3f2.Gixor.config;
 import cn.dev33.satoken.reactor.filter.SaReactorFilter;
 import cn.dev33.satoken.router.SaRouter;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.util.SaResult;
+import com.cpy3f2.Gixor.Domain.ResponseResult;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,14 +20,12 @@ public class GlobalTokenFilter {
 
     @Bean
     public SaReactorFilter getSaReactorFilter(){
+
         return new SaReactorFilter()
                 .addInclude("/**")
-                .addExclude("/favicon.ico","/auth/login**","/auth/render")
-                .setAuth(obj -> {
-                    // 登录校验 -- 拦截所有路由，并排除/auth/login
-                    SaRouter.match("/**",r-> StpUtil.checkLogin())
-                            .notMatch("/auth/login");
-                });
-
+                .addExclude("*.html","*.css","*.js")
+                .addExclude("/auth/**")
+                .setError(e-> SaResult.error("未登录")
+                );
     }
 }

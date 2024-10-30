@@ -1,8 +1,6 @@
 package com.cpy3f2.Gixor.Domain;
 
 import org.springframework.http.HttpStatus;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.io.Serial;
 import java.util.HashMap;
@@ -24,62 +22,57 @@ public class ResponseResult extends HashMap<String, Object> {
 
     public ResponseResult() {
     }
-    public ResponseResult(Integer code, String msg){
+
+    public ResponseResult(Integer code, String msg) {
         super.put(CODE_TAG, code);
         super.put(MSG_TAG, msg);
     }
-    public ResponseResult(Integer code, String msg, Mono<?> data){
+
+    public ResponseResult(Integer code, String msg, Object data) {
         super.put(CODE_TAG, code);
         super.put(MSG_TAG, msg);
-        super.put(DATA_TAG, data);
+        if (data != null) {
+            super.put(DATA_TAG, data);
+        }
     }
-    public ResponseResult(Integer code, String msg, Flux<?> data){
-        super.put(CODE_TAG, code);
-        super.put(MSG_TAG, msg);
-        super.put(DATA_TAG, data);
+
+    public static ResponseResult success() {
+        return ResponseResult.success("操作成功!");
     }
-    public static ResponseResult success(){
-        return  ResponseResult.success("操作成功!");
+
+    public static ResponseResult success(Object data) {
+        return ResponseResult.success("操作成功!", data);
     }
-    public static ResponseResult success(Mono<?> data){
-        return  ResponseResult.success("操作成功!",data);
-    }
-    public static ResponseResult success(Flux<?> data){
-        return  ResponseResult.success("操作成功!",data);
-    }
-    public static ResponseResult success(String msg){
+
+    public static ResponseResult success(String msg) {
         return new ResponseResult(HttpStatus.OK.value(), msg);
     }
-    public static ResponseResult success(String msg, Mono<?> data){
+
+    public static ResponseResult success(String msg, Object data) {
         return new ResponseResult(HttpStatus.OK.value(), msg, data);
     }
-    public static ResponseResult success(String msg, Flux<?> data){
-        return new ResponseResult(HttpStatus.OK.value(), msg ,data);
-    }
-    public static ResponseResult error(){
+
+    public static ResponseResult error() {
         return ResponseResult.error("操作失败!");
     }
-    public static ResponseResult error(String msg){
-        return ResponseResult.error(msg,Mono.error(new RuntimeException(msg)));
-    }
-    public static ResponseResult error(Integer code ,String msg){
-        return new ResponseResult(code ,msg, Mono.error(new RuntimeException(msg)));
-    }
-    public static ResponseResult error(String msg, Mono<?> data){
-        return new ResponseResult(HttpStatus.INTERNAL_SERVER_ERROR.value() ,msg, data);
-    }
-    public static ResponseResult error(String msg, Flux<?> data){
-        return new ResponseResult(HttpStatus.INTERNAL_SERVER_ERROR.value() ,msg, data);
+
+    public static ResponseResult error(String msg) {
+        return ResponseResult.error(msg, null);
     }
 
+    public static ResponseResult error(Integer code, String msg) {
+        return new ResponseResult(code, msg, null);
+    }
 
-    public static ResponseResult warn(String msg){
-        return warn(msg, Mono.error(new RuntimeException(msg)));
+    public static ResponseResult error(String msg, Object data) {
+        return new ResponseResult(HttpStatus.INTERNAL_SERVER_ERROR.value(), msg, data);
     }
-    public static ResponseResult warn(String msg, Flux<?> data){
-        return new ResponseResult(HttpStatus.BAD_REQUEST.value(), msg, data);
+
+    public static ResponseResult warn(String msg) {
+        return warn(msg, null);
     }
-    public static ResponseResult warn(String msg, Mono<?> data){
+
+    public static ResponseResult warn(String msg, Object data) {
         return new ResponseResult(HttpStatus.BAD_REQUEST.value(), msg, data);
     }
 
@@ -88,8 +81,7 @@ public class ResponseResult extends HashMap<String, Object> {
      *
      * @return 结果
      */
-    public boolean isSuccess()
-    {
+    public boolean isSuccess() {
         return Objects.equals(HttpStatus.OK.value(), this.get(CODE_TAG));
     }
 
@@ -98,8 +90,7 @@ public class ResponseResult extends HashMap<String, Object> {
      *
      * @return 结果
      */
-    public boolean isWarn()
-    {
+    public boolean isWarn() {
         return Objects.equals(HttpStatus.BAD_REQUEST.value(), this.get(CODE_TAG));
     }
 
@@ -108,12 +99,12 @@ public class ResponseResult extends HashMap<String, Object> {
      *
      * @return 结果
      */
-    public boolean isError()
-    {
-        return Objects.equals(HttpStatus.INTERNAL_SERVER_ERROR.value(),this.get(CODE_TAG));
+    public boolean isError() {
+        return Objects.equals(HttpStatus.INTERNAL_SERVER_ERROR.value(), this.get(CODE_TAG));
     }
+
     @Override
-    public Object put(String key, Object value) {
+    public ResponseResult put(String key, Object value) {
         super.put(key, value);
         return this;
     }
