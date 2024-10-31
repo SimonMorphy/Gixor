@@ -4,14 +4,16 @@ import GitHubUser
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpy3f2.gixor_mobile.database.SearchHistoryItemDatabase
+
 import com.cpy3f2.gixor_mobile.model.entity.Category
 import com.cpy3f2.gixor_mobile.model.entity.FocusContentItem
 import com.cpy3f2.gixor_mobile.model.entity.FocusItem
+import com.cpy3f2.gixor_mobile.model.entity.SearchHistoryItem
 import com.cpy3f2.gixor_mobile.utils.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -75,5 +77,48 @@ class MainViewModel: ViewModel() {
     var focusContentData = listOf(
         FocusContentItem("https://img13.360buyimg.com/imagetools/jfs/t1/148456/39/13392/164681/605279caE5a940775/7c4d345f6b834795.jpg","关注1"),
     )
+    //从本地获取搜索数据
 
+    // 添加数据库相关的变量
+    private var searchHistoryItems by mutableStateOf<List<SearchHistoryItem>>(emptyList())
+    
+    // 添加获取搜索历史的方法
+    fun getSearchHistory() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                searchHistoryItems = SearchHistoryItemDatabase
+                    .database
+                    .getSearchHistoryItemDao()
+                    .getAll()
+            }
+        }
+    }
+
+    // 添加插入搜索历史的方法
+    fun insertSearchHistory(item: SearchHistoryItem) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                SearchHistoryItemDatabase
+                    .database
+                    .getSearchHistoryItemDao()
+                    .insert(item)
+                // 重新加载数据
+                getSearchHistory()
+            }
+        }
+    }
+
+    // 添加删除搜索历史的方法
+    fun deleteSearchHistory(item: SearchHistoryItem) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                SearchHistoryItemDatabase
+                    .database
+                    .getSearchHistoryItemDao()
+                    .delete(item)
+                // 重新加载数据
+                getSearchHistory()
+            }
+        }
+    }
 }
