@@ -1,7 +1,6 @@
 package com.cpy3f2.gixor_mobile.ui.screens
 
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 
 import androidx.compose.foundation.layout.Column
@@ -13,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -22,35 +19,33 @@ import androidx.compose.material3.Text
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cpy3f2.gixor_mobile.R
+import androidx.navigation.NavController
+import com.cpy3f2.gixor_mobile.ui.components.LittleTopFunctionBar
 import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
 import kotlinx.coroutines.launch
 
 
 @Composable
-fun FrontScreen(vm:MainViewModel = viewModel()) {
-    HorizontalPagerWithIndicator(vm)
+fun FrontScreen(navController: NavController,vm:MainViewModel = viewModel()) {
+    HorizontalPagerWithIndicator(vm,navController)
 }
 
 
 
 
-@Preview
-@Composable
-fun FrontScreenPreview(){
-    FrontScreen()
-}
+//@Preview
+//@Composable
+//fun FrontScreenPreview(){
+//    FrontScreen()
+//}
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HorizontalPagerWithIndicator(vm: MainViewModel) {
+fun HorizontalPagerWithIndicator(vm: MainViewModel,navController: NavController) {
     val pages = vm.categories
     // 更新 PagerState 的创建方式
     val pagerState = rememberPagerState { pages.size }
@@ -67,7 +62,7 @@ fun HorizontalPagerWithIndicator(vm: MainViewModel) {
                 selectedTabIndex = pagerState.currentPage,
                 modifier = Modifier.width(200.dp),
             ) {
-                pages.forEachIndexed { index, title ->
+                pages.forEachIndexed { index, _ ->
                     Tab(
                         text = { Text(text = pages[index].name) },
                         selected = pagerState.currentPage == index,
@@ -79,15 +74,7 @@ fun HorizontalPagerWithIndicator(vm: MainViewModel) {
                     )
                 }
             }
-
-            IconButton(
-                onClick = { /*TODO*/ },
-                Modifier.align(Alignment.CenterVertically)) {
-                Icon(
-                    painter = painterResource(id = R.mipmap.search),
-                    contentDescription = "搜索"
-                )
-            }
+            LittleTopFunctionBar(navController)
         }
 
         // 更新 HorizontalPager 的使用方式

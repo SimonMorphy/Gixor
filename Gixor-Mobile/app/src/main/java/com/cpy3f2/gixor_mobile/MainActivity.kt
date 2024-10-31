@@ -17,7 +17,9 @@ import coil3.SingletonImageLoader
 import coil3.request.crossfade
 import com.cpy3f2.gixor_mobile.ui.screens.LoginScreen
 import com.cpy3f2.gixor_mobile.ui.screens.MainFrame
+import com.cpy3f2.gixor_mobile.ui.screens.SearchScreen
 import com.cpy3f2.gixor_mobile.ui.theme.GixorMobileTheme
+import okhttp3.RequestBody
 
 class MainActivity : ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,6 +41,7 @@ class MainActivity : ComponentActivity(){
                     NavHost(navController = navController, startDestination ="login") {
                         composable("login") { LoginScreen(navController) }
                         composable("main") { MainFrame(navController) }
+                        composable("search") { SearchScreen(navController)  }
 
                     }
                 }

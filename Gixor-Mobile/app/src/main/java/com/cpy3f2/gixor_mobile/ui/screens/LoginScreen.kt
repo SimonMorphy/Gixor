@@ -44,13 +44,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.cpy3f2.gixor_mobile.R
+import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UnrememberedMutableState")
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(navController: NavController,vm : MainViewModel = viewModel()) {
     //创建路由
     //账号
     var username by remember {
@@ -134,8 +136,9 @@ fun LoginScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
                         onClick = {
-                            //TODO 检验是否正确
+                            vm.login(username, password)
                             navController.navigate("main")
+
                         },
                         enabled = isFormValid,
                         modifier = Modifier.fillMaxWidth(),

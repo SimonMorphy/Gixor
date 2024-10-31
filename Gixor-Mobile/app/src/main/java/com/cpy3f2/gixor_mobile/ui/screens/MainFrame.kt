@@ -21,7 +21,7 @@ fun MainFrame(navController: NavController) {
     var currentSelectedItem by remember { mutableIntStateOf(0) }
     val navigationItems = listOf(
         NavigationItem("首页", painterResource(id = R.mipmap.front)),
-        NavigationItem("消息", painterResource(id = R.mipmap.message)),
+        NavigationItem("排行", painterResource(id = R.mipmap.rank)),
         NavigationItem("我的", painterResource(id = R.mipmap.github)),
     )
 
@@ -41,8 +41,8 @@ fun MainFrame(navController: NavController) {
     ) {innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             when (currentSelectedItem) {
-                0 -> FrontScreen()
-                1 -> MessageScreen()
+                0 -> FrontScreen(navController)
+                1 -> RankScreen(navController)
                 2 -> MineScreen()
             }
         }

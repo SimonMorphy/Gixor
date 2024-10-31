@@ -1,13 +1,21 @@
 package com.cpy3f2.gixor_mobile.viewModel
 
+import GitHubUser
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.cpy3f2.gixor_mobile.model.entity.Category
 import com.cpy3f2.gixor_mobile.model.entity.FocusContentItem
 import com.cpy3f2.gixor_mobile.model.entity.FocusItem
+import com.cpy3f2.gixor_mobile.utils.RetrofitClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainViewModel: ViewModel() {
     // 更新 PagerState 的创建方式
@@ -22,6 +30,16 @@ class MainViewModel: ViewModel() {
     var categoryIndex by mutableIntStateOf(0)
         private set
 
+    //登录模块
+    var loginData = MutableLiveData<GitHubUser>()
+    fun login(username: String, password: String){
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                loginData.postValue(RetrofitClient.httpBaseService.login(username,password).httpData())
+            }
+        }
+    }
+
     /**
      * 更新分类下表
      * @param index
@@ -29,6 +47,11 @@ class MainViewModel: ViewModel() {
     fun updateCategoriesIndex(index: Int){
         categoryIndex = index
     }
+
+//    val httpData : MutableLiveData<User>()
+//    val doLoginRepostory by lazy {
+//        LoginRepostory()
+//    }
 
     /**
      *获取关注数据
