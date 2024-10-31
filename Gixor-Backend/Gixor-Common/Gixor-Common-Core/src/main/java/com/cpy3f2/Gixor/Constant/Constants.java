@@ -42,4 +42,8 @@ public class Constants {
      */
     public static final Integer FAIL = 500;
 
+    public static final String ANDROID = "android";
+    public static final Boolean TRUE = true;
+    public static final long CACHE_EXPIRATION = 60*60*24*7;
+    public static final String TOKEN = "token" ;
 }

@@ -1,5 +1,6 @@
 package com.cpy3f2.Gixor.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -9,6 +10,8 @@ import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -17,6 +20,7 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
 
@@ -30,11 +34,29 @@ import java.time.Duration;
 @Configuration
 @AutoConfigureBefore(RedisReactiveAutoConfiguration.class)
 @ConditionalOnClass(ReactiveRedisConnectionFactory.class)
-public class RedisConfig{
+@Slf4j
+public class RedisConfig {
+    @Value("${spring.data.redis.host}")
+    private String host;
+    
+    @Value("${spring.data.redis.port}")
+    private int port;
+    
+    @Value("${spring.data.redis.password}")
+    private String password;
+
     @Bean
+    @Primary
     @ConditionalOnMissingBean(ReactiveRedisConnectionFactory.class)
     public ReactiveRedisConnectionFactory reactiveRedisConnectionFactory() {
-        return new LettuceConnectionFactory();
+        LettuceConnectionFactory factory = new LettuceConnectionFactory();
+        factory.setHostName(host);
+        factory.setPort(port);
+        factory.setPassword(password);
+        
+        log.info("Redis配置信息 - host: {}, port: {}", host, port);
+        
+        return factory;
     }
     @Bean
     @ConditionalOnMissingBean(name = "reactiveRedisTemplate")

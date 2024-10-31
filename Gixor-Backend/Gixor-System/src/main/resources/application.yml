@@ -1,0 +1,17 @@
+server:
+  port: 5579
+spring:
+  application:
+    name: gixor-system
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 82.156.217.74:8848
+      config:
+        server-addr: 82.156.217.74:8848
+        file-extension: yml
+  config:
+    import: nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+
