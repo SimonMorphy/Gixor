@@ -1,6 +1,7 @@
 package com.cpy3f2.gixor_mobile.ui.screens
 
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -18,11 +20,13 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.cpy3f2.gixor_mobile.ui.components.LittleTopFunctionBar
@@ -61,16 +65,25 @@ fun HorizontalPagerWithIndicator(vm: MainViewModel,navController: NavController)
             TabRow(
                 selectedTabIndex = pagerState.currentPage,
                 modifier = Modifier.width(200.dp),
+                indicator = {},
+                divider = {},
+                containerColor = Color.Transparent
             ) {
                 pages.forEachIndexed { index, _ ->
                     Tab(
-                        text = { Text(text = pages[index].name) },
+                        text = {
+                            Text(text = pages[index].name,
+                                fontSize = if (pagerState.currentPage == index) 17.sp else 14.sp,
+                                color = if (pagerState.currentPage == index) Color.Red else Color.Black
+                            )
+                        },
                         selected = pagerState.currentPage == index,
                         onClick = {
                             scope.launch {
                                 pagerState.animateScrollToPage(index)
                             }
-                        }
+                        },
+                        interactionSource = remember { MutableInteractionSource() },
                     )
                 }
             }

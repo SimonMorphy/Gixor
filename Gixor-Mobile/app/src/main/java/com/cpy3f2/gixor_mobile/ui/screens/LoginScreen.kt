@@ -1,6 +1,7 @@
 package com.cpy3f2.gixor_mobile.ui.screens
 
 import android.annotation.SuppressLint
+import android.content.SharedPreferences
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -52,7 +52,7 @@ import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UnrememberedMutableState")
 @Composable
-fun LoginScreen(navController: NavController,vm : MainViewModel = viewModel()) {
+fun LoginScreen(navController: NavController,vm : MainViewModel = viewModel(),sharedPreferences: SharedPreferences) {
     //创建路由
     //账号
     var username by remember {
@@ -68,7 +68,7 @@ fun LoginScreen(navController: NavController,vm : MainViewModel = viewModel()) {
     }
     //格式是否正确
     val isFormValid by derivedStateOf {
-        username.isNotBlank() && password.length>=6
+        username.isNotBlank() && password.length>=0
     }
     Scaffold {
         Column(
@@ -95,7 +95,7 @@ fun LoginScreen(navController: NavController,vm : MainViewModel = viewModel()) {
                         .fillMaxSize()
                         .padding(32.dp)
                 ){
-                    Text(text = "Welcome Back!", fontWeight = FontWeight.Bold, fontSize = 32.sp)
+                    Text(text = "欢迎回来!", fontWeight = FontWeight.Bold, fontSize = 32.sp)
                     Spacer(modifier = Modifier.weight(1f))
                     Column(
                         Modifier
@@ -107,7 +107,7 @@ fun LoginScreen(navController: NavController,vm : MainViewModel = viewModel()) {
                             modifier = Modifier.fillMaxWidth(),
                             value = username,
                             onValueChange = { username = it },
-                            label = { Text("Username") },
+                            label = { Text("账号") },
                             singleLine = true,
                             trailingIcon = {
                                 if (username.isNotBlank())
@@ -121,7 +121,7 @@ fun LoginScreen(navController: NavController,vm : MainViewModel = viewModel()) {
                             modifier = Modifier.fillMaxWidth(),
                             value = password,
                             onValueChange = { password = it },
-                            label = { Text("Password") },
+                            label = { Text("密码") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                             visualTransformation = if (iSPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -137,14 +137,29 @@ fun LoginScreen(navController: NavController,vm : MainViewModel = viewModel()) {
                     Button(
                         onClick = {
                             vm.login(username, password)
-                            navController.navigate("main")
+                            // 获取登录结果
+                            val result = vm.loginData.value
+                            if(result?.code==200){
+                                //将 登录成功后的数据保存到数据库
+                                val token = result.data
+                                sharedPreferences.edit().putString("tokenValue",token.tokenValue).apply()
+                                //去请求获取当前用户信息的接口
+                                val resultUser = vm.gitHubUser.value
+                                if(resultUser?.code==200){
+                                    //将 当前用户信息保存到数据库
+                                    val user = resultUser.data
+
+                                    navController.navigate("main")
+                                }
+
+                            }
 
                         },
                         enabled = isFormValid,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp)
                     ) {
-                        Text(text = "Log In")
+                        Text(text = "登录")
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     Row (

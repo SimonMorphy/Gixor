@@ -4,18 +4,24 @@ import android.app.Application
 import android.content.Context
 
 
-class MyApplication: Application() {
-    init {
-        instance = this
-    }
-    companion object{
-        private var instance:MyApplication? = null
-        fun getApplicationContext(): Context{
-            return instance!!.applicationContext
+class MyApplication : Application() {
+    companion object {
+        var instance: Application? = null
+        
+        fun getApplicationContext(): Context {
+            return instance?.applicationContext 
+                ?: throw IllegalStateException("Application context not initialized")
+        }
+        
+        fun initializeApp(context: Context) {
+            if (instance == null) {
+                instance = MyApplication()
+            }
         }
     }
-
     override fun onCreate() {
         super.onCreate()
+        instance = this
     }
+
 }

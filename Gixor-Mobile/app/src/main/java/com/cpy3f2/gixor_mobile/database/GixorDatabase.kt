@@ -8,14 +8,15 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.cpy3f2.gixor_mobile.MyApplication
 import com.cpy3f2.gixor_mobile.dao.SearchHistoryItemDao
 import com.cpy3f2.gixor_mobile.model.entity.SearchHistoryItem
+import com.cpy3f2.gixor_mobile.dao.GitHubUserDao as GitHubUserDao1
 
 @Database(entities = [SearchHistoryItem::class], version = 1, exportSchema = false)
-abstract class SearchHistoryItemDatabase :RoomDatabase(){
+abstract class GixorDatabase :RoomDatabase(){
     companion object{
-        var database: SearchHistoryItemDatabase
-        val Tag:String =  SearchHistoryItemDatabase::class.java.simpleName
+        var database: GixorDatabase
+        val Tag:String =  GixorDatabase::class.java.simpleName
         init {
-            database = Room.databaseBuilder(MyApplication.getApplicationContext(),SearchHistoryItemDatabase::class.java,"db_search")
+            database = Room.databaseBuilder(MyApplication.getApplicationContext(),GixorDatabase::class.java,"db_gixor")
                 .addCallback(object :Callback(){
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
@@ -27,4 +28,5 @@ abstract class SearchHistoryItemDatabase :RoomDatabase(){
         }
     }
     abstract fun getSearchHistoryItemDao() : SearchHistoryItemDao
+    abstract fun getGitHubUserDao() : GitHubUserDao1
 }

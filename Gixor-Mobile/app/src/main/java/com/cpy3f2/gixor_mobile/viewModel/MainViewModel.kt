@@ -1,6 +1,7 @@
 package com.cpy3f2.gixor_mobile.viewModel
 
 import GitHubUser
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -8,18 +9,28 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.cpy3f2.gixor_mobile.database.SearchHistoryItemDatabase
+import com.cpy3f2.gixor_mobile.database.GixorDatabase
 
 import com.cpy3f2.gixor_mobile.model.entity.Category
 import com.cpy3f2.gixor_mobile.model.entity.FocusContentItem
 import com.cpy3f2.gixor_mobile.model.entity.FocusItem
+import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.SearchHistoryItem
+import com.cpy3f2.gixor_mobile.model.entity.Token
 import com.cpy3f2.gixor_mobile.utils.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainViewModel: ViewModel() {
+
+    //热榜
+    var hotList by mutableStateOf(
+        listOf(
+            "人物热榜",
+            "项目热榜"
+        )
+    )
     // 更新 PagerState 的创建方式
     var categories by mutableStateOf(
         listOf(
@@ -33,11 +44,19 @@ class MainViewModel: ViewModel() {
         private set
 
     //登录模块
-    var loginData = MutableLiveData<GitHubUser>()
+    var loginData = MutableLiveData<ResultData<Token>>()
     fun login(username: String, password: String){
         viewModelScope.launch {
             withContext(Dispatchers.IO){
-                loginData.postValue(RetrofitClient.httpBaseService.login(username,password).httpData())
+                loginData.postValue(RetrofitClient.httpBaseService.login(username,password))
+            }
+        }
+    }
+    val gitHubUser = MutableLiveData<ResultData<GitHubUser>>()
+    fun getUserInfo(token: Token) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                gitHubUser.postValue(RetrofitClient.httpBaseService.getGitHubUserInfo(token.tokenValue))
             }
         }
     }
@@ -80,13 +99,13 @@ class MainViewModel: ViewModel() {
     //从本地获取搜索数据
 
     // 添加数据库相关的变量
-    private var searchHistoryItems by mutableStateOf<List<SearchHistoryItem>>(emptyList())
+    var searchHistoryItems by mutableStateOf<List<SearchHistoryItem>>(emptyList())
     
     // 添加获取搜索历史的方法
-    fun getSearchHistory() {
+    fun getSearchHistory(){
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                searchHistoryItems = SearchHistoryItemDatabase
+                searchHistoryItems = GixorDatabase
                     .database
                     .getSearchHistoryItemDao()
                     .getAll()
@@ -98,7 +117,7 @@ class MainViewModel: ViewModel() {
     fun insertSearchHistory(item: SearchHistoryItem) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                SearchHistoryItemDatabase
+                GixorDatabase
                     .database
                     .getSearchHistoryItemDao()
                     .insert(item)
@@ -112,7 +131,7 @@ class MainViewModel: ViewModel() {
     fun deleteSearchHistory(item: SearchHistoryItem) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                SearchHistoryItemDatabase
+                GixorDatabase
                     .database
                     .getSearchHistoryItemDao()
                     .delete(item)
@@ -121,4 +140,5 @@ class MainViewModel: ViewModel() {
             }
         }
     }
+
 }

@@ -1,4 +1,6 @@
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
 /**
@@ -8,8 +10,11 @@ import java.time.LocalDateTime
  * Copyright (c) 2024. 保留所有权利。
  * @since : 2024-10-30 19:43
  */
+
+@Entity
 data class GitHubUser(
     // 基本标识信息
+    @PrimaryKey
     val githubId: Long? = null,
     val login: String? = null,
     val name: String? = null,

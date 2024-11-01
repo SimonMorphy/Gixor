@@ -22,7 +22,7 @@ interface SearchHistoryItemDao {
     @DELETE
     suspend fun delete(searchHistoryItem: SearchHistoryItem)
 
-    @DELETE(("DELETE FROM search_history_item"))
+    @DELETE("DELETE FROM search_history_item")
     suspend fun deleteAll(vararg searchHistoryItem: SearchHistoryItem)
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
