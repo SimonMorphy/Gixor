@@ -15,18 +15,27 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -41,32 +50,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import androidx.navigation.NavController
 import com.cpy3f2.gixor_mobile.R
+import com.cpy3f2.gixor_mobile.model.entity.SearchHistoryItem
 import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) {
-    var text by remember { mutableStateOf("") }
+    var searchText by remember { mutableStateOf("") }
     var active by remember { mutableStateOf(false) }
+
+    // 记住搜索历史列表
+    var searchHistory by remember { mutableStateOf(listOf<SearchHistoryItem>()) }
 
     Scaffold(
         topBar = {}
     ) { paddingValues ->
         Column(
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
+            // 顶部搜索栏
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -76,33 +94,42 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                         .size(24.dp)
                         .clickable { navController.popBackStack() }
                 )
-                Spacer(modifier = Modifier.width(10.dp))
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
                 SearchBar(
-                    query = text,
-                    onQueryChange = { text = it },
-                    onSearch = { active = false },
-                    active = active,
-                    onActiveChange = { active = false },
-                    placeholder = { 
-                        Text(
-                            "请输入搜索内容",
-                            fontSize = 15.sp
-                        ) 
+                    query = searchText,
+                    onQueryChange = { searchText = it },
+                    onSearch = { 
+                        active = false
+                        // 添加搜索历史
+                        if (searchText.isNotEmpty()) {
+                            val newItem = SearchHistoryItem(
+                                id = 0, // Room会自动生成ID
+                                name = searchText,
+                                time = LocalDateTime.now()
+                            )
+                            // 这里需要调用ViewModel的方法来保存搜索历史
+                            // vm.addSearchHistory(newItem)
+                        }
                     },
+                    active = active,
+                    onActiveChange = { active = it },
+                    placeholder = { Text("搜索游戏、帖子、用户") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "搜索图标",
-                            modifier = Modifier.size(24.dp)
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
                         )
                     },
                     trailingIcon = {
-                        if (text.isNotEmpty()) {
-                            IconButton(onClick = { text = "" }) {
+                        if (searchText.isNotEmpty()) {
+                            IconButton(onClick = { searchText = "" }) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "清除图标",
-                                    modifier = Modifier.size(24.dp)
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
@@ -110,27 +137,110 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                     modifier = Modifier
                         .weight(1f)
                         .height(40.dp),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp),
-                    colors = androidx.compose.material3.SearchBarDefaults.colors(
-                        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                    colors = SearchBarDefaults.colors(
+                        containerColor = Color(0xFFF5F5F5),
                         dividerColor = Color.Transparent
                     )
                 ) {
-                    // SearchBar content
+                    // 搜索建议内容
+                    if (searchText.isNotEmpty()) {
+                        LazyColumn {
+                            items(5) { index ->
+                                ListItem(
+                                    headlineContent = { Text("搜索建议 $searchText $index") },
+                                    leadingContent = {
+                                        Icon(
+                                            imageVector = Icons.Default.Search,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    modifier = Modifier.clickable { }
+                                )
+                            }
+                        }
+                    }
                 }
             }
-            // 写搜索历史
-            Spacer(modifier = Modifier.height(10.dp))
-            SearchHistoryComponent(vm)
+            SearchHistoryComponent(vm);
+
+            // 搜索历史
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                if (searchHistory.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "搜索历史",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Icon(
+                            painter = painterResource(id = R.mipmap.clear),
+                            contentDescription = "清除",
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clickable { 
+                                    // vm.clearSearchHistory()
+                                }
+                        )
+                    }
+                    
+                    LazyColumn(
+                        modifier = Modifier.padding(top = 12.dp)
+                    ) {
+                        items(searchHistory.sortedByDescending { it.time }) { item ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { 
+                                        searchText = item.name
+                                        active = false
+                                    }
+                                    .padding(vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.History,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = Color.Gray
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = item.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.DarkGray
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "删除",
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clickable { 
+                                            // vm.deleteSearchHistory(item)
+                                        },
+                                    tint = Color.Gray
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-//@Preview
-//@Composable
-//fun SearchScreenPreview() {
-//    SearchHistoryComponent(vm)
-//}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -260,4 +370,10 @@ fun PersonHotPoint(){
 @Composable
 fun ProjectHotPoint(){
 
+}
+
+@Preview
+@Composable
+fun SearchScreenPreview() {
+    SearchScreen(viewModel())
 }

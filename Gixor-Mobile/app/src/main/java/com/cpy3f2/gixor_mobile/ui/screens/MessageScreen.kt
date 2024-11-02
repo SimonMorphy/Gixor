@@ -24,6 +24,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.statusBarsPadding
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
+
 @Composable
 fun MessageScreen(viewModel: MainViewModel) {
     // 配置状态栏
@@ -49,7 +50,7 @@ fun MessageScreen(viewModel: MainViewModel) {
         TopBar()
         
         // 消息列表
-        MessageList()
+        MessageList(viewModel)
     }
 }
 
@@ -78,7 +79,7 @@ private fun TopBar() {
 }
 
 @Composable
-private fun MessageList() {
+private fun MessageList(viewModel: MainViewModel) {
     LazyColumn {
         // 系统通知
         item {
@@ -92,7 +93,8 @@ private fun MessageList() {
                 name = "用户 ${index + 1}",
                 lastMessage = "这是最后一条消息 ${index + 1}",
                 time = "12:34",
-                unreadCount = if (index % 3 == 0) (index + 1) else 0
+                unreadCount = if (index % 3 == 0) (index + 1) else 0,
+                viewModel = viewModel
             )
         }
     }
@@ -143,12 +145,21 @@ private fun ChatMessageItem(
     name: String,
     lastMessage: String,
     time: String,
-    unreadCount: Int = 0
+    unreadCount: Int = 0,
+    viewModel: MainViewModel
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* 处理点击事件 */ }
+            .clickable { 
+                // 导航到聊天页面
+                viewModel.navController.value?.navigate(
+                    AppDestinations.Chat.createRoute(
+                        userId = "user_$name",  // 这里应该使用实际的用户ID
+                        userName = name
+                    )
+                )
+            }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {

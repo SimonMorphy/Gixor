@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import android.content.Context
+import androidx.lifecycle.LiveData
 
 class MainViewModel: ViewModel() {
     val sharedPreferences  = MyApplication.getApplicationContext().getSharedPreferences("token", MODE_PRIVATE)
@@ -189,4 +190,41 @@ class MainViewModel: ViewModel() {
         }
     }
 
+    // 搜索历史LiveData
+    private val _searchHistory = MutableLiveData<List<SearchHistoryItem>>()
+    val searchHistory: LiveData<List<SearchHistoryItem>> = _searchHistory
+
+//    // 添加搜索历史
+//    fun addSearchHistory(item: SearchHistoryItem) {
+//        viewModelScope.launch {
+//            withContext(Dispatchers.IO) {
+//                // 这里需要调用Room数据库的DAO来保存
+//                // searchHistoryDao.insert(item)
+//                // 更新LiveData
+//                _searchHistory.postValue(/* 从数据库获取最新数据 */)
+//            }
+//        }
+//    }
+
+//    // 删除单个搜索历史
+//    fun deleteSearchHistory(item: SearchHistoryItem) {
+//        viewModelScope.launch {
+//            withContext(Dispatchers.IO) {
+//                // searchHistoryDao.delete(item)
+//                // 更新LiveData
+//                _searchHistory.postValue(/* 从数据库获取最新数据 */)
+//            }
+//        }
+//    }
+
+    // 清空所有搜索历史
+    fun clearSearchHistory() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                // searchHistoryDao.deleteAll()
+                // 更新LiveData
+                _searchHistory.postValue(emptyList())
+            }
+        }
+    }
 }
