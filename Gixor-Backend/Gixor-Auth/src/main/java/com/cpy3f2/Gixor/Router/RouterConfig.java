@@ -20,6 +20,7 @@ public class RouterConfig {
     public RouterFunction<ServerResponse> routerFunction(LoginHandler handler) {
         return RouterFunctions.route()
                 .GET("/render", handler::render)
+                .GET("/test",handler::test)
                 .build();
     }
 

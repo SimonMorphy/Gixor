@@ -13,6 +13,8 @@
         <module>Gixor-Common-Knife</module>
         <module>Gixor-Common-DataSource</module>
         <module>Gixor-Common-Core</module>
+        <module>Gixor-Common-Auth</module>
+        <module>Gixor-Common-ElasticSearch</module>
     </modules>
     <artifactId>Gixor-Common</artifactId>
     <packaging>pom</packaging>

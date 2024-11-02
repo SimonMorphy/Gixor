@@ -1,7 +1,12 @@
 package com.cpy3f2.Gixor.Config;
 
 import cn.dev33.satoken.config.SaTokenConfig;
+import cn.dev33.satoken.reactor.filter.SaReactorFilter;
+import cn.dev33.satoken.stp.StpUtil;
+import com.cpy3f2.Gixor.Condition.GateWayCondition;
+import com.cpy3f2.Gixor.Domain.ResponseResult;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
@@ -18,14 +23,15 @@ public class TokenConfig {
     @Bean
     @Primary
     public SaTokenConfig getSaTokenConfigPrimary() {
-        SaTokenConfig config = new SaTokenConfig();
-        config.setTimeout(30 * 24 * 60 * 60);
-        config.setActiveTimeout(-1);
-        config.setIsConcurrent(true);
-        config.setIsShare(true);
-        config.setTokenStyle("uuid");
-        config.setIsLog(false);
-        return config;
+        return new SaTokenConfig()
+                .setActiveTimeout(-1)
+                .setIsConcurrent(false)
+                .setIsShare(true)
+                .setTokenName("gixor-login")
+                .setTokenStyle("uuid")
+                .setIsLog(false)
+                .setIsReadCookie(false)
+                .setIsReadHeader(true);
     }
 
 }

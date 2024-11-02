@@ -2,8 +2,11 @@ package com.cpy3f2.Gixor.Config;
 
 import cn.dev33.satoken.reactor.filter.SaReactorFilter;
 import cn.dev33.satoken.stp.StpUtil;
+import com.cpy3f2.Gixor.Condition.GateWayCondition;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
@@ -15,14 +18,11 @@ import org.springframework.context.annotation.Primary;
  * @since : 2024-10-29 09:29
  */
 @Configuration
+@Conditional(GateWayCondition.class)
 public class SaTokenConfig {
 
     @Bean
     public SaReactorFilter getSaReactorFilter() {
-        return new SaReactorFilter()
-                .addInclude("/**")
-                .addExclude("/render", "/callback","/test","/check")
-                .setAuth(obj -> StpUtil.checkLogin())
-                .setError(e -> ResponseResult.error(e.getMessage()));
+        return new SaReactorFilter();
     }
 }

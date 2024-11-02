@@ -33,6 +33,8 @@ public class LoginRequestConfig {
     private String clientSecret;
     @Value("${JustAuth.github.redirectUri}")
     private String redirectUri;
+    @Value("${proxy.port:7890}")
+    private int proxyPort;
 
     @Bean
     public AuthRequest authGithubRequest() {
@@ -41,8 +43,8 @@ public class LoginRequestConfig {
                 .clientSecret(clientSecret)
                 .redirectUri(redirectUri)
                 .httpConfig(HttpConfig.builder()
-                        .timeout(3000)
-                        .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 33210)))
+                        .timeout(30000)
+                        .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", proxyPort)))
                         .build())
                 .scopes(AuthScopeUtils.getScopes(
                         AuthGithubScope.USER,AuthGithubScope.PUBLIC_REPO,

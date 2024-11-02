@@ -41,7 +41,7 @@ public class User {
 
     @Column("nickname")
     @Size(max = 50, message = "昵称长度不能超过50个字符")
-    public String nickName;
+    public String nickname;
 
     @Column("password")
     @NotBlank(message = "密码不能为空")
