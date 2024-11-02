@@ -30,10 +30,8 @@ class MainActivity : ComponentActivity() {
                 .crossfade(true)
                 .build()
         }
-        // 如果 Application 还没初始化，使用 Activity 的 applicationContext
-        if (MyApplication.Companion.instance == null) {
-            MyApplication.Companion.instance = applicationContext as Application
-        }
+        // 使用 getInstance() 方法获取实例
+        val app = MyApplication.getInstance()
 
         // 创建 ViewModel
         val viewModel: MainViewModel by viewModels()

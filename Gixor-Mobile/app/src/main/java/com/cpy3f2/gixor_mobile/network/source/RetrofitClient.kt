@@ -1,12 +1,14 @@
 package com.cpy3f2.gixor_mobile.network.source
 
+import com.cpy3f2.gixor_mobile.MyApplication
 import com.cpy3f2.gixor_mobile.data.api.HttpBaseService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
-import okhttp3.logging.HttpLoggingInterceptor
 
 /**
  * Created by lya
@@ -22,25 +24,44 @@ class RetrofitClient {
                 .create()
         }
 
-        //首先创建一个OkHttpClient对象
+        // 创建认证拦截器
+        private val authInterceptor = Interceptor { chain ->
+            val original = chain.request()
+            val token = MyApplication.preferencesManager.getToken()
+            
+            val request = if (!token.isNullOrEmpty()) {
+                original.newBuilder()
+                    .header("Authorization", "Bearer $token")
+                    .build()
+            } else {
+                original
+            }
+            
+            chain.proceed(request)
+        }
+
+        // 创建日志拦截器
+        private val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        // 创建 OkHttpClient
         val okHttpClient = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)  // 连接超时时间
-            .readTimeout(30, TimeUnit.SECONDS)     // 读取超时时间
-            .writeTimeout(30, TimeUnit.SECONDS)    // 写入超时时间
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            })
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(authInterceptor)      // 添加认证拦截器
+            .addInterceptor(loggingInterceptor)   // 添加日志拦截器
             .build()
 
-
-        //创建Retrofit对象
+        // 创建 Retrofit 实例
         val retrofit = retrofit2.Retrofit.Builder()
             .baseUrl(HttpBaseService.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(createGson()))
             .client(okHttpClient)
             .build()
 
-        //创建接口对象
+        // 创建服务接口实例
         val httpBaseService = retrofit.create(HttpBaseService::class.java)
     }
 }

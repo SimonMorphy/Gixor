@@ -29,9 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import android.content.Context
 import androidx.lifecycle.LiveData
 
-class MainViewModel: ViewModel() {
-    val sharedPreferences  = MyApplication.getApplicationContext().getSharedPreferences("token", MODE_PRIVATE)
-
+class MainViewModel : ViewModel() {
     //热榜
     var hotList by mutableStateOf(
         listOf(
@@ -150,12 +148,7 @@ class MainViewModel: ViewModel() {
     }
 
     // 检查是否有token
-    fun hasToken(): Boolean {
-        // 从本地存储或内存中获取token
-
-        // 这里需要根据你的token存储方式来实现
-        return false // 临时返回值
-    }
+    fun hasToken(): Boolean = preferencesManager.hasToken()
 
     // 导航状态
     private val _navController = MutableStateFlow<NavHostController?>(null)
@@ -211,7 +204,7 @@ class MainViewModel: ViewModel() {
 //            withContext(Dispatchers.IO) {
 //                // searchHistoryDao.delete(item)
 //                // 更新LiveData
-//                _searchHistory.postValue(/* 从数据库获取最新数据 */)
+//                _searchHistory.postValue(/* 从数据库获取最新数 */)
 //            }
 //        }
 //    }
@@ -226,4 +219,35 @@ class MainViewModel: ViewModel() {
             }
         }
     }
+
+    private val preferencesManager = MyApplication.preferencesManager
+
+    private val _isLoggedIn = MutableStateFlow(preferencesManager.hasToken())
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
+    fun handleLoginSuccess(token: String) {
+        viewModelScope.launch {
+            try {
+                // 保存token到SharedPreferences
+                preferencesManager.saveToken(token)
+                // 更新登录状态
+                _isLoggedIn.value = true
+                // 更新 httpBaseService 的 token
+                // httpBaseService.updateToken(token)
+                // 获取用户信息等其他操作
+                // loadUserInfo()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            preferencesManager.clearToken()
+            _isLoggedIn.value = false
+        }
+    }
+
+    fun getToken(): String? = preferencesManager.getToken()
 }

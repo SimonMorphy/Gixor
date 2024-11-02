@@ -10,6 +10,11 @@ sealed class AppDestinations(val route: String) {
             return "chat/${Uri.encode(userId)}/${Uri.encode(userName)}"
         }
     }
+    object NotificationDetail : AppDestinations("notification/{notificationId}?repository={repository}") {
+        fun createRoute(notificationId: String, repository: String? = null): String {
+            return "notification/${Uri.encode(notificationId)}?repository=${Uri.encode(repository ?: "")}"
+        }
+    }
     
     companion object {
         fun fromRoute(route: String): AppDestinations {
@@ -19,6 +24,7 @@ sealed class AppDestinations(val route: String) {
                 "search" -> Search
                 "message" -> Message
                 "chat" -> Chat
+                "notification" -> NotificationDetail
                 else -> Main
             }
         }

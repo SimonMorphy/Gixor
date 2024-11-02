@@ -1,47 +1,56 @@
 package com.cpy3f2.gixor_mobile.data.api
 
-
 import GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.Token
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.Header
-import retrofit2.http.PUT
-import retrofit2.http.Query
+import retrofit2.http.*
 
 interface HttpBaseService {
     companion object {
-        val BASE_URL =  "http://182.92.129.140"
+        const val BASE_URL = "http://1024.viwipiediema.com:10102"
     }
-    //suspend关键字修饰方法，表示这是一个挂起函数，可以在协程中使用,然后返回可以直接返回我们想要的实体类
+
+    // 登录相关接口
     @GET("/auth/render")
-    suspend fun login(@Query("username") username : String, @Query("password") password : String):ResultData<Token>
+    suspend fun login(
+        @Query("username") username: String,
+        @Query("password") password: String
+    ): ResultData<Token>
 
     @GET("/auth/render")
-    suspend fun otherLogin():ResultData<Token>
+    suspend fun otherLogin(): ResultData<Token>
 
+    // GitHub用户信息接口
     @GET("/gith/user")
-    suspend fun getGitHubUserInfo(@Header("gixor-login") tokenValue : String):ResultData<GitHubUser>
+    suspend fun getGitHubUserInfo(
+        @Header("gixor-login") tokenValue: String
+    ): ResultData<GitHubUser>
 
-
-    //为指定仓库Star
+    // Star相关接口
     @PUT("/{owner}/{repo}")
-    suspend fun starRepo(@Query("owner") owner: String, @Query("repo") repo : String)
+    suspend fun starRepo(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    )
 
-    //为指定仓库取消Star
     @DELETE("/{owner}/{repo}")
-    suspend fun unStarRepo(@Query("owner") owner: String, @Query("repo") repo : String)
+    suspend fun unStarRepo(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    )
 
-    //判断当前用户是否收藏了指定仓库
     @GET("/{owner}/{repo}")
-    suspend fun isStarRepo(@Query("owner") owner: String, @Query("repo") repo : String):ResultData<Boolean>
+    suspend fun isStarRepo(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    ): ResultData<Boolean>
 
-    //获取当前用户收藏的仓库
-    @GET
-    suspend fun getStarRepoList()
+    // Star列表接口
+    @GET("/user/starred")
+    suspend fun getStarRepoList(): ResultData<List<Any>>  // 替换 Any 为具体的数据类型
 
-    //获取指定用户收藏的仓库
-    @GET("/{username}")
-    suspend fun getUserStarRepoList(@Query("username") username: String)
+    @GET("/users/{username}/starred")
+    suspend fun getUserStarRepoList(
+        @Path("username") username: String
+    ): ResultData<List<Any>>  // 替换 Any 为具体的数据类型
 }

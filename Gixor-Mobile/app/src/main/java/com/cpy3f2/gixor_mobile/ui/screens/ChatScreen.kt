@@ -1,3 +1,4 @@
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -49,210 +50,252 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.ui.tooling.preview.Preview
 
 
 @Composable
 fun ChatScreen(
     viewModel: MainViewModel,
-    userId: String,
-    userName: String
+    notificationId: String,
+    repository: String
 ) {
-    val systemUiController = rememberSystemUiController()
-    val statusBarColor = MaterialTheme.colorScheme.background
-    val isDarkIcons = !isSystemInDarkTheme()
-    
-    DisposableEffect(systemUiController) {
-        systemUiController.setStatusBarColor(
-            color = statusBarColor,
-            darkIcons = isDarkIcons
-        )
-        onDispose {}
-    }
-
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding(),
-        bottomBar = { BottomInput() }
+        topBar = { 
+            IssueTopBar(
+                viewModel = viewModel,
+                repository = repository
+            ) 
+        },
+        bottomBar = { IssueCommentInput() }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {  // 使用Box来放置聊天内容和滚动按钮
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                // 顶部栏
-                TopBar(viewModel, userName)
-                
-                // 聊天内容
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                ) {
-                    val listState = rememberLazyListState()
-                    val messageCount = 20 // 假设有20条消息
-                    
-                    // 首次加载时滚动到底部
-                    LaunchedEffect(Unit) {
-                        // 滚动到最后一条消息
-                        listState.scrollToItem(
-                            index = messageCount - 1,
-                            scrollOffset = 0
-                        )
-                    }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            // Issue Header
+            item {
+                IssueHeader(
+                    title = "Unable to load specific user profile",
+                    number = notificationId,  // 使用通知ID作为issue编号
+                    status = IssueStatus.OPEN,
+                    author = "Author Name",  // 这里可以从viewModel获取作者信息
+                    createdTime = "2024-03-20 10:30"  // 这里可以从viewModel获取创建时间
+                )
+            }
 
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color(0xFFF5F5F5)),
-                        state = listState,
-                        reverseLayout = false  // 改为false，使消息正序显示
-                    ) {
-                        items(messageCount) { index ->
-                            if (index % 2 == 0) {
-                                ReceivedMessage("这是收到的消息 $index")
-                            } else {
-                                SentMessage("这是发送的消息 $index")
-                            }
-                        }
-                    }
+            // Issue Description
+            item {
+                IssueComment(
+                    author = "Author Name",
+                    avatar = "https://placekitten.com/200/200",
+                    content = "这里是问题的详细描述...",
+                    time = "3天前",
+                    isAuthor = true
+                )
+            }
+
+            // Comments
+            items(10) { index ->
+                IssueComment(
+                    author = "User ${index + 1}",
+                    avatar = "https://placekitten.com/200/200",
+                    content = "这是第 ${index + 1} 条回复内容...",
+                    time = "${index + 1}天前",
+                    isAuthor = false
+                )
+            }
+        }
+    }
+}
+
+enum class IssueStatus { OPEN, CLOSED }
+
+@Composable
+private fun IssueTopBar(
+    viewModel: MainViewModel,
+    repository: String
+) {
+    Surface(
+        shadowElevation = 4.dp,
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.ArrowBack,
+                contentDescription = "返回",
+                modifier = Modifier
+                    .size(24.dp)
+                    .clickable { viewModel.navController.value?.popBackStack() }
+            )
+            
+            Text(
+                text = "#123",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun IssueHeader(
+    title: String,
+    number: String,
+    status: IssueStatus,
+    author: String,
+    createdTime: String
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = when(status) {
+                    IssueStatus.OPEN -> Color(0xFF2DA44E)
+                    IssueStatus.CLOSED -> Color(0xFF8250DF)
+                }
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = when(status) {
+                            IssueStatus.OPEN -> Icons.Rounded.Info
+                            IssueStatus.CLOSED -> Icons.Rounded.Check
+                        },
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = status.name,
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+            
+            Text(
+                text = "$author opened this issue on $createdTime",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun IssueComment(
+    author: String,
+    avatar: String,
+    content: String,
+    time: String,
+    isAuthor: Boolean
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        // Comment header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+                )
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = avatar,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            
+            Text(
+                text = author,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            
+            if (isAuthor) {
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Text(
+                        text = "Author",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                    )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun TopBar(viewModel: MainViewModel, userName: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // 返回按钮
-        Icon(
-            imageVector = Icons.Rounded.ArrowBack,
-            contentDescription = "返回",
-            modifier = Modifier
-                .size(24.dp)
-                .clickable { viewModel.navController.value?.popBackStack() }
-        )
         
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.weight(1f))
         
-        // 用户名
         Text(
-            text = userName,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun ChatContent() {
-    val listState = rememberLazyListState()
-    val messageCount = 20 // 假设有20条消息
-    
-    // 首次加载时滚动到底部
-    LaunchedEffect(Unit) {
-        // 滚动到最后一条消息
-        listState.scrollToItem(
-            index = messageCount - 1,
-            scrollOffset = 0
-        )
-    }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F5F5)),
-        state = listState,
-        reverseLayout = false  // 改为false，使消息正序显示
-    ) {
-        items(messageCount) { index ->
-            if (index % 2 == 0) {
-                ReceivedMessage("这是收到的消息 $index")
-            } else {
-                SentMessage("这是发送的消息 $index")
-            }
-        }
-    }
-}
-
-@Composable
-private fun ReceivedMessage(message: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-    ) {
-        // 头像
-        AsyncImage(
-            model = "https://placekitten.com/200/200",
-            contentDescription = "头像",
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
+            text = time,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         
-        // 消息气泡
-        Box(
-            modifier = Modifier
-                .padding(start = 8.dp)
-                .clip(RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp))
-                .background(Color.White)
-                .padding(12.dp)
-        ) {
-            Text(text = message)
-        }
-    }
-}
-
-@Composable
-private fun SentMessage(message: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.End
-    ) {
-        // 消息气泡
-        Box(
-            modifier = Modifier
-                .padding(end = 8.dp)
-                .clip(RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp))
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(12.dp)
+        // Comment content
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Text(
-                text = message,
-                color = MaterialTheme.colorScheme.onPrimary
+                text = content,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(16.dp)
             )
         }
-        
-        // 头像
-        AsyncImage(
-            model = "https://placekitten.com/200/200",
-            contentDescription = "头像",
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape),
-            contentScale = ContentScale.Crop
-        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BottomInput() {
+private fun IssueCommentInput() {
     var text by remember { mutableStateOf("") }
     
     Surface(
@@ -261,80 +304,32 @@ private fun BottomInput() {
             .imePadding(),
         shadowElevation = 8.dp
     ) {
-        Row(
+        TextField(
+            value = text,
+            onValueChange = { text = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 输入框
-            TextField(
-                value = text,
-                onValueChange = { text = it },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp),
-                placeholder = { Text("发送消息...") },
-                colors = TextFieldDefaults.textFieldColors(
-                    containerColor = Color(0xFFF5F5F5),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                shape = RoundedCornerShape(24.dp),
-                maxLines = 4,
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Send
-                ),
-                keyboardActions = KeyboardActions(
-                    onSend = {
-                        if (text.isNotEmpty()) {
-                            text = ""
-                        }
-                    }
-                )
-            )
-            
-            // 发送按钮
-            Button(
-                onClick = { 
-                    if (text.isNotEmpty()) {
-                        text = ""
-                    }
-                },
-                shape = CircleShape,
-                contentPadding = PaddingValues(12.dp),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Send,
-                    contentDescription = "发送",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
+                .padding(16.dp),
+            placeholder = { Text("Leave a comment") },
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.outline
+            ),
+            maxLines = 4
+        )
     }
 }
 
-// 可选：添加一个滚动到底部的按钮
+@Preview
 @Composable
-private fun ScrollToBottomButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .padding(16.dp)
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.KeyboardArrowDown,
-            contentDescription = "滚动到底部",
-            tint = MaterialTheme.colorScheme.onPrimary
-        )
-    }
+fun IssueCommentPreview() {
+    IssueComment(
+        author = "John Doe",
+        avatar = "https://placekitten.com/200/200",
+        content = "This is a sample comment with some content that might span multiple lines. " +
+                "It's designed to show how the comment layout works with longer text.",
+        time = "3天前",
+        isAuthor = true
+    )
 } 

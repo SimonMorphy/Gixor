@@ -40,18 +40,21 @@ fun AppNavigation(
         composable(AppDestinations.Search.route) { SearchScreen(navController) }
         composable(AppDestinations.Message.route) { MessageScreen(viewModel = viewModel)  }
         composable(
-            route = AppDestinations.Chat.route,
+            route = AppDestinations.NotificationDetail.route,
             arguments = listOf(
-                navArgument("userId") { type = NavType.StringType },
-                navArgument("userName") { type = NavType.StringType }
+                navArgument("notificationId") { type = NavType.StringType },
+                navArgument("repository") { 
+                    type = NavType.StringType
+                    nullable = true 
+                }
             )
         ) { backStackEntry ->
-            val userId = Uri.decode(backStackEntry.arguments?.getString("userId") ?: "")
-            val userName = Uri.decode(backStackEntry.arguments?.getString("userName") ?: "")
+            val notificationId = Uri.decode(backStackEntry.arguments?.getString("notificationId") ?: "")
+            val repository = Uri.decode(backStackEntry.arguments?.getString("repository") ?: "")
             ChatScreen(
                 viewModel = viewModel,
-                userId = userId,
-                userName = userName
+                notificationId = notificationId,
+                repository = repository
             )
         }
     }
