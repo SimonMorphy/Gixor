@@ -1,6 +1,5 @@
 package com.cpy3f2.gixor_mobile.network.source
 
-import RankApi
 import com.cpy3f2.gixor_mobile.data.api.HttpBaseService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

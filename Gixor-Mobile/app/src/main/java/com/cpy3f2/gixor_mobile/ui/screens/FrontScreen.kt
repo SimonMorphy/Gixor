@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -30,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.cpy3f2.gixor_mobile.ui.components.LittleTopFunctionBar
-import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
+import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import kotlinx.coroutines.launch
 
 

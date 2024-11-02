@@ -14,7 +14,7 @@ import androidx.navigation.NavType
 import com.cpy3f2.gixor_mobile.ui.screens.MainFrame
 import com.cpy3f2.gixor_mobile.ui.screens.MessageScreen
 import com.cpy3f2.gixor_mobile.ui.screens.SearchScreen
-import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
+import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 
 @Composable
 fun AppNavigation(

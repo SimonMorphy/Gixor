@@ -1,4 +1,4 @@
-package com.cpy3f2.gixor_mobile.viewModel
+package com.cpy3f2.gixor_mobile.viewModels
 
 import GitHubUser
 import android.content.Context.MODE_PRIVATE

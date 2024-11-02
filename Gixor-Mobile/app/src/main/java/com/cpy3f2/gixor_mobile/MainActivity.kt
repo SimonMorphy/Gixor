@@ -10,19 +10,14 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModelProvider.NewInstanceFactory.Companion.instance
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.request.crossfade
 import com.cpy3f2.gixor_mobile.navigation.AppNavigation
 
 import com.cpy3f2.gixor_mobile.ui.theme.GixorMobileTheme
-import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
+import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 
 
 class MainActivity : ComponentActivity() {
