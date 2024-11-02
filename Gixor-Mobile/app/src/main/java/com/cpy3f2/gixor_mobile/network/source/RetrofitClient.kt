@@ -1,6 +1,7 @@
-package com.cpy3f2.gixor_mobile.utils
+package com.cpy3f2.gixor_mobile.network.source
 
-import com.cpy3f2.gixor_mobile.io.HttpBaseService
+import RankApi
+import com.cpy3f2.gixor_mobile.data.api.HttpBaseService
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.OkHttpClient
@@ -10,14 +11,15 @@ import okhttp3.logging.HttpLoggingInterceptor
 
 /**
  * Created by lya
- * describe:retrofit封装
+ * describe:retrofit数据源
  */
 
 class RetrofitClient {
     companion object {
+        // 设置宽松解析
         private fun createGson(): Gson {
             return GsonBuilder()
-                .setLenient() // 设置宽松解析
+                .setLenient()
                 .create()
         }
 

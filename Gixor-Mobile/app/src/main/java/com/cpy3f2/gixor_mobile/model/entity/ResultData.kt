@@ -1,8 +1,6 @@
 package com.cpy3f2.gixor_mobile.model.entity
 
 data class ResultData<T>(
-    // 请求是否成功
-    val success:Boolean,
     //响应码
     val code :Int,
     // 响应消息

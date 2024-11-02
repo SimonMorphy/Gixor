@@ -2,7 +2,6 @@ package com.cpy3f2.gixor_mobile.viewModel
 
 import GitHubUser
 import android.content.Context.MODE_PRIVATE
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -19,7 +18,7 @@ import com.cpy3f2.gixor_mobile.model.entity.FocusItem
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.SearchHistoryItem
 import com.cpy3f2.gixor_mobile.model.entity.Token
-import com.cpy3f2.gixor_mobile.utils.RetrofitClient
+import com.cpy3f2.gixor_mobile.network.source.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

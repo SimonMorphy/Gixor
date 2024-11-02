@@ -1,11 +1,13 @@
-package com.cpy3f2.gixor_mobile.io
+package com.cpy3f2.gixor_mobile.data.api
 
 
 import GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.Token
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PUT
 import retrofit2.http.Query
 
 interface HttpBaseService {
@@ -21,4 +23,25 @@ interface HttpBaseService {
 
     @GET("/gith/user")
     suspend fun getGitHubUserInfo(@Header("gixor-login") tokenValue : String):ResultData<GitHubUser>
+
+
+    //为指定仓库Star
+    @PUT("/{owner}/{repo}")
+    suspend fun starRepo(@Query("owner") owner: String, @Query("repo") repo : String)
+
+    //为指定仓库取消Star
+    @DELETE("/{owner}/{repo}")
+    suspend fun unStarRepo(@Query("owner") owner: String, @Query("repo") repo : String)
+
+    //判断当前用户是否收藏了指定仓库
+    @GET("/{owner}/{repo}")
+    suspend fun isStarRepo(@Query("owner") owner: String, @Query("repo") repo : String):ResultData<Boolean>
+
+    //获取当前用户收藏的仓库
+    @GET
+    suspend fun getStarRepoList()
+
+    //获取指定用户收藏的仓库
+    @GET("/{username}")
+    suspend fun getUserStarRepoList(@Query("username") username: String)
 }
