@@ -23,6 +23,11 @@ import com.cpy3f2.gixor_mobile.utils.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.navigation.NavHostController
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import android.content.Context
 
 class MainViewModel: ViewModel() {
     val sharedPreferences  = MyApplication.getApplicationContext().getSharedPreferences("token", MODE_PRIVATE)
@@ -152,10 +157,36 @@ class MainViewModel: ViewModel() {
         return false // 临时返回值
     }
 
-    // 导航到登录页面
+    // 导航状态
+    private val _navController = MutableStateFlow<NavHostController?>(null)
+    val navController: StateFlow<NavHostController?> = _navController.asStateFlow()
+
+    // 设置导航控制器
+    fun setNavController(navController: NavHostController) {
+        _navController.value = navController
+    }
+
+    // 导航方法
     fun navigateToLogin() {
-        // 实现导航逻辑
-        // 可以使用Navigation组件或其他导航方式
+        _navController.value?.navigate(AppDestinations.Login.route)
+    }
+
+    fun navigateToMain() {
+        _navController.value?.navigate(AppDestinations.Main.route)
+    }
+
+    fun navigateToSearch() {
+        _navController.value?.navigate(AppDestinations.Search.route)
+    }
+
+    // 检查登录状态
+    fun checkLoginStatus() {
+        val sharedPreferences = MyApplication.getApplicationContext()
+            .getSharedPreferences("token", Context.MODE_PRIVATE)
+        val token = sharedPreferences.getString("token", null)
+        if (token == null) {
+            navigateToLogin()
+        }
     }
 
 }

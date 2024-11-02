@@ -1,10 +1,12 @@
 package com.cpy3f2.gixor_mobile
 
+import AppNavigation
 import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -17,13 +19,12 @@ import androidx.navigation.compose.rememberNavController
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.request.crossfade
-import com.cpy3f2.gixor_mobile.ui.screens.LoginScreen
-import com.cpy3f2.gixor_mobile.ui.screens.MainFrame
-import com.cpy3f2.gixor_mobile.ui.screens.SearchScreen
-import com.cpy3f2.gixor_mobile.ui.theme.GixorMobileTheme
-import okhttp3.RequestBody
 
-class MainActivity : ComponentActivity(){
+import com.cpy3f2.gixor_mobile.ui.theme.GixorMobileTheme
+import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
+
+
+class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,20 +38,20 @@ class MainActivity : ComponentActivity(){
         if (MyApplication.Companion.instance == null) {
             MyApplication.Companion.instance = applicationContext as Application
         }
+
+        // 创建 ViewModel
+        val viewModel: MainViewModel by viewModels()
+
         setContent {
             GixorMobileTheme{
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val sharedPreferences  = MyApplication.getApplicationContext().getSharedPreferences("token", MODE_PRIVATE)
-                    //创建路由
-                    val navController = rememberNavController()
-                    NavHost(navController = navController, startDestination ="main") {
-                        composable("login") { LoginScreen(navController, sharedPreferences = sharedPreferences) }
-                        composable("main") { MainFrame(navController) }
-                        composable("search") { SearchScreen(navController)  }
-                    }
+                    AppNavigation(
+                        viewModel = viewModel,
+                        sharedPreferences = getSharedPreferences("token", MODE_PRIVATE)
+                    )
                 }
             }
         }
