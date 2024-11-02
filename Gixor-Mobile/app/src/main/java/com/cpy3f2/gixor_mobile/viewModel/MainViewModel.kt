@@ -1,6 +1,7 @@
 package com.cpy3f2.gixor_mobile.viewModel
 
 import GitHubUser
+import android.content.Context.MODE_PRIVATE
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -9,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpy3f2.gixor_mobile.MyApplication
 import com.cpy3f2.gixor_mobile.database.GixorDatabase
 
 import com.cpy3f2.gixor_mobile.model.entity.Category
@@ -23,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainViewModel: ViewModel() {
+    val sharedPreferences  = MyApplication.getApplicationContext().getSharedPreferences("token", MODE_PRIVATE)
 
     //热榜
     var hotList by mutableStateOf(
@@ -139,6 +142,20 @@ class MainViewModel: ViewModel() {
                 getSearchHistory()
             }
         }
+    }
+
+    // 检查是否有token
+    fun hasToken(): Boolean {
+        // 从本地存储或内存中获取token
+
+        // 这里需要根据你的token存储方式来实现
+        return false // 临时返回值
+    }
+
+    // 导航到登录页面
+    fun navigateToLogin() {
+        // 实现导航逻辑
+        // 可以使用Navigation组件或其他导航方式
     }
 
 }
