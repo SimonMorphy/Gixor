@@ -78,7 +78,7 @@ fun DynamicScreen(vm: MainViewModel = viewModel()) {
                         )
                         Button(
                             onClick = { 
-                                showLoginWebView = true
+                                vm.navigateToLogin()
                             }
                         ) {
                             Text("去登录")

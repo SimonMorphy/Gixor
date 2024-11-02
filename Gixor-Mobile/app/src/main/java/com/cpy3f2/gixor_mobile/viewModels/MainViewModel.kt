@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import android.content.Context
 import androidx.lifecycle.LiveData
+import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -150,26 +151,17 @@ class MainViewModel : ViewModel() {
     // 检查是否有token
     fun hasToken(): Boolean = preferencesManager.hasToken()
 
-    // 导航状态
-    private val _navController = MutableStateFlow<NavHostController?>(null)
-    val navController: StateFlow<NavHostController?> = _navController.asStateFlow()
-
-    // 设置导航控制器
-    fun setNavController(navController: NavHostController) {
-        _navController.value = navController
-    }
-
     // 导航方法
     fun navigateToLogin() {
-        _navController.value?.navigate(AppDestinations.Login.route)
+        NavigationManager.navigateToLogin()
     }
 
     fun navigateToMain() {
-        _navController.value?.navigate(AppDestinations.Main.route)
+        NavigationManager.navigateToMain()
     }
 
     fun navigateToSearch() {
-        _navController.value?.navigate(AppDestinations.Search.route)
+        NavigationManager.navigateToSearch()
     }
 
     // 检查登录状态

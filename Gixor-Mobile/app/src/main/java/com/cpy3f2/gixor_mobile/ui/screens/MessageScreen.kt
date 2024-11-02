@@ -33,6 +33,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import android.net.Uri
+import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 
 
 @Composable
@@ -113,7 +114,7 @@ private fun NotificationsTopBar() {
                     )
                 }
                 
-                IconButton(onClick = { /* ��置 */ }) {
+                IconButton(onClick = { /* 置 */ }) {
                     Icon(
                         imageVector = Icons.Rounded.Settings,
                         contentDescription = "Settings"
@@ -179,12 +180,10 @@ private fun NotificationItem(
                 else MaterialTheme.colorScheme.surface
             )
             .clickable { 
-                // 使用新的路由定义进行导航
-                viewModel.navController.value?.navigate(
-                    AppDestinations.NotificationDetail.createRoute(
-                        notificationId = notificationId,
-                        repository = repository
-                    )
+                // 使用 NavigationManager 进行导航
+                NavigationManager.navigateToNotification(
+                    notificationId = notificationId,
+                    repository = repository
                 )
             }
             .padding(16.dp),

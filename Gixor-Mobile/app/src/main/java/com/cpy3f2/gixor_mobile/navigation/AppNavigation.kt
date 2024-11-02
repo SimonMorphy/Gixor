@@ -11,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import android.net.Uri
 import androidx.navigation.NavType
+import com.cpy3f2.gixor_mobile.ui.screens.LoginScreen
 import com.cpy3f2.gixor_mobile.ui.screens.MainFrame
 import com.cpy3f2.gixor_mobile.ui.screens.MessageScreen
 import com.cpy3f2.gixor_mobile.ui.screens.SearchScreen
@@ -23,19 +24,18 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
     
-    // 设置导航控制器
+    // 设置全局导航控制器
     LaunchedEffect(navController) {
-        viewModel.setNavController(navController)
+        NavigationManager.setNavController(navController)
     }
 
     NavHost(
         navController = navController,
         startDestination = AppDestinations.Main.route
     ) {
-//        composable(AppDestinations.Login.route) {
-//            LoginScreen(
-//            )
-//        }
+        composable(AppDestinations.Login.route) {
+            LoginScreen(viewModel = viewModel)
+        }
         composable(AppDestinations.Main.route) { MainFrame(navController) }
         composable(AppDestinations.Search.route) { SearchScreen(navController) }
         composable(AppDestinations.Message.route) { MessageScreen(viewModel = viewModel)  }

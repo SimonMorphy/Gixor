@@ -56,6 +56,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.ui.tooling.preview.Preview
+import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 
 
 @Composable
@@ -140,7 +141,9 @@ private fun IssueTopBar(
                 contentDescription = "返回",
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable { viewModel.navController.value?.popBackStack() }
+                    .clickable { 
+                        NavigationManager.navigateBack()
+                    }
             )
             
             Text(

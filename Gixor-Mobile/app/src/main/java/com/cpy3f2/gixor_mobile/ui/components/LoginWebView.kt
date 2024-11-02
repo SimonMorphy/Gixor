@@ -11,11 +11,6 @@ import android.app.Activity
 import android.os.Handler
 import android.os.Looper
 import android.webkit.JavascriptInterface
-import android.webkit.ConsoleMessage
-import android.webkit.WebResourceError
-import android.webkit.WebResourceResponse
-import android.util.Log
-import android.webkit.WebChromeClient
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 
 @Composable
@@ -43,43 +38,52 @@ fun LoginWebView(
                         // 注入 JavaScript 来处理响应
                         val script = """
                             (function() {
-                                var content = document.body.textContent;
-                                try {
-                                    if (content.includes('You are being redirected')) {
-                                        // 如果是重定向页面，替换内容
-                                        document.body.innerHTML = '<div style="text-align: center; padding: 20px; font-size: 18px;">正在登录中...</div>';
-                                        return;
-                                    }
-                                    
+                                const messageStyle = 
+                                    'position: fixed;' +
+                                    'top: 50%;' +
+                                    'left: 50%;' +
+                                    'transform: translate(-50%, -50%);' +
+                                    'text-align: center;' +
+                                    'padding: 20px;' +
+                                    'font-family: system-ui, -apple-system, sans-serif;' +
+                                    'width: 100%;';
+
+                                var content = document.body.textContent || '';
+                                var url = window.location.href;
+                                
+                                // 仅在重定向页面显示登录中
+                                if (content.includes('You are being redirected')) {
+                                    document.body.innerHTML = 
+                                        '<div style="' + messageStyle + '">正在登录中...</div>';
+                                    return;
+                                }
+                                
+                                // 只在登录回调页面处理登录结果
+                                if (url.includes('/auth/callback')) {
                                     var jsonStart = content.indexOf('{');
                                     if (jsonStart >= 0) {
-                                        var jsonContent = content.substring(jsonStart);
-                                        var jsonResponse = JSON.parse(jsonContent);
-                                        if (jsonResponse.code === 200 && jsonResponse.token) {
-                                            // 发送 token 到 Android
-                                            window.androidInterface.onLoginSuccess(jsonResponse.token.tokenValue);
-                                            // 替换页面内容为成功提示
-                                            document.body.innerHTML = `
-                                                <div style="
-                                                    text-align: center; 
-                                                    padding: 20px; 
-                                                    font-family: system-ui, -apple-system, sans-serif;
-                                                ">
-                                                    <div style="
-                                                        color: #1a73e8;
-                                                        font-size: 24px;
-                                                        margin-bottom: 10px;
-                                                    ">✓</div>
-                                                    <div style="
-                                                        font-size: 18px;
-                                                        color: #202124;
-                                                    ">登录成功！</div>
-                                                </div>
-                                            `;
+                                        try {
+                                            var jsonContent = content.substring(jsonStart);
+                                            var jsonResponse = JSON.parse(jsonContent);
+                                            
+                                            if (jsonResponse.code === 200 && jsonResponse.token) {
+                                                window.androidInterface.onLoginSuccess(jsonResponse.token.tokenValue);
+                                                document.body.innerHTML = 
+                                                    '<div style="' + messageStyle + '">' +
+                                                        '<div style="color: #1a73e8; font-size: 24px; margin-bottom: 10px;">✓</div>' +
+                                                        '<div style="font-size: 18px; color: #202124;">登录成功！</div>' +
+                                                    '</div>';
+                                            } else {
+                                                document.body.innerHTML = 
+                                                    '<div style="' + messageStyle + '">' +
+                                                        '<div style="color: #d93025; font-size: 24px; margin-bottom: 10px;">✕</div>' +
+                                                        '<div style="font-size: 18px; color: #202124;">登录失败</div>' +
+                                                    '</div>';
+                                            }
+                                        } catch(e) {
+                                            console.log('Parse error:', e);
                                         }
                                     }
-                                } catch(e) {
-                                    console.log('Parse error:', e);
                                 }
                             })();
                         """.trimIndent()
