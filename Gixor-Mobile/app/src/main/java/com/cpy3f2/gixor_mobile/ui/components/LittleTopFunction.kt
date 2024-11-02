@@ -33,7 +33,7 @@ fun LittleTopFunctionBar(navController: NavController) {
         }
         // 消息
         IconButton(
-            onClick = { /*TODO*/ },
+            onClick = { navController.navigate("message") },
             Modifier.align(Alignment.CenterVertically).padding(end = 5.dp)) {
             Icon(
                 painter = painterResource(id = R.mipmap.message),

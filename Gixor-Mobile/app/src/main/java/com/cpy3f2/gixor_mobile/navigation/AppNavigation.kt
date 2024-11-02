@@ -1,3 +1,6 @@
+package com.cpy3f2.gixor_mobile.navigation
+
+import AppDestinations
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -6,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.cpy3f2.gixor_mobile.ui.screens.LoginScreen
 import com.cpy3f2.gixor_mobile.ui.screens.MainFrame
+import com.cpy3f2.gixor_mobile.ui.screens.MessageScreen
 import com.cpy3f2.gixor_mobile.ui.screens.SearchScreen
 import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
 
@@ -31,5 +35,6 @@ fun AppNavigation(
 //        }
         composable(AppDestinations.Main.route) { MainFrame(navController) }
         composable(AppDestinations.Search.route) { SearchScreen(navController) }
+        composable(AppDestinations.Message.route) { MessageScreen(viewModel = viewModel)  }
     }
 } 

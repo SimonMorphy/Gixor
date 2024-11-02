@@ -1,6 +1,6 @@
 package com.cpy3f2.gixor_mobile
 
-import AppNavigation
+
 import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -19,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.request.crossfade
+import com.cpy3f2.gixor_mobile.navigation.AppNavigation
 
 import com.cpy3f2.gixor_mobile.ui.theme.GixorMobileTheme
 import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
