@@ -2,6 +2,7 @@ package com.cpy3f2.gixor_mobile.ui.screens
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -62,185 +64,255 @@ import com.cpy3f2.gixor_mobile.viewModel.MainViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.foundation.layout.statusBarsPadding
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.animateContentSize
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) {
     var searchText by remember { mutableStateOf("") }
-    var active by remember { mutableStateOf(false) }
+    var selectedTab by remember { mutableStateOf(0) }
+    val tabs = listOf("人物热榜", "项目热榜")
 
-    // 记住搜索历史列表
-    var searchHistory by remember { mutableStateOf(listOf<SearchHistoryItem>()) }
+    val pagerState = rememberPagerState(pageCount = { tabs.size })
+    val coroutineScope = rememberCoroutineScope()
 
-    Scaffold(
-        topBar = {}
-    ) { paddingValues ->
-        Column(
+    LaunchedEffect(selectedTab) {
+        pagerState.animateScrollToPage(selectedTab)
+    }
+    
+    LaunchedEffect(pagerState.currentPage) {
+        selectedTab = pagerState.currentPage
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+    ) {
+        // 顶部搜索栏
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // 顶部搜索栏
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0xFFF5F5F5)
             ) {
-                Icon(
-                    painter = painterResource(id = R.mipmap.back),
-                    contentDescription = "返回",
+                Row(
                     modifier = Modifier
-                        .size(24.dp)
-                        .clickable { navController.popBackStack() }
-                )
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
-                SearchBar(
-                    query = searchText,
-                    onQueryChange = { searchText = it },
-                    onSearch = { 
-                        active = false
-                        // 添加搜索历史
-                        if (searchText.isNotEmpty()) {
-                            val newItem = SearchHistoryItem(
-                                id = 0, // Room会自动生成ID
-                                name = searchText,
-                                time = LocalDateTime.now()
-                            )
-                            // 这里需要调用ViewModel的方法来保存搜索历史
-                            // vm.addSearchHistory(newItem)
-                        }
-                    },
-                    active = active,
-                    onActiveChange = { active = it },
-                    placeholder = { Text("搜索游戏、帖子、用户") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchText.isNotEmpty()) {
-                            IconButton(onClick = { searchText = "" }) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(40.dp),
-                    colors = SearchBarDefaults.colors(
-                        containerColor = Color(0xFFF5F5F5),
-                        dividerColor = Color.Transparent
-                    )
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // 搜索建议内容
-                    if (searchText.isNotEmpty()) {
-                        LazyColumn {
-                            items(5) { index ->
-                                ListItem(
-                                    headlineContent = { Text("搜索建议 $searchText $index") },
-                                    leadingContent = {
-                                        Icon(
-                                            imageVector = Icons.Default.Search,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    modifier = Modifier.clickable { }
-                                )
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                        tint = Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    
+                    BasicTextField(
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 8.dp),
+                        textStyle = TextStyle(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 16.sp
+                        ),
+                        singleLine = true,
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        decorationBox = { innerTextField ->
+                            Box {
+                                if (searchText.isEmpty()) {
+                                    Text(
+                                        "搜索项目、用户、方向",
+                                        color = Color.Gray,
+                                        fontSize = 16.sp
+                                    )
+                                }
+                                innerTextField()
                             }
                         }
+                    )
+                    
+                    if (searchText.isNotEmpty()) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "清除",
+                            tint = Color.Gray,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clickable { searchText = "" }
+                        )
                     }
                 }
             }
-            SearchHistoryComponent(vm);
-
-            // 搜索历史
-            Column(
+            
+            // 取消按钮
+            Text(
+                text = "取消",
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                if (searchHistory.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "搜索历史",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Icon(
-                            painter = painterResource(id = R.mipmap.clear),
-                            contentDescription = "清除",
-                            modifier = Modifier
-                                .size(20.dp)
-                                .clickable { 
-                                    // vm.clearSearchHistory()
-                                }
-                        )
-                    }
-                    
-                    LazyColumn(
-                        modifier = Modifier.padding(top = 12.dp)
-                    ) {
-                        items(searchHistory.sortedByDescending { it.time }) { item ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { 
-                                        searchText = item.name
-                                        active = false
-                                    }
-                                    .padding(vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.History,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp),
-                                        tint = Color.Gray
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = item.name,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.DarkGray
-                                    )
-                                }
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "删除",
-                                    modifier = Modifier
-                                        .size(16.dp)
-                                        .clickable { 
-                                            // vm.deleteSearchHistory(item)
-                                        },
-                                    tint = Color.Gray
-                                )
-                            }
+                    .padding(start = 12.dp)
+                    .clickable { navController.popBackStack() }
+            )
+        }
+
+        // 修改后的标签栏
+        TabRow(
+            selectedTabIndex = selectedTab,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            divider = { }, // 移除底部分割线
+            indicator = { } // 移除指示器
+        ) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { 
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(index)
                         }
+                    },
+                    text = {
+                        Text(
+                            text = title,
+                            fontSize = if (selectedTab == index) 18.sp else 16.sp,  // 选中时字体变大
+                            color = if (selectedTab == index) Color.Red else Color.Black,  // 选中时变红
+                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                        )
                     }
-                }
+                )
+            }
+        }
+
+        // 优化后的 HorizontalPager
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            when (page) {
+                0 -> PersonHotList()
+                1 -> ProjectHotList()
             }
         }
     }
 }
 
+@Composable
+private fun PersonHotList() {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        items(15) { index ->
+            key(index) {  // 使用 key 优化重组
+                HotListItem(
+                    rank = index + 1,
+                    title = "热门用户 ${index + 1}",
+                    subtitle = "活跃度: ${1000 - index * 50}",
+                    score = "${1000 - index * 50}"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProjectHotList() {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        items(15) { index ->
+            key(index) {
+                HotListItem(
+                    rank = index + 1,
+                    title = "热门项目 ${index + 1}",
+                    subtitle = "热度: ${1000 - index * 50}",
+                    score = "${1000 - index * 50}"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HotListItem(
+    rank: Int,
+    title: String,
+    subtitle: String,
+    score: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { }
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // 排名
+        Text(
+            text = rank.toString(),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = when (rank) {
+                1 -> Color(0xFFFF6B6B)
+                2 -> Color(0xFF6C757D)
+                3 -> Color(0xFFCD7F32)
+                else -> Color.Gray
+            },
+            modifier = Modifier.width(40.dp)
+        )
+
+        // 内容
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
+            )
+        }
+
+        // 分数
+        Text(
+            text = score,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
