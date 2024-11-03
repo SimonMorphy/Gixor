@@ -1,7 +1,12 @@
 package com.cpy3f2.Gixor.Handler;
 
+import cn.dev33.satoken.reactor.context.SaReactorHolder;
+import cn.dev33.satoken.stp.StpUtil;
+import com.cpy3f2.Gixor.Config.ReactiveRequestContextHolder;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
+import com.cpy3f2.Gixor.Domain.User;
 import com.cpy3f2.Gixor.Service.LoginService;
+import com.cpy3f2.Gixor.Service.RpcUserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import me.zhyd.oauth.exception.AuthException;
@@ -12,6 +17,7 @@ import me.zhyd.oauth.utils.AuthStateUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.service.annotation.GetExchange;
@@ -37,6 +43,9 @@ public class LoginHandler {
     @Resource
     private LoginService loginService;
 
+    @Resource
+    RpcUserService userService;
+
 
     public Mono<ServerResponse> render(ServerRequest request){
         return ServerResponse
@@ -51,6 +60,12 @@ public class LoginHandler {
                 .cast(AuthUser.class)
                 .switchIfEmpty(Mono.error(new AuthException("GitHub授权失败：用户数据为空")))
                 .flatMap(loginService::login);
+    }
+
+    public Mono<ServerResponse> test(ServerRequest request) {
+        return ServerResponse
+                .ok()
+                .bodyValue(StpUtil.getTokenValue());
     }
 
 

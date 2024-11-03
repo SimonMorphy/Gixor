@@ -8,7 +8,6 @@
         <artifactId>Gixor-Common</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-
     <artifactId>Gixor-Common-DataSource</artifactId>
 
 

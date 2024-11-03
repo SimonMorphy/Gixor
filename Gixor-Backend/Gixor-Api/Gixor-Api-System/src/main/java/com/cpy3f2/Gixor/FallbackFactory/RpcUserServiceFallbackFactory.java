@@ -1,9 +1,7 @@
 package com.cpy3f2.Gixor.FallbackFactory;
 
-import com.cpy3f2.Gixor.Domain.ResponseResult;
 import com.cpy3f2.Gixor.Domain.User;
 import com.cpy3f2.Gixor.Service.RpcUserService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import reactivefeign.FallbackFactory;
 import reactor.core.publisher.Mono;
@@ -25,12 +23,12 @@ public class RpcUserServiceFallbackFactory implements FallbackFactory<RpcUserSer
 
             @Override
             public Mono<Boolean> addUser(User user) {
-                return Mono.empty();
+                return Mono.error(throwable);
             }
 
             @Override
             public Mono<Boolean> exists(String uuid) {
-                return Mono.just(false);
+                return Mono.error(throwable);
             }
         };
     }

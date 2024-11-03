@@ -1,10 +1,10 @@
 server:
-  port: 5929
+  port: 1518
 spring:
   application:
-    name: gixor-auth
+    name: gixor-github
   profiles:
-    active: tes
+    active: dev
   cloud:
     nacos:
       discovery:
