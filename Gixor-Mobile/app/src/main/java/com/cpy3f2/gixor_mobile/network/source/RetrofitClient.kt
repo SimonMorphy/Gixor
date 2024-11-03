@@ -2,6 +2,7 @@ package com.cpy3f2.gixor_mobile.network.source
 
 import com.cpy3f2.gixor_mobile.MyApplication
 import com.cpy3f2.gixor_mobile.data.api.HttpBaseService
+import com.cpy3f2.gixor_mobile.network.interceptor.AuthInterceptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import okhttp3.Interceptor
@@ -46,22 +47,40 @@ class RetrofitClient {
         }
 
         // 创建 OkHttpClient
-        val okHttpClient = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .addInterceptor(authInterceptor)      // 添加认证拦截器
-            .addInterceptor(loggingInterceptor)   // 添加日志拦截器
-            .build()
+        private fun createOkHttpClient(): OkHttpClient {
+            return OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .addInterceptor(AuthInterceptor())
+                .addInterceptor(loggingInterceptor)
+                .build()
+        }
 
-        // 创建 Retrofit 实例
-        val retrofit = retrofit2.Retrofit.Builder()
+        // 创建 基础Retrofit 实例
+        private val baseRetrofit = retrofit2.Retrofit.Builder()
             .baseUrl(HttpBaseService.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(createGson()))
-            .client(okHttpClient)
+            .client(createOkHttpClient())
+            .build()
+        //创建 Star的Retrofit实例
+        private val starRetrofit = retrofit2.Retrofit.Builder()
+            .baseUrl(HttpBaseService.STAR_URL)
+            .addConverterFactory(GsonConverterFactory.create(createGson()))
+            .client(createOkHttpClient())
+            .build()
+        //创建仓库的Retrofit实例
+        private val repoRetrofit = retrofit2.Retrofit.Builder()
+            .baseUrl(HttpBaseService.REPOSITORY_URL)
+            .addConverterFactory(GsonConverterFactory.create(createGson()))
+            .client(createOkHttpClient())
             .build()
 
         // 创建服务接口实例
-        val httpBaseService = retrofit.create(HttpBaseService::class.java)
+        val httpBaseService = baseRetrofit.create(HttpBaseService::class.java)
+        //创建star的服务接口实例
+        val starService = starRetrofit.create(HttpBaseService::class.java)
+        //创建仓库的的服务接口实例
+        val repoService = repoRetrofit.create(HttpBaseService::class.java)
     }
 }

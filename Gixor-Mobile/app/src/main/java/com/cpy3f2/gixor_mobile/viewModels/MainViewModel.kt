@@ -50,20 +50,42 @@ class MainViewModel : ViewModel() {
     var categoryIndex by mutableIntStateOf(0)
         private set
 
-    //登录模块
-    var loginData = MutableLiveData<ResultData<Token>>()
-    fun login(username: String, password: String){
+    val gitHubUser = MutableLiveData<ResultData<GitHubUser>>()
+    fun getUserInfo(tokenValue: String) {
         viewModelScope.launch {
             withContext(Dispatchers.IO){
-                loginData.postValue(RetrofitClient.httpBaseService.login(username,password))
+                gitHubUser.postValue(RetrofitClient.httpBaseService.getGitHubUserInfo(tokenValue))
             }
         }
     }
-    val gitHubUser = MutableLiveData<ResultData<GitHubUser>>()
-    fun getUserInfo(token: Token) {
+
+    /***
+     * 收藏 Star相关的
+     */
+    // 是否正在加载
+    var isStarLoading by mutableStateOf(false)
+    // 是否已收藏
+    var isStarred by mutableStateOf(false)
+        private set
+    // 错误信息
+    var starErrorMsg by mutableStateOf<String?>(null)
+        private set
+    fun checkStarStatus(repo: String, owner: String) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO){
-                gitHubUser.postValue(RetrofitClient.httpBaseService.getGitHubUserInfo(token.tokenValue))
+            isStarLoading = true
+            starErrorMsg = null
+            try {
+                withContext(Dispatchers.IO) {
+                    val response = RetrofitClient.starService.isStarRepo(repo, owner)
+                    // code 200 表示已收藏
+                    isStarred = response.code == 200
+                    starErrorMsg = null
+                }
+            } catch (e: Exception) {
+                starErrorMsg = e.message
+                isStarred = false
+            } finally {
+                isStarLoading = false
             }
         }
     }

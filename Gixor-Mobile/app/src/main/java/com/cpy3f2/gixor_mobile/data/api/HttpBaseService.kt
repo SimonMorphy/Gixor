@@ -8,17 +8,9 @@ import retrofit2.http.*
 interface HttpBaseService {
     companion object {
         const val BASE_URL = "http://1024.viwipiediema.com:10102"
+        const val STAR_URL = BASE_URL+"/gith/star"
+        const val REPOSITORY_URL = BASE_URL+"/gith/repo"
     }
-
-    // 登录相关接口
-    @GET("/auth/render")
-    suspend fun login(
-        @Query("username") username: String,
-        @Query("password") password: String
-    ): ResultData<Token>
-
-    @GET("/auth/render")
-    suspend fun otherLogin(): ResultData<Token>
 
     // GitHub用户信息接口
     @GET("/gith/user")
@@ -27,21 +19,21 @@ interface HttpBaseService {
     ): ResultData<GitHubUser>
 
     // Star相关接口
-    @PUT("/{owner}/{repo}")
+    @PUT("/{username}/{repo}")
     suspend fun starRepo(
-        @Path("owner") owner: String,
+        @Path("username") username: String,
         @Path("repo") repo: String
     )
 
-    @DELETE("/{owner}/{repo}")
+    @DELETE("/{username}/{repo}")
     suspend fun unStarRepo(
-        @Path("owner") owner: String,
+        @Path("username") username: String,
         @Path("repo") repo: String
     )
-
-    @GET("/{owner}/{repo}")
+    //查看某个项目是不是收藏了
+    @GET("/{username}/{repo}")
     suspend fun isStarRepo(
-        @Path("owner") owner: String,
+        @Path("username") username: String,
         @Path("repo") repo: String
     ): ResultData<Boolean>
 
