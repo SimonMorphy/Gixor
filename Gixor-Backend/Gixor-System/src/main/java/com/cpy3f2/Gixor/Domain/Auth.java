@@ -24,6 +24,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Auth {
+
+    @Column("id")
+    private Long id;
+
     @Column("user_id")
     @NotNull(message = "用户ID不能为空")
     private Long userId;

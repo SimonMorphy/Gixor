@@ -8,9 +8,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 82.156.217.74:8848
+        server-addr: 39.105.98.60:8848
+        namespace: ${spring.profiles.active}
       config:
-        server-addr: 82.156.217.74:8848
+        server-addr: 39.105.98.60:8848
         file-extension: yml
   config:
     import: nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}

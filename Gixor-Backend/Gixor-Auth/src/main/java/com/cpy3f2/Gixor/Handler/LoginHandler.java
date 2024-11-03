@@ -1,10 +1,6 @@
 package com.cpy3f2.Gixor.Handler;
 
-import cn.dev33.satoken.reactor.context.SaReactorHolder;
-import cn.dev33.satoken.stp.StpUtil;
-import com.cpy3f2.Gixor.Config.ReactiveRequestContextHolder;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
-import com.cpy3f2.Gixor.Domain.User;
 import com.cpy3f2.Gixor.Service.LoginService;
 import com.cpy3f2.Gixor.Service.RpcUserService;
 import jakarta.annotation.Resource;
@@ -15,9 +11,7 @@ import me.zhyd.oauth.model.AuthUser;
 import me.zhyd.oauth.request.AuthRequest;
 import me.zhyd.oauth.utils.AuthStateUtils;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.service.annotation.GetExchange;
@@ -62,11 +56,6 @@ public class LoginHandler {
                 .flatMap(loginService::login);
     }
 
-    public Mono<ServerResponse> test(ServerRequest request) {
-        return ServerResponse
-                .ok()
-                .bodyValue(StpUtil.getTokenValue());
-    }
 
 
 }

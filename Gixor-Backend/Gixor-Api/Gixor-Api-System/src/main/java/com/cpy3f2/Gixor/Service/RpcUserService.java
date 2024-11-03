@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
  */
 @ReactiveFeignClient(
     name = "gixor-system",
+    qualifier = "RpcUserService",
     fallbackFactory = RpcUserServiceFallbackFactory.class,
     configuration = FeignConfig.class
 )
