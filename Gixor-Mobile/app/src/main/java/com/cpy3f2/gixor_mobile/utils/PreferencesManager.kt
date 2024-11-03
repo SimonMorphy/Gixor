@@ -1,33 +1,32 @@
 import android.content.Context
 
 class PreferencesManager(context: Context) {
-    private val sharedPreferences = context.getSharedPreferences(
-        PREF_NAME,
-        Context.MODE_PRIVATE
-    )
+    private val sharedPreferences = context.getSharedPreferences("gixor_prefs", Context.MODE_PRIVATE)
 
     fun saveToken(token: String) {
         sharedPreferences.edit()
-            .putString(KEY_TOKEN, token)
+            .putString("token", token)
+            .putString("state", "login")
             .apply()
     }
 
-    fun getToken(): String? {
-        return sharedPreferences.getString(KEY_TOKEN, null)
-    }
+    fun getToken(): String? = sharedPreferences.getString("token", null)
+
+    fun hasToken(): Boolean = getToken() != null
 
     fun clearToken() {
         sharedPreferences.edit()
-            .remove(KEY_TOKEN)
+            .remove("token")
+            .remove("state")
+            .remove("userInfo")
             .apply()
     }
 
-    fun hasToken(): Boolean {
-        return !getToken().isNullOrEmpty()
+    fun saveUserInfo(jsonResponse: String) {
+        sharedPreferences.edit()
+            .putString("userInfo", jsonResponse)
+            .apply()
     }
 
-    companion object {
-        private const val PREF_NAME = "GixorPrefs"
-        private const val KEY_TOKEN = "user_token"
-    }
+    fun getUserInfoJson(): String? = sharedPreferences.getString("userInfo", null)
 } 

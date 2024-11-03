@@ -41,7 +41,7 @@ fun MessageScreen(viewModel: MainViewModel) {
     val systemUiController = rememberSystemUiController()
     val statusBarColor = MaterialTheme.colorScheme.surface
     val isDarkIcons = !isSystemInDarkTheme()
-    
+
     DisposableEffect(systemUiController) {
         systemUiController.setStatusBarColor(
             color = statusBarColor,
@@ -75,7 +75,7 @@ fun MessageScreen(viewModel: MainViewModel) {
                     isUnread = index % 2 == 0,
                     notificationId = "notification_$index"
                 )
-                
+
                 if (index < 9) {
                     Divider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
@@ -103,7 +103,7 @@ private fun NotificationsTopBar() {
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -113,7 +113,7 @@ private fun NotificationsTopBar() {
                         contentDescription = "Mark all as read"
                     )
                 }
-                
+
                 IconButton(onClick = { /* 置 */ }) {
                     Icon(
                         imageVector = Icons.Rounded.Settings,
@@ -129,7 +129,7 @@ private fun NotificationsTopBar() {
 private fun NotificationFilters() {
     var selectedFilter by remember { mutableStateOf("All") }
     val filters = listOf("All", "Unread", "Mentions")
-    
+
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp
@@ -179,7 +179,7 @@ private fun NotificationItem(
                 if (isUnread) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
                 else MaterialTheme.colorScheme.surface
             )
-            .clickable { 
+            .clickable {
                 // 使用 NavigationManager 进行导航
                 NavigationManager.navigateToNotification(
                     notificationId = notificationId,
@@ -198,11 +198,11 @@ private fun NotificationItem(
                 else -> Icons.Rounded.Notifications
             },
             contentDescription = null,
-            tint = if (isUnread) MaterialTheme.colorScheme.primary 
-                   else MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = if (isUnread) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(24.dp)
         )
-        
+
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -213,7 +213,7 @@ private fun NotificationItem(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
+
             // 标题
             Text(
                 text = title,
@@ -221,7 +221,7 @@ private fun NotificationItem(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = if (isUnread) FontWeight.Medium else FontWeight.Normal
             )
-            
+
             // 时间和原因
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -231,13 +231,13 @@ private fun NotificationItem(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
+
                 Text(
                     text = "•",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
+
                 Text(
                     text = reason.replace("_", " ").capitalize(),
                     style = MaterialTheme.typography.bodySmall,
@@ -245,7 +245,7 @@ private fun NotificationItem(
                 )
             }
         }
-        
+
         // 更多操作按钮
         IconButton(
             onClick = { /* 显示更多操作 */ }
@@ -280,9 +280,9 @@ fun NotificationItemPreview() {
             isUnread = true,
             notificationId = "notification_1"
         )
-        
+
         Divider()
-        
+
         // 已读通知
         NotificationItem(
             viewModel = previewViewModel,

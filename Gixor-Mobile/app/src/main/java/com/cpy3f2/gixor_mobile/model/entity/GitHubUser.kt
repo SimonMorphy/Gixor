@@ -1,7 +1,4 @@
-
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import java.time.LocalDateTime
+package com.cpy3f2.gixor_mobile.model.entity
 
 /**
  * @author : lya
@@ -11,10 +8,8 @@ import java.time.LocalDateTime
  * @since : 2024-10-30 19:43
  */
 
-@Entity
 data class GitHubUser(
     // 基本标识信息
-    @PrimaryKey
     val githubId: Long? = null,
     val login: String? = null,
     val name: String? = null,
@@ -52,6 +47,6 @@ data class GitHubUser(
     val score: Double? = null,
 
     // 时间戳
-    val createdAt: LocalDateTime? = null,
-    val updatedAt: LocalDateTime? = null
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )

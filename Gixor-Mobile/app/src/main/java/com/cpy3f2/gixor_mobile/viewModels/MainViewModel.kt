@@ -1,7 +1,6 @@
 package com.cpy3f2.gixor_mobile.viewModels
 
-import GitHubUser
-import android.content.Context.MODE_PRIVATE
+import android.annotation.SuppressLint
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,18 +16,19 @@ import com.cpy3f2.gixor_mobile.model.entity.FocusContentItem
 import com.cpy3f2.gixor_mobile.model.entity.FocusItem
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.SearchHistoryItem
-import com.cpy3f2.gixor_mobile.model.entity.Token
 import com.cpy3f2.gixor_mobile.network.source.RetrofitClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import android.content.Context
 import androidx.lifecycle.LiveData
+import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
+import java.time.LocalDateTime
+import com.google.gson.Gson
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -41,9 +41,9 @@ class MainViewModel : ViewModel() {
     // 更新 PagerState 的创建方式
     var categories by mutableStateOf(
         listOf(
-                Category("动态"),
-                Category("推荐"),
-                Category("热点")
+            Category("动态"),
+            Category("推荐"),
+            Category("热点")
         )
     )
 
@@ -127,48 +127,51 @@ class MainViewModel : ViewModel() {
     )
     //从本地获取搜索数据
 
-    // 添加数据库相关的变量
-    var searchHistoryItems by mutableStateOf<List<SearchHistoryItem>>(emptyList())
+    private val searchHistoryDao = GixorDatabase.database.getSearchHistoryItemDao()
     
-    // 添加获取搜索历史的方法
-    fun getSearchHistory(){
+    // 使用 StateFlow 管理搜索历史
+    private val _searchHistoryItems = MutableStateFlow<List<SearchHistoryItem>>(emptyList())
+    val searchHistoryItems: StateFlow<List<SearchHistoryItem>> = _searchHistoryItems.asStateFlow()
+    
+    init {
+        // 初始化时加载搜索历史
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                searchHistoryItems = GixorDatabase
-                    .database
-                    .getSearchHistoryItemDao()
-                    .getAll()
-            }
+            loadSearchHistory()
         }
     }
 
-    // 添加插入搜索历史的方法
-    fun insertSearchHistory(item: SearchHistoryItem) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                GixorDatabase
-                    .database
-                    .getSearchHistoryItemDao()
-                    .insert(item)
-                // 重新加载数据
-                getSearchHistory()
-            }
+    // 修改原来的 getSearchHistory 方法为 loadSearchHistory
+    private suspend fun loadSearchHistory() {
+        withContext(Dispatchers.IO) {
+            _searchHistoryItems.value = searchHistoryDao.getAll()
         }
     }
 
-    // 添加删除搜索历史的方法
+    // 修改 insertSearchHistory 方法
+    @SuppressLint("NewApi")
+    fun addSearchHistory(searchText: String) {
+        if (searchText.isBlank()) return
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            val searchItem = SearchHistoryItem(
+                id = 0, // Room会自动生成ID
+                name = searchText,
+                time = LocalDateTime.now()
+            )
+            searchHistoryDao.insert(searchItem)
+            loadSearchHistory() // 重新加载搜索历史
+        }
+    }
+
+    // 修改 deleteSearchHistory 方法
     fun deleteSearchHistory(item: SearchHistoryItem) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                GixorDatabase
-                    .database
-                    .getSearchHistoryItemDao()
-                    .delete(item)
-                // 重新加载数据
-                getSearchHistory()
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            searchHistoryDao.delete(item)
+            loadSearchHistory() // 重新加载搜索历史
         }
     }
+
+
 
     // 检查是否有token
     fun hasToken(): Boolean = preferencesManager.hasToken()
@@ -239,19 +242,48 @@ class MainViewModel : ViewModel() {
     private val _isLoggedIn = MutableStateFlow(preferencesManager.hasToken())
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
+    // 添加登录状态流
+    private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
+    val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
+
+    // 定义登录状态
+    sealed class LoginState {
+        object Idle : LoginState()
+        object Loading : LoginState()
+        object Success : LoginState()
+        data class Error(val message: String) : LoginState()
+    }
+
     fun handleLoginSuccess(token: String) {
         viewModelScope.launch {
             try {
+                _loginState.value = LoginState.Loading
+                
                 // 保存token到SharedPreferences
                 preferencesManager.saveToken(token)
-                // 更新登录状态
-                _isLoggedIn.value = true
-                // 更新 httpBaseService 的 token
-                // httpBaseService.updateToken(token)
-                // 获取用户信息等其他操作
-                // loadUserInfo()
+                
+                // 获取用户信息
+                withContext(Dispatchers.IO) {
+                    val userResponse = RetrofitClient.httpBaseService.getGitHubUserInfo(token)
+                    if (userResponse.code == 200) {
+                        // 将整个响应转换为 JSON 字符串并保存
+                        val gson = Gson()
+                        val jsonResponse = gson.toJson(userResponse)
+                        preferencesManager.saveUserInfo(jsonResponse)
+                        
+                        // 更新登录状态
+                        _isLoggedIn.value = true
+                        _loginState.value = LoginState.Success
+                    } else {
+                        throw RuntimeException("Failed to get user info: ${userResponse.msg}")
+                    }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
+                _loginState.value = LoginState.Error(e.message ?: "Unknown error")
+                // 登录失败时清除token
+                preferencesManager.clearToken()
+                _isLoggedIn.value = false
             }
         }
     }

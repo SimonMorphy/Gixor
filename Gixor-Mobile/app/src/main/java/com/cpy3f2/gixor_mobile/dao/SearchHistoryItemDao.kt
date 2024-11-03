@@ -1,31 +1,28 @@
 package com.cpy3f2.gixor_mobile.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import com.cpy3f2.gixor_mobile.model.entity.SearchHistoryItem
-import retrofit2.http.DELETE
 
 @Dao
 interface SearchHistoryItemDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(vararg searchHistoryItem: SearchHistoryItem)
+    @Query("SELECT * FROM search_history_item ORDER BY time DESC")
+    fun getAll(): List<SearchHistoryItem>
 
-    @Query("SELECT * FROM search_history_item")
-    suspend fun getAll() : List<SearchHistoryItem>
+    @Insert
+    suspend fun insert(item: SearchHistoryItem)
 
-    @Query("SELECT * FROM search_history_item WHERE id=:id")
-    suspend fun findByName(id: Int) : SearchHistoryItem
+    @Insert
+    suspend fun insertAll(items: List<SearchHistoryItem>)
 
-    @DELETE
-    suspend fun delete(searchHistoryItem: SearchHistoryItem)
+    @Delete
+    suspend fun delete(item: SearchHistoryItem)
 
-    @DELETE("DELETE FROM search_history_item")
-    suspend fun deleteAll(vararg searchHistoryItem: SearchHistoryItem)
+    @Delete
+    suspend fun deleteAll(items: List<SearchHistoryItem>)
 
-    @Update(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun update(vararg searchHistoryItem: SearchHistoryItem)
-
+    @Query("DELETE FROM search_history_item")
+    suspend fun clearAll()
 }

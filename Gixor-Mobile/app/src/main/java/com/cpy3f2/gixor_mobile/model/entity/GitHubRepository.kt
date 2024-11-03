@@ -21,11 +21,11 @@ data class GitHubRepository(
     val htmlUrl: String? = null,
     val topics: List<String>? = null,
 
-    val createdAt: LocalDateTime? = null,
+    val createdAt: String? = null,
 
-    val updatedAt: LocalDateTime? = null,
+    val updatedAt: String? = null,
 
-    val pushedAt: LocalDateTime? = null,
+    val pushedAt: String? = null,
     val size: Int? = null,
 
     val defaultBranch: String? = null
@@ -51,4 +51,16 @@ data class GitHubRepository(
         val key: String? = null,
         val url: String? = null
     )
+
+    fun getCreatedDateTime(): LocalDateTime {
+        return LocalDateTime.parse(createdAt?.replace("Z", ""))
+    }
+
+    fun getUpdatedDateTime(): LocalDateTime {
+        return LocalDateTime.parse(updatedAt?.replace("Z", ""))
+    }
+
+    fun getPushedDateTime(): LocalDateTime {
+        return LocalDateTime.parse(pushedAt?.replace("Z", ""))
+    }
 }

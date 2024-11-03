@@ -61,6 +61,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.layout.statusBarsPadding
 
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -77,7 +78,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
     LaunchedEffect(selectedTab) {
         pagerState.animateScrollToPage(selectedTab)
     }
-    
+
     LaunchedEffect(pagerState.currentPage) {
         selectedTab = pagerState.currentPage
     }
@@ -112,7 +113,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                         tint = Color.Gray,
                         modifier = Modifier.size(20.dp)
                     )
-                    
+
                     BasicTextField(
                         value = searchText,
                         onValueChange = { searchText = it },
@@ -138,7 +139,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                             }
                         }
                     )
-                    
+
                     if (searchText.isNotEmpty()) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -151,7 +152,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                     }
                 }
             }
-            
+
             // 取消按钮
             Text(
                 text = "取消",
@@ -176,7 +177,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTab == index,
-                    onClick = { 
+                    onClick = {
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(index)
                         }
@@ -301,7 +302,13 @@ private fun HotListItem(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SearchHistoryComponent(vm: MainViewModel) {
+fun SearchHistoryComponent(
+    vm: MainViewModel,
+    onHistoryItemClick: (String) -> Unit
+) {
+    // 使用 collectAsState() 收集 StateFlow 数据
+    val searchHistory by vm.searchHistoryItems.collectAsState()
+    
     Column(
         modifier = Modifier.padding(top = 10.dp)
     ) {
@@ -320,26 +327,34 @@ fun SearchHistoryComponent(vm: MainViewModel) {
             )
             Spacer(modifier = Modifier.weight(1f))
             Row(
-                modifier = Modifier.clickable { /* 在这里处理清空操作 */ },
+                modifier = Modifier.clickable { vm.clearSearchHistory() },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     painter = painterResource(id = R.mipmap.clear),
                     contentDescription = "清空",
-                    modifier = Modifier.padding(end = 4.dp)
+                    modifier = Modifier.size(16.dp)
                 )
                 Text(
                     text = "清空",
+                    fontSize = 14.sp,
                     color = Color.Gray,
-                    fontSize = 12.sp
+                    modifier = Modifier.padding(start = 4.dp)
                 )
             }
         }
-        FlowRow {
-            vm.searchHistoryItems.forEach { item ->
-                ChipItem(text = item.name) {
-
-                }
+        
+        FlowRow(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // 使用 searchHistory 列表而不是直接使用 Flow
+            searchHistory.forEach { item ->
+                ChipItem(
+                    text = item.name,
+                    onClick = { onHistoryItemClick(item.name) }
+                )
             }
         }
         Spacer(modifier = Modifier.height(40.dp))
@@ -349,17 +364,22 @@ fun SearchHistoryComponent(vm: MainViewModel) {
 
 //每一项的组件
 @Composable
-fun ChipItem(text: String, onClick: () -> Unit = {}) {
-    FilterChip(
-        modifier = Modifier.padding(end = 4.dp),
+fun ChipItem(
+    text: String,
+    onClick: () -> Unit
+) {
+    Surface(
         onClick = onClick,
-        leadingIcon = {},
-        border = BorderStroke(1.dp, Color(0xFF3B3A3C)),
-        label = {
-            Text(text = text)
-        },
-        selected = false
-    )
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, Color.LightGray)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
 }
 
 @Composable
@@ -386,12 +406,12 @@ fun HotPoint(vm: MainViewModel){
                         modifier = Modifier
                             .width(100.dp)
                             .padding(0.dp),
-                        text = { 
+                        text = {
                             Text(
                                 text = pages[index],
                                 fontSize = 14.sp,
                                 color = if (pagerState.currentPage == index) Color.Red else Color.Black
-                            ) 
+                            )
                         },
                         selected = pagerState.currentPage == index,
                         onClick = {

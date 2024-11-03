@@ -12,6 +12,11 @@ import android.os.Handler
 import android.os.Looper
 import android.webkit.JavascriptInterface
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+
+import kotlinx.coroutines.delay
 
 @Composable
 fun LoginWebView(
@@ -19,6 +24,24 @@ fun LoginWebView(
     onLoginSuccess: () -> Unit
 ) {
     var webView: WebView? = null
+    
+    // 收集登录状态
+    val loginState by viewModel.loginState.collectAsState()
+    
+    // 处理登录状态
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is MainViewModel.LoginState.Success -> {
+                // 延迟关闭登录页面
+                delay(1500) // 1.5秒后关闭
+                onLoginSuccess()
+            }
+            is MainViewModel.LoginState.Error -> {
+                // 可以在这里显示错误提示
+            }
+            else -> {} // 处理其他状态
+        }
+    }
     
     AndroidView(
         factory = { context ->
@@ -70,18 +93,21 @@ fun LoginWebView(
                                                 window.androidInterface.onLoginSuccess(jsonResponse.token.tokenValue);
                                                 document.body.innerHTML = 
                                                     '<div style="' + messageStyle + '">' +
-                                                        '<div style="color: #1a73e8; font-size: 24px; margin-bottom: 10px;">✓</div>' +
-                                                        '<div style="font-size: 18px; color: #202124;">登录成功！</div>' +
+                                                        '<div style="color: #1a73e8; font-size: 24px; margin-bottom: 10px;">⌛</div>' +
+                                                        '<div style="font-size: 18px; color: #202124;">正在获取用户信息...</div>' +
                                                     '</div>';
                                             } else {
                                                 document.body.innerHTML = 
                                                     '<div style="' + messageStyle + '">' +
                                                         '<div style="color: #d93025; font-size: 24px; margin-bottom: 10px;">✕</div>' +
                                                         '<div style="font-size: 18px; color: #202124;">登录失败</div>' +
+                                                        '<div style="color: #5f6368; margin-top: 8px;">' + 
+                                                            jsonResponse.msg + 
+                                                        '</div>' +
                                                     '</div>';
                                             }
                                         } catch(e) {
-                                            console.log('Parse error:', e);
+                                            console.error('Failed to parse JSON:', e);
                                         }
                                     }
                                 }
@@ -91,7 +117,7 @@ fun LoginWebView(
                         view?.evaluateJavascript(script, null)
                     }
                 }
-
+                
                 // 添加 JavaScript 接口
                 addJavascriptInterface(
                     object {
@@ -99,10 +125,6 @@ fun LoginWebView(
                         fun onLoginSuccess(token: String) {
                             (context as? Activity)?.runOnUiThread {
                                 viewModel.handleLoginSuccess(token)
-                                // 延迟关闭登录页面
-                                Handler(Looper.getMainLooper()).postDelayed({
-                                    onLoginSuccess()
-                                }, 1500) // 1.5秒后关闭
                             }
                         }
                     },

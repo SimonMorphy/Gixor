@@ -56,12 +56,20 @@ class RetrofitClient {
                 .addInterceptor(loggingInterceptor)
                 .build()
         }
+        private fun createBaseOkHttpClient(): OkHttpClient {
+            return OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
+                .addInterceptor(loggingInterceptor)
+                .build()
+        }
 
         // 创建 基础Retrofit 实例
         private val baseRetrofit = retrofit2.Retrofit.Builder()
             .baseUrl(HttpBaseService.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create(createGson()))
-            .client(createOkHttpClient())
+            .client(createBaseOkHttpClient())
             .build()
         //创建 Star的Retrofit实例
         private val starRetrofit = retrofit2.Retrofit.Builder()
