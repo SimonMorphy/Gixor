@@ -1,16 +1,16 @@
 package com.cpy3f2.gixor_mobile.navigation
 
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 object NavigationManager {
-    private val _navController = MutableStateFlow<NavHostController?>(null)
-    val navController: StateFlow<NavHostController?> = _navController.asStateFlow()
+    private val _navController = MutableStateFlow<NavController?>(null)
+    val navController: StateFlow<NavController?> = _navController.asStateFlow()
 
-    fun setNavController(navController: NavHostController) {
-        _navController.value = navController
+    fun setNavController(controller: NavController) {
+        _navController.value = controller
     }
 
     fun navigateToLogin() {
@@ -44,5 +44,13 @@ object NavigationManager {
 
     fun navigateBack() {
         _navController.value?.popBackStack()
+    }
+
+    fun navigateUp() {
+        _navController.value?.navigateUp()
+    }
+
+    fun navigateToRepoDetail(owner: String, name: String) {
+        _navController.value?.navigate(AppDestinations.RepoDetail.createRoute(owner, name))
     }
 } 

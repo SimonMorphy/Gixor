@@ -318,4 +318,52 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
+    // 存储仓库的收藏状态
+    private val _starredRepos = MutableStateFlow<Set<String>>(emptySet())
+    val starredRepos: StateFlow<Set<String>> = _starredRepos.asStateFlow()
+
+    // 加载用户的收藏仓库列表
+    fun loadStarredRepos() {
+        if (!hasToken()) return
+        
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.httpBaseService.getStarRepoList()
+                if (response.code == 200) {
+                    val starredRepoIds = response.data.map { "${it.owner}/${it.name}" }.toSet()
+                    _starredRepos.value = starredRepoIds
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // Star/Unstar 仓库
+    fun toggleStarRepo(owner: String, repo: String, isCurrentlyStarred: Boolean) {
+        if (!hasToken()) {
+            navigateToLogin()
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                if (isCurrentlyStarred) {
+                    RetrofitClient.httpBaseService.unStarRepo(owner, repo)
+                    _starredRepos.value = _starredRepos.value - "$owner/$repo"
+                } else {
+                    RetrofitClient.httpBaseService.starRepo(owner, repo)
+                    _starredRepos.value = _starredRepos.value + "$owner/$repo"
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    init {
+        // 在初始化时加载收藏列表
+        loadStarredRepos()
+    }
 }

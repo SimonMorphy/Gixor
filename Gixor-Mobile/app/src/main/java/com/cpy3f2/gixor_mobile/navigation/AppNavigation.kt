@@ -2,6 +2,7 @@ package com.cpy3f2.gixor_mobile.navigation
 
 import AppDestinations
 import ChatScreen
+import RepoDetailScreen
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +56,21 @@ fun AppNavigation(
                 viewModel = viewModel,
                 notificationId = notificationId,
                 repository = repository
+            )
+        }
+        composable(
+            route = AppDestinations.RepoDetail.route,
+            arguments = listOf(
+                navArgument("owner") { type = NavType.StringType },
+                navArgument("name") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val owner = backStackEntry.arguments?.getString("owner") ?: ""
+            val name = backStackEntry.arguments?.getString("name") ?: ""
+            RepoDetailScreen(
+                viewModel = viewModel,
+                owner = owner,
+                repoName = name
             )
         }
     }

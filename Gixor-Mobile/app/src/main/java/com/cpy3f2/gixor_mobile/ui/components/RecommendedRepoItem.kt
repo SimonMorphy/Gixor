@@ -26,6 +26,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.res.painterResource
 import com.cpy3f2.gixor_mobile.R
 import com.cpy3f2.gixor_mobile.model.entity.Contributor
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 // 创建 Preview 参数提供者
 class TrendyRepoPreviewProvider : PreviewParameterProvider<TrendyRepository> {
@@ -140,8 +146,39 @@ fun RecommendedRepoListPreview() {
 fun RecommendedRepoItem(
     repo: TrendyRepository,
     onRepoClick: () -> Unit = {},
-    onStarClick: () -> Unit = {}
+    onStarClick: () -> Unit = {},
+    onLoginClick: () -> Unit = {},
+    isStarred: Boolean = false,
+    isLoggedIn: Boolean = false
 ) {
+    var showLoginDialog by remember { mutableStateOf(false) }
+
+    // 登录提示对话框
+    if (showLoginDialog) {
+        AlertDialog(
+            onDismissRequest = { showLoginDialog = false },
+            title = { Text("提示") },
+            text = { Text("登录后才能收藏仓库，是否前往登录？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLoginDialog = false
+                        onLoginClick()
+                    }
+                ) {
+                    Text("去登录")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLoginDialog = false }
+                ) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -152,15 +189,31 @@ fun RecommendedRepoItem(
     ) {
         Box {
             IconButton(
-                onClick = onStarClick,
+                onClick = { 
+                    if (!isLoggedIn) {
+                        showLoginDialog = true
+                    } else {
+                        onStarClick()
+                    }
+                },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(4.dp)
             ) {
                 Icon(
-                    painter = painterResource(id = R.mipmap.star),
+                    painter = painterResource(
+                        id = if (isLoggedIn && isStarred) {
+                            R.mipmap.starf
+                        } else {
+                            R.mipmap.star
+                        }
+                    ),
                     contentDescription = "Star repository",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = if (isLoggedIn && isStarred) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        Color.Gray
+                    }
                 )
             }
 

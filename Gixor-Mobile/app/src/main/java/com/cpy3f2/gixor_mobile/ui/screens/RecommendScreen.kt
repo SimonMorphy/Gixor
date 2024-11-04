@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 
 /**
@@ -22,17 +23,30 @@ fun RecommendScreen(
     modifier: Modifier = Modifier
 ) {
     val trendyRepos by viewModel.trendyRepos.collectAsState()
+    val starredRepos by viewModel.starredRepos.collectAsState()
+    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
     
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         items(trendyRepos) { repo ->
+            val repoId = "${repo.author}/${repo.name}"
+            val isStarred = starredRepos.contains(repoId)
+            
             RecommendedRepoItem(
                 repo = repo,
                 onRepoClick = {
-                    // 处理点击事件，比如打开仓库详情页
-                }
+                    NavigationManager.navigateToRepoDetail(repo.author, repo.name)
+                },
+                onStarClick = {
+                    viewModel.toggleStarRepo(repo.author, repo.name, isStarred)
+                },
+                onLoginClick = {
+                    viewModel.navigateToLogin()
+                },
+                isStarred = isStarred,
+                isLoggedIn = isLoggedIn
             )
         }
     }
