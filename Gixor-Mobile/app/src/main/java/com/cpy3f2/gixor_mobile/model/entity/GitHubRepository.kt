@@ -1,5 +1,6 @@
 package com.cpy3f2.gixor_mobile.model.entity
 
+import android.annotation.SuppressLint
 import java.time.LocalDateTime
 
 data class GitHubRepository(
@@ -52,14 +53,17 @@ data class GitHubRepository(
         val url: String? = null
     )
 
+    @SuppressLint("NewApi")
     fun getCreatedDateTime(): LocalDateTime {
         return LocalDateTime.parse(createdAt?.replace("Z", ""))
     }
 
+    @SuppressLint("NewApi")
     fun getUpdatedDateTime(): LocalDateTime {
         return LocalDateTime.parse(updatedAt?.replace("Z", ""))
     }
 
+    @SuppressLint("NewApi")
     fun getPushedDateTime(): LocalDateTime {
         return LocalDateTime.parse(pushedAt?.replace("Z", ""))
     }

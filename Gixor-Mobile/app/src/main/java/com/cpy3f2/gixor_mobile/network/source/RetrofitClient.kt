@@ -71,24 +71,8 @@ class RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create(createGson()))
             .client(createBaseOkHttpClient())
             .build()
-        //创建 Star的Retrofit实例
-        private val starRetrofit = retrofit2.Retrofit.Builder()
-            .baseUrl(HttpBaseService.STAR_URL)
-            .addConverterFactory(GsonConverterFactory.create(createGson()))
-            .client(createOkHttpClient())
-            .build()
-        //创建仓库的Retrofit实例
-        private val repoRetrofit = retrofit2.Retrofit.Builder()
-            .baseUrl(HttpBaseService.REPOSITORY_URL)
-            .addConverterFactory(GsonConverterFactory.create(createGson()))
-            .client(createOkHttpClient())
-            .build()
 
         // 创建服务接口实例
         val httpBaseService = baseRetrofit.create(HttpBaseService::class.java)
-        //创建star的服务接口实例
-        val starService = starRetrofit.create(HttpBaseService::class.java)
-        //创建仓库的的服务接口实例
-        val repoService = repoRetrofit.create(HttpBaseService::class.java)
     }
 }

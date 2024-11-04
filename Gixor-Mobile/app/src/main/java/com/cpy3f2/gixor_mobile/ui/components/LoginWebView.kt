@@ -1,4 +1,3 @@
-import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -8,8 +7,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import android.app.Activity
-import android.os.Handler
-import android.os.Looper
+
 import android.webkit.JavascriptInterface
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import androidx.compose.runtime.LaunchedEffect
@@ -21,7 +19,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun LoginWebView(
     viewModel: MainViewModel,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var webView: WebView? = null
     
@@ -32,14 +31,13 @@ fun LoginWebView(
     LaunchedEffect(loginState) {
         when (loginState) {
             is MainViewModel.LoginState.Success -> {
-                // 延迟关闭登录页面
-                delay(1500) // 1.5秒后关闭
+                delay(1500)
                 onLoginSuccess()
             }
             is MainViewModel.LoginState.Error -> {
-                // 可以在这里显示错误提示
+                // 处理错误
             }
-            else -> {} // 处理其他状态
+            else -> {}
         }
     }
     
@@ -53,6 +51,9 @@ fun LoginWebView(
                     javaScriptCanOpenWindowsAutomatically = true
                     mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                 }
+                
+                // 设置WebView的背景为透明
+                setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
@@ -132,7 +133,7 @@ fun LoginWebView(
                 )
             }
         },
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) { webView ->
         webView.loadUrl("http://1024.viwipiediema.com:10102/auth/render")
     }

@@ -40,7 +40,7 @@ import coil3.compose.AsyncImage
 @Composable
 fun GithubActivityItem(
     avatar: String,
-    username: String,
+    author: String,
     time: String,
     actionType: String,
     repoName: String,
@@ -80,7 +80,7 @@ fun GithubActivityItem(
             Text(
                 text = buildAnnotatedString {
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(username)
+                        append(author)
                     }
                     append(" $actionType ")
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -182,7 +182,7 @@ fun GithubActivityItem(
 fun GithubActivityItemPreview() {
     GithubActivityItem(
         avatar = "https://github.com/avatar.jpg",
-        username = "octocat",
+        author = "octocat",
         time = "2 hours ago",
         actionType = "starred",
         repoName = "facebook/react",

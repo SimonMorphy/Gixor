@@ -29,6 +29,7 @@ import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import java.time.LocalDateTime
 import com.google.gson.Gson
+import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -76,7 +77,7 @@ class MainViewModel : ViewModel() {
             starErrorMsg = null
             try {
                 withContext(Dispatchers.IO) {
-                    val response = RetrofitClient.starService.isStarRepo(repo, owner)
+                    val response = RetrofitClient.httpBaseService.isStarRepo(repo, owner)
                     // code 200 表示已收藏
                     isStarred = response.code == 200
                     starErrorMsg = null
@@ -296,4 +297,25 @@ class MainViewModel : ViewModel() {
     }
 
     fun getToken(): String? = preferencesManager.getToken()
+
+    private val _trendyRepos = MutableStateFlow<List<TrendyRepository>>(emptyList())
+    val trendyRepos: StateFlow<List<TrendyRepository>> = _trendyRepos.asStateFlow()
+    
+    init {
+        loadTrendyRepos()
+    }
+    
+    private fun loadTrendyRepos() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.httpBaseService.getTrendyRepoList()
+                if (response.code == 200) {
+                    _trendyRepos.value = response.data
+                }
+            } catch (e: Exception) {
+                // 处理错误
+                e.printStackTrace()
+            }
+        }
+    }
 }
