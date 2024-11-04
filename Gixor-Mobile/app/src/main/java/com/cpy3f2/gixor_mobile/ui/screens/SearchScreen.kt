@@ -1,7 +1,6 @@
 package com.cpy3f2.gixor_mobile.ui.screens
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,12 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -70,20 +66,18 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.TextButton
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) {
     var searchText by remember { mutableStateOf("") }
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("人物热榜", "项目热榜")
-    val searchHistory by vm.searchHistoryItems.collectAsState()
-    
+
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val coroutineScope = rememberCoroutineScope()
 
@@ -408,7 +402,8 @@ fun SearchHistoryComponent(
             }
             
             // 如果有超过两行的内容，显示展开/收起按钮
-            if (searchHistory.size > 6) { // 假设每行平均显示3个项目
+            // 假设每行平均显示3个项目
+            if (searchHistory.size > 6) {
                 TextButton(
                     onClick = { isExpanded = !isExpanded },
                     modifier = Modifier.fillMaxWidth()
@@ -444,82 +439,19 @@ fun ChipItem(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, Color.LightGray)
+        shape = RoundedCornerShape(4.dp),
+        color = Color(0xFFF5F5F5),
+        modifier = Modifier.height(32.dp)
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = Color.Black,
+                fontSize = 14.sp
+            )
         )
     }
 }
 
-@Composable
-fun HotPoint(vm: MainViewModel){
-    val pages = vm.hotList
-    val pagerState = rememberPagerState{pages.size}
-    val scope = rememberCoroutineScope()
-
-    Column(
-        Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            TabRow(
-                selectedTabIndex = pagerState.currentPage,
-                modifier = Modifier.width((100.dp * pages.size) + (10.dp * (pages.size - 1))),
-                divider = {},
-                indicator = {}
-            ) {
-                pages.forEachIndexed { index, _ ->
-                    Tab(
-                        modifier = Modifier
-                            .width(100.dp)
-                            .padding(0.dp),
-                        text = {
-                            Text(
-                                text = pages[index],
-                                fontSize = 14.sp,
-                                color = if (pagerState.currentPage == index) Color.Red else Color.Black
-                            )
-                        },
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            scope.launch {
-                                pagerState.animateScrollToPage(index)
-                            }
-                        },
-                        interactionSource = remember { MutableInteractionSource() },
-                    )
-                }
-            }
-        }
-        // 更新 HorizontalPager 的使用方式
-        HorizontalPager(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(),
-            state = pagerState,
-        ) { page ->
-            when(page) {
-                0 -> PersonHotPoint()
-                1 -> ProjectHotPoint()
-            }
-        }
-    }
-}
-
-@Composable
-fun PersonHotPoint(){
-
-}
-
-@Composable
-fun ProjectHotPoint(){
-
-}
 
