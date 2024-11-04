@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import com.cpy3f2.gixor_mobile.model.entity.SearchHistoryItem
+import java.time.LocalDateTime
 
 @Dao
 interface SearchHistoryItemDao {
@@ -25,4 +26,10 @@ interface SearchHistoryItemDao {
 
     @Query("DELETE FROM search_history_item")
     suspend fun clearAll()
+
+    @Query("SELECT * FROM search_history_item WHERE name = :searchText LIMIT 1")
+    suspend fun findByName(searchText: String): SearchHistoryItem?
+
+    @Query("UPDATE search_history_item SET time = :newTime WHERE name = :searchText")
+    suspend fun updateTime(searchText: String, newTime: LocalDateTime)
 }

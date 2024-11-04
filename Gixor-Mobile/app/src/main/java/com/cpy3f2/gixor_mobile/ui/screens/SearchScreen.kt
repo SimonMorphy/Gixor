@@ -27,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -45,7 +44,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -63,6 +61,19 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
+import androidx.compose.material3.IconButton
+
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -71,7 +82,8 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
     var searchText by remember { mutableStateOf("") }
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("人物热榜", "项目热榜")
-
+    val searchHistory by vm.searchHistoryItems.collectAsState()
+    
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val coroutineScope = rememberCoroutineScope()
 
@@ -83,19 +95,38 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
         selectedTab = pagerState.currentPage
     }
 
+    fun handleSearch() {
+        if (searchText.isNotBlank()) {
+            vm.addSearchHistory(searchText)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
     ) {
-        // 顶部搜索栏
+        // 搜索栏
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.mipmap.back),
+                    contentDescription = "返回",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
             Surface(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(8.dp),
@@ -126,6 +157,8 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                         ),
                         singleLine = true,
                         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        keyboardActions = KeyboardActions(onSearch = { handleSearch() }),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         decorationBox = { innerTextField ->
                             Box {
                                 if (searchText.isEmpty()) {
@@ -152,18 +185,20 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                     }
                 }
             }
-
-            // 取消按钮
-            Text(
-                text = "取消",
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(start = 12.dp)
-                    .clickable { navController.popBackStack() }
-            )
         }
 
-        // 修改后的标签栏
+        // 搜索历史
+        SearchHistoryComponent(
+            vm = vm,
+            onHistoryItemClick = { historyText ->
+                searchText = historyText
+                handleSearch()
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 热榜标签栏
         TabRow(
             selectedTabIndex = selectedTab,
             modifier = Modifier
@@ -171,8 +206,8 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                 .padding(horizontal = 16.dp),
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.primary,
-            divider = { }, // 移除底部分割线
-            indicator = { } // 移除指示器
+            divider = { },
+            indicator = { }
         ) {
             tabs.forEachIndexed { index, title ->
                 Tab(
@@ -185,8 +220,8 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                     text = {
                         Text(
                             text = title,
-                            fontSize = if (selectedTab == index) 18.sp else 16.sp,  // 选中时字体变大
-                            color = if (selectedTab == index) Color.Red else Color.Black,  // 选中时变红
+                            fontSize = if (selectedTab == index) 18.sp else 16.sp,
+                            color = if (selectedTab == index) Color.Red else Color.Black,
                             fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
                         )
                     }
@@ -194,7 +229,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
             }
         }
 
-        // 优化后的 HorizontalPager
+        // 热榜内容
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
@@ -306,59 +341,98 @@ fun SearchHistoryComponent(
     vm: MainViewModel,
     onHistoryItemClick: (String) -> Unit
 ) {
-    // 使用 collectAsState() 收集 StateFlow 数据
     val searchHistory by vm.searchHistoryItems.collectAsState()
+    var isExpanded by remember { mutableStateOf(false) }
     
     Column(
-        modifier = Modifier.padding(top = 10.dp)
+        modifier = Modifier.padding(horizontal = 16.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .padding(start = 10.dp, end = 10.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "搜索历史",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-            Spacer(modifier = Modifier.weight(1f))
+        if (searchHistory.isNotEmpty()) {
             Row(
-                modifier = Modifier.clickable { vm.clearSearchHistory() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    painter = painterResource(id = R.mipmap.clear),
-                    contentDescription = "清空",
-                    modifier = Modifier.size(16.dp)
-                )
                 Text(
-                    text = "清空",
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(start = 4.dp)
+                    text = "搜索历史",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
+                
+                // 修改清除按钮部分
+                Row(
+                    modifier = Modifier
+                        .clickable { vm.clearSearchHistory() },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.mipmap.clear),
+                        contentDescription = "清除历史",
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.Gray
+                    )
+                    Text(
+                        text = "清除",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (isExpanded) 
+                            Modifier.wrapContentHeight()
+                        else 
+                            Modifier.height(72.dp)
+                    )
+                    .clip(RectangleShape)
+            ) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    searchHistory.forEach { item ->
+                        ChipItem(
+                            text = item.name,
+                            onClick = { onHistoryItemClick(item.name) }
+                        )
+                    }
+                }
+            }
+            
+            // 如果有超过两行的内容，显示展开/收起按钮
+            if (searchHistory.size > 6) { // 假设每行平均显示3个项目
+                TextButton(
+                    onClick = { isExpanded = !isExpanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isExpanded) "收起" else "展开",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Icon(
+                            imageVector = if (isExpanded) 
+                                Icons.Default.KeyboardArrowUp 
+                            else 
+                                Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isExpanded) "收起" else "展开",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
         }
-        
-        FlowRow(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // 使用 searchHistory 列表而不是直接使用 Flow
-            searchHistory.forEach { item ->
-                ChipItem(
-                    text = item.name,
-                    onClick = { onHistoryItemClick(item.name) }
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(40.dp))
-        HotPoint(vm)
     }
 }
 
@@ -449,8 +523,3 @@ fun ProjectHotPoint(){
 
 }
 
-@Preview
-@Composable
-fun SearchScreenPreview() {
-    SearchScreen(viewModel())
-}

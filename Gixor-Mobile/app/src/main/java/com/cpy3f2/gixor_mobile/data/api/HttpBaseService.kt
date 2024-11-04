@@ -26,24 +26,27 @@ interface HttpBaseService {
     @PUT("/gith/star/{username}/{repo}")
     suspend fun starRepo(
         @Path("username") username: String,
-        @Path("repo") repo: String
+        @Path("repo") repo: String,
+        @Header("gixor-login") tokenValue: String
     )
     //取消star
     @DELETE("/gith/star/{username}/{repo}")
     suspend fun unStarRepo(
         @Path("username") username: String,
-        @Path("repo") repo: String
+        @Path("repo") repo: String,
+        @Header("gixor-login") tokenValue: String
     )
     //查看某个项目是不是收藏了
     @GET("/gith/star/{username}/{repo}")
     suspend fun isStarRepo(
         @Path("username") username: String,
-        @Path("repo") repo: String
+        @Path("repo") repo: String,
+        @Header("gixor-login") tokenValue: String
     ): ResultData<Boolean>
 
     // Star列表接口
     @GET("/gith/star/user/starred")
-    suspend fun getStarRepoList(): ResultData<List<GitHubRepository>>  // 替换 Any 为具体的数据类型
+    suspend fun getStarRepoList(@Header("gixor-login") tokenValue: String): ResultData<List<GitHubRepository>>  // 替换 Any 为具体的数据类型
 
     @GET("/gith/star/users/{username}/starred")
     suspend fun getUserStarRepoList(

@@ -28,7 +28,6 @@ import androidx.lifecycle.LiveData
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import java.time.LocalDateTime
-import com.google.gson.Gson
 import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
 
 class MainViewModel : ViewModel() {
@@ -77,8 +76,8 @@ class MainViewModel : ViewModel() {
             starErrorMsg = null
             try {
                 withContext(Dispatchers.IO) {
-                    val response = RetrofitClient.httpBaseService.isStarRepo(repo, owner)
-                    // code 200 表示已收藏
+                    val token = getToken() ?: throw Exception("未登录")
+                    val response = RetrofitClient.httpBaseService.isStarRepo(repo, owner, token)
                     isStarred = response.code == 200
                     starErrorMsg = null
                 }
@@ -154,13 +153,24 @@ class MainViewModel : ViewModel() {
         if (searchText.isBlank()) return
         
         viewModelScope.launch(Dispatchers.IO) {
-            val searchItem = SearchHistoryItem(
-                id = 0, // Room会自动生成ID
-                name = searchText,
-                time = LocalDateTime.now()
-            )
-            searchHistoryDao.insert(searchItem)
-            loadSearchHistory() // 重新加载搜索历史
+            // 先查找是否存在相同的搜索记录
+            val existingItem = searchHistoryDao.findByName(searchText)
+            
+            if (existingItem != null) {
+                // 如果存在，只更新时间
+                searchHistoryDao.updateTime(searchText, LocalDateTime.now())
+            } else {
+                // 如果不存在，创建新记录
+                val searchItem = SearchHistoryItem(
+                    id = 0, // Room会自动生成ID
+                    name = searchText,
+                    time = LocalDateTime.now()
+                )
+                searchHistoryDao.insert(searchItem)
+            }
+            
+            // 重新加载搜索历史（已经按时间降序排序）
+            loadSearchHistory()
         }
     }
 
@@ -210,7 +220,7 @@ class MainViewModel : ViewModel() {
 //            withContext(Dispatchers.IO) {
 //                // 这里需要调用Room数据库的DAO来保存
 //                // searchHistoryDao.insert(item)
-//                // 更新LiveData
+//                // 更LiveData
 //                _searchHistory.postValue(/* 从数据库获取最新数据 */)
 //            }
 //        }
@@ -229,12 +239,9 @@ class MainViewModel : ViewModel() {
 
     // 清空所有搜索历史
     fun clearSearchHistory() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                // searchHistoryDao.deleteAll()
-                // 更新LiveData
-                _searchHistory.postValue(emptyList())
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            searchHistoryDao.clearAll()
+            loadSearchHistory()
         }
     }
 
@@ -316,9 +323,10 @@ class MainViewModel : ViewModel() {
         
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.httpBaseService.getStarRepoList()
+                val token = getToken() ?: return@launch
+                val response = RetrofitClient.httpBaseService.getStarRepoList(token)
                 if (response.code == 200) {
-                    val starredRepoIds = response.data.map { "${it.owner}/${it.name}" }.toSet()
+                    val starredRepoIds = response.data.map { "${it.owner?.name}/${it.name}" }.toSet()
                     _starredRepos.value = starredRepoIds
                 }
             } catch (e: Exception) {
@@ -328,23 +336,27 @@ class MainViewModel : ViewModel() {
     }
 
     // Star/Unstar 仓库
-    fun toggleStarRepo(owner: String, repo: String, isCurrentlyStarred: Boolean) {
-        if (!hasToken()) {
-            navigateToLogin()
-            return
-        }
-
+    fun toggleStarRepo(owner: String, name: String, isCurrentlyStarred: Boolean) {
         viewModelScope.launch {
             try {
+                _uiState.value = UiState.Loading
+                val token = getToken() ?: return@launch
                 if (isCurrentlyStarred) {
-                    RetrofitClient.httpBaseService.unStarRepo(owner, repo)
-                    _starredRepos.value = _starredRepos.value - "$owner/$repo"
+                    RetrofitClient.httpBaseService.unStarRepo(owner, name, token)
+                    _starredRepos.value = _starredRepos.value - "$owner/$name"
                 } else {
-                    RetrofitClient.httpBaseService.starRepo(owner, repo)
-                    _starredRepos.value = _starredRepos.value + "$owner/$repo"
+                    RetrofitClient.httpBaseService.starRepo(owner, name, token)
+                    _starredRepos.value = _starredRepos.value + "$owner/$name"
                 }
+                _uiState.value = UiState.Success
             } catch (e: Exception) {
                 e.printStackTrace()
+                _uiState.value = UiState.Error(e.message ?: "操作失败")
+                // 如果是 token 相关错误，可以清除登录状态
+                if (e.message?.contains("Token") == true) {
+                    _isLoggedIn.value = false
+                    preferencesManager.clearToken()
+                }
             }
         }
     }
@@ -353,4 +365,14 @@ class MainViewModel : ViewModel() {
         // 在初始化时加载收藏列表
         loadStarredRepos()
     }
+
+    sealed class UiState {
+        object Idle : UiState()
+        object Loading : UiState()
+        object Success : UiState()
+        data class Error(val message: String) : UiState()
+    }
+
+    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 }
