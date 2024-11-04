@@ -29,6 +29,7 @@ import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import java.time.LocalDateTime
 import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
+import createQueryParams
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -54,7 +55,7 @@ class MainViewModel : ViewModel() {
     fun getUserInfo(tokenValue: String) {
         viewModelScope.launch {
             withContext(Dispatchers.IO){
-                gitHubUser.postValue(RetrofitClient.httpBaseService.getGitHubUserInfo(tokenValue))
+                gitHubUser.postValue(RetrofitClient.httpBaseService.getMyUserInfo(tokenValue))
             }
         }
     }
@@ -70,25 +71,6 @@ class MainViewModel : ViewModel() {
     // 错误信息
     var starErrorMsg by mutableStateOf<String?>(null)
         private set
-    fun checkStarStatus(repo: String, owner: String) {
-        viewModelScope.launch {
-            isStarLoading = true
-            starErrorMsg = null
-            try {
-                withContext(Dispatchers.IO) {
-                    val token = getToken() ?: throw Exception("未登录")
-                    val response = RetrofitClient.httpBaseService.isStarRepo(repo, owner, token)
-                    isStarred = response.code == 200
-                    starErrorMsg = null
-                }
-            } catch (e: Exception) {
-                starErrorMsg = e.message
-                isStarred = false
-            } finally {
-                isStarLoading = false
-            }
-        }
-    }
 
     /**
      * 更新分类下表
@@ -98,10 +80,6 @@ class MainViewModel : ViewModel() {
         categoryIndex = index
     }
 
-//    val httpData : MutableLiveData<User>()
-//    val doLoginRepostory by lazy {
-//        LoginRepostory()
-//    }
 
     /**
      *获取关注数据
@@ -210,32 +188,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // 搜索历史LiveData
-    private val _searchHistory = MutableLiveData<List<SearchHistoryItem>>()
-    val searchHistory: LiveData<List<SearchHistoryItem>> = _searchHistory
 
-//    // 添加搜索历史
-//    fun addSearchHistory(item: SearchHistoryItem) {
-//        viewModelScope.launch {
-//            withContext(Dispatchers.IO) {
-//                // 这里需要调用Room数据库的DAO来保存
-//                // searchHistoryDao.insert(item)
-//                // 更LiveData
-//                _searchHistory.postValue(/* 从数据库获取最新数据 */)
-//            }
-//        }
-//    }
-
-//    // 删除单个搜索历史
-//    fun deleteSearchHistory(item: SearchHistoryItem) {
-//        viewModelScope.launch {
-//            withContext(Dispatchers.IO) {
-//                // searchHistoryDao.delete(item)
-//                // 更新LiveData
-//                _searchHistory.postValue(/* 从数据库获取最新数 */)
-//            }
-//        }
-//    }
 
     // 清空所有搜索历史
     fun clearSearchHistory() {
@@ -299,15 +252,45 @@ class MainViewModel : ViewModel() {
         loadTrendyRepos()
     }
     
-    private fun loadTrendyRepos() {
+    fun loadTrendyRepos() {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.httpBaseService.getTrendyRepoList()
                 if (response.code == 200) {
+                    // 先加载仓库列表（此时所有仓库默认未收藏）
                     _trendyRepos.value = response.data
+                    
+                    // 如果用户已登录，异步检查每个仓库的收藏状态
+                    if (hasToken()) {
+                        checkStarStatusForRepos(response.data)
+                    }
                 }
             } catch (e: Exception) {
-                // 处理错误
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun checkStarStatusForRepos(repos: List<TrendyRepository>) {
+        if (!hasToken()) return
+        
+        viewModelScope.launch {
+            try {
+                val token = getToken() ?: return@launch
+                // 对每个仓库单独检查收藏状态
+                repos.forEach { repo ->
+                    try {
+                        val response = RetrofitClient.httpBaseService.isStarRepo(repo.author, repo.name, token)
+                        if (response.code == 200 && response.data == true) {
+                            // 如果仓库被收藏，将其ID添加到收藏集合中
+                            _starredRepos.value = _starredRepos.value + "${repo.author}/${repo.name}"
+                        }
+                    } catch (e: Exception) {
+                        // 单个仓库检查失败不影响其他仓库
+                        e.printStackTrace()
+                    }
+                }
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
@@ -323,8 +306,9 @@ class MainViewModel : ViewModel() {
         
         viewModelScope.launch {
             try {
+                createQueryParams()
                 val token = getToken() ?: return@launch
-                val response = RetrofitClient.httpBaseService.getStarRepoList(token)
+                val response = RetrofitClient.httpBaseService.getMyStarRepoList(createQueryParams(),token)
                 if (response.code == 200) {
                     val starredRepoIds = response.data.map { "${it.owner?.name}/${it.name}" }.toSet()
                     _starredRepos.value = starredRepoIds
@@ -341,18 +325,33 @@ class MainViewModel : ViewModel() {
             try {
                 _uiState.value = UiState.Loading
                 val token = getToken() ?: return@launch
-                if (isCurrentlyStarred) {
-                    RetrofitClient.httpBaseService.unStarRepo(owner, name, token)
-                    _starredRepos.value = _starredRepos.value - "$owner/$name"
+                val repoId = "$owner/$name"
+                
+                val success = if (isCurrentlyStarred) {
+                    // 取消收藏
+                    val response = RetrofitClient.httpBaseService.unStarRepo(owner, name, token)
+                    if (response.code == 200) {
+                        _starredRepos.value = _starredRepos.value - repoId
+                        true
+                    } else false
                 } else {
-                    RetrofitClient.httpBaseService.starRepo(owner, name, token)
-                    _starredRepos.value = _starredRepos.value + "$owner/$name"
+                    // 添加收藏
+                    val response = RetrofitClient.httpBaseService.starRepo(owner, name, token)
+                    if (response.code == 200) {
+                        _starredRepos.value = _starredRepos.value + repoId
+                        true
+                    } else false
                 }
-                _uiState.value = UiState.Success
+
+                if (success) {
+                    _uiState.value = UiState.Success
+                } else {
+                    _uiState.value = UiState.Error("操作失败")
+                }
+                
             } catch (e: Exception) {
                 e.printStackTrace()
                 _uiState.value = UiState.Error(e.message ?: "操作失败")
-                // 如果是 token 相关错误，可以清除登录状态
                 if (e.message?.contains("Token") == true) {
                     _isLoggedIn.value = false
                     preferencesManager.clearToken()
@@ -375,4 +374,9 @@ class MainViewModel : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    // 如果需要检查单个仓库的收藏状态，可以使用这个扩展方法
+    fun isRepoStarred(owner: String, name: String): Boolean {
+        return "$owner/$name" in _starredRepos.value
+    }
 }

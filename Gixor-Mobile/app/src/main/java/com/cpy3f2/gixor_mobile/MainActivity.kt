@@ -18,6 +18,7 @@ import com.cpy3f2.gixor_mobile.navigation.AppNavigation
 
 import com.cpy3f2.gixor_mobile.ui.theme.GixorMobileTheme
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
+import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
 
 
 class MainActivity : ComponentActivity() {
@@ -35,6 +36,7 @@ class MainActivity : ComponentActivity() {
 
         // 创建 ViewModel
         val viewModel: MainViewModel by viewModels()
+        val userModel: UserProfileViewModel by viewModels()
 
         setContent {
             GixorMobileTheme{
@@ -44,7 +46,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppNavigation(
                         viewModel = viewModel,
-                        sharedPreferences = getSharedPreferences("token", MODE_PRIVATE)
+                        sharedPreferences = getSharedPreferences("token", MODE_PRIVATE),
+                        userModel = userModel
                     )
                 }
             }

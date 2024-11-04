@@ -16,12 +16,15 @@ import com.cpy3f2.gixor_mobile.ui.screens.LoginScreen
 import com.cpy3f2.gixor_mobile.ui.screens.MainFrame
 import com.cpy3f2.gixor_mobile.ui.screens.MessageScreen
 import com.cpy3f2.gixor_mobile.ui.screens.SearchScreen
+import com.cpy3f2.gixor_mobile.ui.screens.UserProfileScreen
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
+import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
 
 @Composable
 fun AppNavigation(
     viewModel: MainViewModel,
-    sharedPreferences: SharedPreferences
+    sharedPreferences: SharedPreferences,
+    userModel: UserProfileViewModel
 ) {
     val navController = rememberNavController()
     
@@ -71,6 +74,20 @@ fun AppNavigation(
                 viewModel = viewModel,
                 owner = owner,
                 repoName = name
+            )
+        }
+        composable(
+            route = AppDestinations.UserProfile.route,
+            arguments = listOf(
+                navArgument("username") { 
+                    type = NavType.StringType 
+                }
+            )
+        ) { backStackEntry ->
+            val username = Uri.decode(backStackEntry.arguments?.getString("username") ?: "")
+            UserProfileScreen(
+                username = username,
+                viewModel = userModel
             )
         }
     }

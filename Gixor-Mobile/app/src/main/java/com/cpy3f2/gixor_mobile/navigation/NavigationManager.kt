@@ -1,5 +1,6 @@
 package com.cpy3f2.gixor_mobile.navigation
 
+import AppDestinations
 import androidx.navigation.NavController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,5 +53,9 @@ object NavigationManager {
 
     fun navigateToRepoDetail(owner: String, name: String) {
         _navController.value?.navigate(AppDestinations.RepoDetail.createRoute(owner, name))
+    }
+
+    fun navigateToUserProfile(username: String) {
+        _navController.value?.navigate(AppDestinations.UserProfile.createRoute(username))
     }
 } 
