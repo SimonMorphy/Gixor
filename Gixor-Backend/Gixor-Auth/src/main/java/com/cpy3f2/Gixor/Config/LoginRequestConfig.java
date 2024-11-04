@@ -48,7 +48,9 @@ public class LoginRequestConfig {
                         .build())
                 .scopes(AuthScopeUtils.getScopes(
                         AuthGithubScope.USER,AuthGithubScope.PUBLIC_REPO,
-                        AuthGithubScope.GIST,AuthGithubScope.READ_USER
+                        AuthGithubScope.GIST,AuthGithubScope.READ_USER,
+                        AuthGithubScope.USER_EMAIL,AuthGithubScope.NOTIFICATIONS,
+                        AuthGithubScope.REPO_STATUS,AuthGithubScope.USER_FOLLOW
                 ))
                 .build());
 

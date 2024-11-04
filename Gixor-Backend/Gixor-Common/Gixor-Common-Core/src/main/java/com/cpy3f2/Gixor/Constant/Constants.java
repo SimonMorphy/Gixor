@@ -2,6 +2,8 @@ package com.cpy3f2.Gixor.Constant;
 
 import org.springframework.http.HttpStatus;
 
+import java.util.function.Predicate;
+
 /**
  *
  * @author simon
@@ -46,4 +48,7 @@ public class Constants {
     public static final Boolean TRUE = true;
     public static final long CACHE_EXPIRATION = 60*60*24*7;
     public static final String TOKEN = "token" ;
+    public static final String ADMIN = "admin";
+    public static final String TOKEN_KEY = "gixor-login";
+    public static final Character EFFECTIVE = '1';
 }

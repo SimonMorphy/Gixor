@@ -26,6 +26,14 @@ public class RepositoryEndpoint {
     private RepositoryService repositoryService;
 
 
+
+    @GetExchange("/trendy")
+    public Mono<ResponseResult> listTrendyRepositories(){
+        return repositoryService.listTrendyRepos()
+                .collectList()
+                .map(ResponseResult::success);
+    }
+
     /**
      * 获取仓库列表
      * @param settings 查询参数

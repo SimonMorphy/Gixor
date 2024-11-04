@@ -1,5 +1,6 @@
 package com.cpy3f2.Gixor.Router;
 
+import com.cpy3f2.Gixor.Handler.AuthHandler;
 import com.cpy3f2.Gixor.Handler.LoginHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,10 +18,10 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 @Configuration
 public class RouterConfig {
     @Bean
-    public RouterFunction<ServerResponse> routerFunction(LoginHandler handler) {
+    public RouterFunction<ServerResponse> routerFunction(LoginHandler login, AuthHandler auth) {
         return RouterFunctions.route()
-                .GET("/render", handler::render)
-                .GET("/test",handler::test)
+                .GET("/render", login::render)
+                .GET("/authen", auth::getPermissionList)
                 .build();
     }
 

@@ -1,6 +1,7 @@
 package com.cpy3f2.Gixor.Config;
 
 import com.cpy3f2.Gixor.Domain.QuerySetting;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,9 @@ import reactor.core.publisher.Mono;
 import cn.dev33.satoken.reactor.context.SaReactorSyncHolder;
 import lombok.extern.slf4j.Slf4j;
 import cn.dev33.satoken.context.SaTokenContext;
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import java.util.Optional;
 
@@ -45,26 +49,58 @@ public class GitHubApi {
     }
 
     /**
-     * 添加通用查询参数
+     * 使用反射动态添加查询参数
      * @param builder UriBuilder实例
      * @param querySetting 查询设置
      * @return 更新后的UriBuilder
      */
     public static UriBuilder addQueryParams(UriBuilder builder, QuerySetting querySetting) {
-        if (querySetting != null) {
-            Optional.ofNullable(querySetting.getSort())
-                .ifPresent(sort -> builder.queryParam("sort", sort));
-
-            Optional.ofNullable(querySetting.getDirection())
-                .ifPresent(direction -> builder.queryParam("direction", direction));
-
-            Optional.ofNullable(querySetting.getPerPage())
-                .ifPresent(perPage -> builder.queryParam("perPage", perPage));
-
-            Optional.ofNullable(querySetting.getPage())
-                .ifPresent(page -> builder.queryParam("page", page));
+        if (querySetting == null) {
+            return builder;
         }
+
+        try {
+            Field[] fields = QuerySetting.class.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true);
+                Object value = field.get(querySetting);
+                
+                if (value != null) {
+                    String paramName = getParamName(field);
+                    String paramValue = formatValue(value);
+                    
+                    if (paramValue != null) {
+                        builder.queryParam(paramName, paramValue);
+                    }
+                }
+            }
+        } catch (IllegalAccessException e) {
+            log.error("反射获取QuerySetting属性失败", e);
+        }
+        
         return builder;
+    }
+    
+    /**
+     * 获取参数名称，优先使用JsonProperty注解的值
+     */
+    private static String getParamName(Field field) {
+        JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
+        return jsonProperty != null ? jsonProperty.value() : field.getName();
+    }
+    
+    /**
+     * 格式化参数值
+     */
+    private static String formatValue(Object value) {
+        if (value instanceof LocalDateTime) {
+            return ((LocalDateTime) value).format(DateTimeFormatter.ISO_DATE_TIME);
+        } else if (value instanceof Boolean || value instanceof Number) {
+            return value.toString();
+        } else if (value instanceof String) {
+            return (String) value;
+        }
+        return null;
     }
 
     @Bean

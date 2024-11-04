@@ -3,6 +3,7 @@ package com.cpy3f2.Gixor.Service;
 import com.cpy3f2.Gixor.Config.GitHubApi;
 import com.cpy3f2.Gixor.Domain.GitHubRepository;
 import com.cpy3f2.Gixor.Domain.QuerySetting;
+import com.cpy3f2.Gixor.Domain.TrendyRepository;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,15 @@ public class RepositoryService {
 
     @Resource
     private WebClient githubClient;
+
+    public Flux<TrendyRepository> listTrendyRepos(){
+        return WebClient.builder()
+                .baseUrl("https://api.gitterapp.com")
+                .build()
+                .get()
+                .retrieve()
+                .bodyToFlux(TrendyRepository.class);
+    }
     public Flux<GitHubRepository> listStarredRepo(String username, QuerySetting querySetting) {
         return githubClient
                 .get()

@@ -21,6 +21,10 @@ import jakarta.validation.constraints.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RolePermission {
+
+    @Column("id")
+    private Long id;
+
     @Column("role_id")
     @NotNull(message = "角色ID不能为空")
     private Long roleId;

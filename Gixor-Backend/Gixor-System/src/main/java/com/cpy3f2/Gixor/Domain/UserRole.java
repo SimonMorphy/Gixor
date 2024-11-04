@@ -20,6 +20,10 @@ import jakarta.validation.constraints.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserRole {
+
+    @Column("id")
+    private Long id;
+
     @Column("user_id")
     @NotNull(message = "用户ID不能为空")
     private Long userId;
