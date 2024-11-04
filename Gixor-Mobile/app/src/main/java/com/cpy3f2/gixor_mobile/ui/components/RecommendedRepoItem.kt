@@ -24,6 +24,7 @@ import android.content.res.Configuration
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.res.painterResource
+import com.cpy3f2.gixor_mobile.R
 import com.cpy3f2.gixor_mobile.model.entity.Contributor
 
 // 创建 Preview 参数提供者
@@ -31,7 +32,7 @@ class TrendyRepoPreviewProvider : PreviewParameterProvider<TrendyRepository> {
     override val values = sequenceOf(
         TrendyRepository(
             author = "google",
-            repoName = "androidx",
+            name = "androidx",
             avatar = "https://github.com/google.png",
             url = "https://github.com/google/androidx",
             description = "Development environment for Android Jetpack extension libraries under androidx namespace. Synchronized with Android Jetpack's primary development branch on AOSP.",
@@ -51,7 +52,7 @@ class TrendyRepoPreviewProvider : PreviewParameterProvider<TrendyRepository> {
         // 添加一个最小数据的示例
         TrendyRepository(
             author = "minimal-repo",
-            repoName = "test-repo",
+            name = "test-repo",
             avatar = null.toString(),
             url = "https://github.com/test/test",
             description = null,
@@ -82,7 +83,8 @@ fun RecommendedRepoItemDarkPreview(
         Surface {
             RecommendedRepoItem(
                 repo = repo,
-                onRepoClick = {}
+                onRepoClick = {},
+                onStarClick = {}
             )
         }
     }
@@ -104,7 +106,8 @@ fun RecommendedRepoItemLightPreview(
         Surface {
             RecommendedRepoItem(
                 repo = repo,
-                onRepoClick = {}
+                onRepoClick = {},
+                onStarClick = {}
             )
         }
     }
@@ -124,7 +127,8 @@ fun RecommendedRepoListPreview() {
                 items(TrendyRepoPreviewProvider().values.toList()) { repo ->
                     RecommendedRepoItem(
                         repo = repo,
-                        onRepoClick = {}
+                        onRepoClick = {},
+                        onStarClick = {}
                     )
                 }
             }
@@ -135,7 +139,8 @@ fun RecommendedRepoListPreview() {
 @Composable
 fun RecommendedRepoItem(
     repo: TrendyRepository,
-    onRepoClick: () -> Unit = {}
+    onRepoClick: () -> Unit = {},
+    onStarClick: () -> Unit = {}
 ) {
     Surface(
         modifier = Modifier
@@ -145,111 +150,130 @@ fun RecommendedRepoItem(
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(1.dp, Color(0xFFE1E4E8))
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Author info row
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+        Box {
+            IconButton(
+                onClick = onStarClick,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
             ) {
-                AsyncImage(
-                    model = repo.avatar,
-                    contentDescription = "Author avatar",
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape),
-//                    error = painterResource(id = R.drawable.default_avatar)
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                Text(
-                    text = repo.author ?: "Unknown Author",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
+                Icon(
+                    painter = painterResource(id = R.mipmap.star),
+                    contentDescription = "Star repository",
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Repository name
-            Text(
-                text = repo.repoName ?: "Unnamed Repository",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            
-            // Description
-            if (!repo.description.isNullOrEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = repo.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Stats row
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
-                // Language
-                if (!repo.language.isNullOrEmpty()) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    try {
-                                        Color(android.graphics.Color.parseColor(repo.languageColor ?: "#CCCCCC"))
-                                    } catch (e: Exception) {
-                                        Color.Gray
-                                    }
-                                )
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = repo.language,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                }
-                
-                // Stars
+                // Author info row
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Star,
-                        contentDescription = "stars",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.Gray
+                    AsyncImage(
+                        model = repo.avatar,
+                        contentDescription = "Author avatar",
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape),
+//                    error = painterResource(id = R.drawable.default_avatar)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
                     Text(
-                        text = "${repo.stars ?: 0}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        text = repo.author ?: "Unknown Author",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
                     )
                 }
                 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 
-                // Current period stars
-                if ((repo.currentPeriodStars ?: 0) > 0) {
+                // Repository name
+                Text(
+                    text = repo.name ?: "Unnamed Repository",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                // Description
+                if (!repo.description.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "+${repo.currentPeriodStars} stars today",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF28a745)
+                        text = repo.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
                     )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Stats row
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Language
+                    if (!repo.language.isNullOrEmpty()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        try {
+                                            Color(
+                                                android.graphics.Color.parseColor(
+                                                    repo.languageColor ?: "#CCCCCC"
+                                                )
+                                            )
+                                        } catch (e: Exception) {
+                                            Color.Gray
+                                        }
+                                    )
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = repo.language,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                    }
+                    
+                    // Stars
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Star,
+                            contentDescription = "stars",
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${repo.stars ?: 0}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(16.dp))
+                    
+                    // Current period stars
+                    if ((repo.currentPeriodStars ?: 0) > 0) {
+                        Text(
+                            text = "+${repo.currentPeriodStars} stars today",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF28a745)
+                        )
+                    }
                 }
             }
         }

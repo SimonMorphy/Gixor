@@ -9,7 +9,7 @@ package com.cpy3f2.gixor_mobile.model.entity
  */
 data class TrendyRepository(
 
-    val repoName: String,
+    val name: String,
     val author: String,
     val avatar: String,
     val url: String,
