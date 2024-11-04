@@ -118,7 +118,7 @@ fun LoginWebView(
                                                 var jsonResponse = JSON.parse(jsonContent);
                                                 
                                                 if (jsonResponse.code === 200 && jsonResponse.token) {
-                                                    window.androidInterface.onLoginSuccess(jsonResponse.token.tokenValue);
+                                                    window.androidInterface.onLoginSuccess(jsonContent);
                                                     document.body.innerHTML = '';
                                                 } else {
                                                     document.body.innerHTML = 
@@ -146,9 +146,9 @@ fun LoginWebView(
                     addJavascriptInterface(
                         object {
                             @JavascriptInterface
-                            fun onLoginSuccess(token: String) {
+                            fun onLoginSuccess(jsonResponse: String) {
                                 (context as? Activity)?.runOnUiThread {
-                                    viewModel.handleLoginSuccess(token)
+                                    viewModel.handleLoginSuccess(jsonResponse)
                                 }
                             }
                         },

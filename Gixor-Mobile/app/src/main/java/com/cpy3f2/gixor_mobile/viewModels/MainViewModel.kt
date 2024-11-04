@@ -255,30 +255,17 @@ class MainViewModel : ViewModel() {
         data class Error(val message: String) : LoginState()
     }
 
-    fun handleLoginSuccess(token: String) {
+    fun handleLoginSuccess(jsonResponse: String) {
         viewModelScope.launch {
             try {
                 _loginState.value = LoginState.Loading
                 
-                // 保存token到SharedPreferences
-                preferencesManager.saveToken(token)
+                // 保存完整的响应
+                preferencesManager.saveToken(jsonResponse)
                 
-                // 获取用户信息
-                withContext(Dispatchers.IO) {
-                    val userResponse = RetrofitClient.httpBaseService.getGitHubUserInfo(token)
-                    if (userResponse.code == 200) {
-                        // 将整个响应转换为 JSON 字符串并保存
-                        val gson = Gson()
-                        val jsonResponse = gson.toJson(userResponse)
-                        preferencesManager.saveUserInfo(jsonResponse)
-                        
-                        // 更新登录状态
-                        _isLoggedIn.value = true
-                        _loginState.value = LoginState.Success
-                    } else {
-                        throw RuntimeException("Failed to get user info: ${userResponse.msg}")
-                    }
-                }
+                // 更新登录状态
+                _isLoggedIn.value = true
+                _loginState.value = LoginState.Success
             } catch (e: Exception) {
                 e.printStackTrace()
                 _loginState.value = LoginState.Error(e.message ?: "Unknown error")
