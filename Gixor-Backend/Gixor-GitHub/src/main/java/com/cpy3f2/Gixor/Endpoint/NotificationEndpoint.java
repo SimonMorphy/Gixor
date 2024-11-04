@@ -1,14 +1,14 @@
 package com.cpy3f2.Gixor.Endpoint;
 
 import com.cpy3f2.Gixor.Annotation.Endpoint;
-import com.cpy3f2.Gixor.Domain.Notification;
-import com.cpy3f2.Gixor.Domain.QuerySetting;
+import com.cpy3f2.Gixor.Domain.Query.NotificationQuerySetting;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
 import com.cpy3f2.Gixor.Service.NotificationService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.service.annotation.GetExchange;
-import reactor.core.publisher.Flux;
+import org.springframework.web.service.annotation.PutExchange;
+import reactor.core.publisher.Mono;
 
 /**
  * @author : simon
@@ -26,9 +26,16 @@ public class NotificationEndpoint {
     private NotificationService notificationService;
 
     @GetExchange
-    public Flux<ResponseResult> getNotification(QuerySetting settings){
+    public Mono<ResponseResult> getNotification(NotificationQuerySetting settings){
         return notificationService
                 .getNotification(settings)
+                .collectList()
                 .map(ResponseResult::success);
+    }
+    @PutExchange
+    public Mono<ResponseResult> markAsRead(){
+        return notificationService
+                .markAsRead()
+                .then(Mono.just(ResponseResult.success("已读成功！")));
     }
 }

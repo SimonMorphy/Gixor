@@ -55,19 +55,19 @@ public class GitHubUser {
     private Boolean followedByCurrentUser;
     private Boolean isCurrentUser;
 
-    @Field(name = "Total_Stars_Earned", type = FieldType.Integer)
+    @Field(name = "total_Stars_Earned", type = FieldType.Long)
     private Integer totalStars;
 
-    @Field(name = "Total_Commits_2024", type = FieldType.Integer)
+    @Field(name = "total_Commits_2024", type = FieldType.Long)
     private Integer totalCommits;
 
-    @Field(name = "Total_PRs", type = FieldType.Integer)
+    @Field(name = "total_PRs", type = FieldType.Long)
     private Integer totalPRs;
 
-    @Field(name = "Total_Issues", type = FieldType.Integer)
+    @Field(name = "total_Issues", type = FieldType.Long)
     private Integer totalIssues;
 
-    @Field(name = "Contributed_to_last_year", type = FieldType.Integer)
+    @Field(name = "contributed_to_last_year", type = FieldType.Long)
     private Integer contributedTo;
 
     @Field(name = "grade", type = FieldType.Keyword)
@@ -75,6 +75,21 @@ public class GitHubUser {
 
     @Field(name = "score", type = FieldType.Double)
     private BigDecimal score;
+
+    @Field(name = "total_PRs_Merged", type = FieldType.Long)
+    private Long totalPRsMerged;
+
+    @Field(name = "merged_PRs_Percentage", type = FieldType.Double)
+    private Double mergedPRsPercentage;
+
+    @Field(name = "total_PRs_Reviewed", type = FieldType.Long)
+    private Long totalPRsReviewed;
+
+    @Field(name = "total_Discussions_Started", type = FieldType.Long)
+    private Long totalDiscussionsStarted;
+
+    @Field(name = "total_Discussions_Answered", type = FieldType.Long)
+    private Long totalDiscussionsAnswered;
 
     @JsonProperty("created_at")
     private LocalDateTime createdAt;

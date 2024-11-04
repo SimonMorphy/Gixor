@@ -1,6 +1,7 @@
 package com.cpy3f2.Gixor.Domain.DTO;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,11 +22,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class IssueDTO {
     private String title;
     private String body;
     private List<String> assignees;
 
+    @JsonProperty("milestone_number")
     private Long milestone;
 
     private List<String> labels;
@@ -33,3 +36,4 @@ public class IssueDTO {
     @JsonProperty("state_reason")
     private String stateReason;
 }
+

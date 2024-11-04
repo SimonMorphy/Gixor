@@ -111,6 +111,46 @@
             <artifactId>jakarta.persistence-api</artifactId>
             <version>${persistence-api.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.cpy3f2.Gixor</groupId>
+            <artifactId>Gixor-Api-GitHub</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cpy3f2.Gixor</groupId>
+            <artifactId>Gixor-Api-System</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cpy3f2.Gixor</groupId>
+            <artifactId>Gixor-Common-Core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cpy3f2.Gixor</groupId>
+            <artifactId>Gixor-Common-ElasticSearch</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cpy3f2.Gixor</groupId>
+            <artifactId>Gixor-Common-Auth</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cpy3f2.Gixor</groupId>
+            <artifactId>Gixor-Common-Redis</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cpy3f2.Gixor</groupId>
+            <artifactId>Gixor-Common-Knife</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cpy3f2.Gixor</groupId>
+            <artifactId>Gixor-Common-DataSource</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </dependencyManagement>
     <build>

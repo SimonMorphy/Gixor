@@ -26,7 +26,6 @@
         <dependency>
             <groupId>com.cpy3f2.Gixor</groupId>
             <artifactId>Gixor-Common-Core</artifactId>
-            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>

@@ -4,13 +4,13 @@ import cn.dev33.satoken.annotation.SaCheckRole;
 import com.cpy3f2.Gixor.Annotation.Endpoint;
 import com.cpy3f2.Gixor.Constant.Constants;
 import com.cpy3f2.Gixor.Domain.GitHubUser;
+import com.cpy3f2.Gixor.Domain.ResponseResult;
 import com.cpy3f2.Gixor.Domain.User;
 import com.cpy3f2.Gixor.Service.GitHubUserService;
 import com.cpy3f2.Gixor.Service.UserService;
+import com.cpy3f2.Gixor.service.CacheService;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.PostExchange;
@@ -34,6 +34,14 @@ public class UserEndpoint {
     private UserService userService;
 
 
+    @Resource
+    private CacheService cacheService;
+
+
+
+
+
+
 
     @PostExchange
     @SaCheckRole(Constants.ADMIN)
@@ -47,15 +55,23 @@ public class UserEndpoint {
     }
 
     @GetExchange
-    public Mono<GitHubUser> getInfo()
+    public Mono<ResponseResult> getInfo()
     {
-        return gitUserService.getInfo();
+        return gitUserService.getInfo()
+                .map(ResponseResult::success);
     }
 
+    @GetExchange("/rank")
+    public Mono<ResponseResult> list(int page,int pageSize){
+        return cacheService.getCacheList(Constants.RANK_KEY, GitHubUser.class,page,pageSize)
+                .collectList()
+                .map(ResponseResult::success);
+    }
     @GetExchange("/{username}")
-    public Mono<GitHubUser> getInfo(@PathVariable String username)
+    public Mono<ResponseResult> getInfo(@PathVariable String username)
     {
-        return gitUserService.getInfo(username);
+        return gitUserService.getInfo(username)
+                .map(ResponseResult::success);
     }
 
 }

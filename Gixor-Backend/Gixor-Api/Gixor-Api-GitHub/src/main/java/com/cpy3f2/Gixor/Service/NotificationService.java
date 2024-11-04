@@ -2,7 +2,7 @@ package com.cpy3f2.Gixor.Service;
 
 import com.cpy3f2.Gixor.Config.GitHubApi;
 import com.cpy3f2.Gixor.Domain.Notification;
-import com.cpy3f2.Gixor.Domain.QuerySetting;
+import com.cpy3f2.Gixor.Domain.Query.*;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -22,9 +22,9 @@ public class NotificationService {
     @Resource
     private WebClient githubClient;
 
-    public Flux<Notification> getNotification(QuerySetting querySetting) {
+    public Flux<Notification> getNotification(NotificationQuerySetting querySetting) {
         return githubClient.get()
-                .uri(uriBuilder -> GitHubApi.addQueryParams(uriBuilder, querySetting)
+                .uri(uriBuilder -> GitHubApi.addQueryParams(uriBuilder.path("/notifications"), querySetting)
                         .build())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,

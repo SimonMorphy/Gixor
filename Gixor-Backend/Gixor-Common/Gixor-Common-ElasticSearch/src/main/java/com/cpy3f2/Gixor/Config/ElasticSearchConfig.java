@@ -22,13 +22,13 @@ import java.time.Duration;
 @Configuration
 public class ElasticSearchConfig extends ReactiveElasticsearchConfiguration {
 
-    @Value("${spring.elasticsearch.uris:localhost:9200}")
+    @Value("${spring.elasticsearch.uris:39.105.98.60:9200}")
     private String elasticsearchUri;
 
-    @Value("${spring.elasticsearch.connection-timeout:5s}")
+    @Value("${spring.elasticsearch.connection-timeout:30s}")
     private String connectionTimeout;
 
-    @Value("${spring.elasticsearch.socket-timeout:5s}")
+    @Value("${spring.elasticsearch.socket-timeout:30s}")
     private String socketTimeout;
 
     @Value("${spring.elasticsearch.username:}")
@@ -42,15 +42,16 @@ public class ElasticSearchConfig extends ReactiveElasticsearchConfiguration {
     public ClientConfiguration clientConfiguration() {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/vnd.elasticsearch+json;compatible-with=8");
+        headers.add("Content-Type", "application/json");
 
         var builder = ClientConfiguration.builder()
-                .connectedTo(elasticsearchUri)
+                .connectedTo(elasticsearchUri.split(","))
                 .withConnectTimeout(Duration.parse("PT" + connectionTimeout))
                 .withSocketTimeout(Duration.parse("PT" + socketTimeout))
                 .withDefaultHeaders(headers);
 
         if (!username.isEmpty() && !password.isEmpty()) {
-            return builder.withBasicAuth(username, password).build();
+            builder.withBasicAuth(username, password);
         }
 
         return builder.build();
