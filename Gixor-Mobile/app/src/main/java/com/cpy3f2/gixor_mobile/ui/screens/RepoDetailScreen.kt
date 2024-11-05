@@ -74,7 +74,12 @@ fun RepoDetailScreen(
     var selectedTab by remember { mutableStateOf(RepoTab.Code) }
     val isStarred by viewModel.starredRepos.collectAsState()
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+    val repoDetails by viewModel.repoDetails.collectAsState()
     val context = LocalContext.current
+
+    LaunchedEffect(owner, repoName) {
+        viewModel.loadRepoDetails(owner, repoName)
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
         // 顶部应用栏
@@ -189,7 +194,6 @@ fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (isLoading) {
-            // 加载状态
             Column(
                 modifier = Modifier.align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -203,7 +207,6 @@ fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
                 )
             }
         } else {
-            // 原有的内容显示
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -246,24 +249,6 @@ fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
                                 count = repoDetails?.openIssues?.toString() ?: "0"
                             )
                         }
-
-                        // 语言信息
-                        if (!repoDetails?.language.isNullOrEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Language: ${repoDetails?.language}",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 文件列表
-                LazyColumn {
-                    items(sampleFiles) { file ->
-                        FileListItem(file)
                     }
                 }
             }

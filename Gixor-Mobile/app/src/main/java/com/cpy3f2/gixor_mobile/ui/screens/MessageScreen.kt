@@ -115,7 +115,8 @@ private fun NotificationsTopBar(viewModel: MainViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 IconButton(onClick = { 
-                    // 刷新通知列表
+                    // 标记所有通知为已读并刷新
+                    viewModel.refreshNotifications()
                     viewModel.loadNotifications(isRefresh = true)
                 }) {
                     Icon(

@@ -246,13 +246,13 @@ class MainViewModel : ViewModel() {
     private val _trendyRepos = MutableStateFlow<List<TrendyRepository>>(emptyList())
     val trendyRepos: StateFlow<List<TrendyRepository>> = _trendyRepos.asStateFlow()
 
-    // 添加一个标志来追踪是否已经加载过数据
+    // 添加一个标志来是否已经加载过
     private var _hasLoadedTrendyRepos = false
 
     fun loadTrendyRepos() {
         // 如果已经加载过且有数据，就不重复加载
         if (_hasLoadedTrendyRepos && _trendyRepos.value.isNotEmpty()) return
-        
+
         viewModelScope.launch {
             try {
                 _uiState.value = UiState.Loading
@@ -261,7 +261,7 @@ class MainViewModel : ViewModel() {
                     if (response.code == 200) {
                         _trendyRepos.value = response.data!!
                         _hasLoadedTrendyRepos = true
-                        
+
                         if (hasToken()) {
                             checkStarStatusForRepos(response.data)
                         }
@@ -281,7 +281,7 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val token = getToken() ?: return@launch
-                // 对每个仓库单独检查收藏状态
+                // 对每个仓库单独检查藏状态
                 repos.forEach { repo ->
                     try {
                         val response = RetrofitClient.httpBaseService.isStarRepo(repo.author, repo.name, token)
@@ -387,30 +387,58 @@ class MainViewModel : ViewModel() {
         return "$owner/$name" in _starredRepos.value
     }
 
+    // 仓库详情相关状态
     private val _repoDetails = MutableStateFlow<GitHubRepository?>(null)
     val repoDetails: StateFlow<GitHubRepository?> = _repoDetails.asStateFlow()
 
-    // 添加加载状态
     private val _isRepoDetailsLoading = MutableStateFlow(false)
     val isRepoDetailsLoading: StateFlow<Boolean> = _isRepoDetailsLoading.asStateFlow()
 
-    fun loadRepoDetails(owner: String, repoName: String) {
+    private val _repoDetailsError = MutableStateFlow<String?>(null)
+    val repoDetailsError: StateFlow<String?> = _repoDetailsError.asStateFlow()
+
+    fun loadRepoDetails(owner: String, repo: String) {
         viewModelScope.launch {
             try {
-                _isRepoDetailsLoading.value = true  // 开始加载
-                val params = createQueryParams()
-                val response = getToken()?.let { RetrofitClient.httpBaseService.getUserRepoList(it, owner, params) }
-                if (response != null) {
-                    if (response.code == 200) {
-                        val repo = response.data?.find { it.name == repoName }
-                        _repoDetails.value = repo
+                _isRepoDetailsLoading.value = true
+                _repoDetailsError.value = null
+                
+                val token = getToken() ?: throw Exception("Token not found")
+                val response = RetrofitClient.httpBaseService.getRepoDetail(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    params = createPageQueryParams()
+                )
+                
+                if (response.code == 200) {
+                    _repoDetails.value = response.data
+                    // 如果用户已登录，检查 star 状态
+                    if (hasToken()) {
+                        checkStarStatusForRepo(owner, repo)
                     }
+                } else {
+                    _repoDetailsError.value = response.msg ?: "Failed to load repository details"
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                _repoDetailsError.value = e.message ?: "Unknown error"
             } finally {
-                _isRepoDetailsLoading.value = false  // 结束加载
+                _isRepoDetailsLoading.value = false
             }
+        }
+    }
+
+    // 检查单个仓库的 star 状态
+    private suspend fun checkStarStatusForRepo(owner: String, repo: String) {
+        try {
+            val token = getToken() ?: return
+            val response = RetrofitClient.httpBaseService.isStarRepo(owner, repo, token)
+            if (response.code == 200) {
+                _starredRepos.value = _starredRepos.value + "$owner/$repo"
+            }
+        } catch (e: Exception) {
+            // 如果检查失败，假设未 star
+            e.printStackTrace()
         }
     }
 
@@ -435,7 +463,7 @@ class MainViewModel : ViewModel() {
             try {
                 _isIssuesLoading.value = true  // 开始加载
                 val params = createStateQueryParams(state = selectedFilter) // 使用选中的过滤器状态
-                val response = getToken()?.let { 
+                val response = getToken()?.let {
                     RetrofitClient.httpBaseService.getRepoIssues(it, owner, repoName, params)
                 }
                 if (response != null) {
@@ -472,7 +500,7 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _isPrLoading.value = true
-                val response = getToken()?.let { 
+                val response = getToken()?.let {
                     RetrofitClient.httpBaseService.getRepoPrList(it, owner, repoName, createStateQueryParams(state = selectedPrFilter))
                 }
                 if (response != null) {
@@ -498,7 +526,7 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _isIssueDetailLoading.value = true
-                val response = getToken()?.let { 
+                val response = getToken()?.let {
                     RetrofitClient.httpBaseService.getIssueDetail(owner, repo, issueNumber)
                 }
                 if (response?.code == 200) {
@@ -542,18 +570,18 @@ class MainViewModel : ViewModel() {
     // 预加载数据方法
     suspend fun preloadData() {
         if (_isPreloading.value) return
-        
+
         viewModelScope.launch {
             try {
                 _isPreloading.value = true
-                
+
                 // 并行加载多个数据
                 coroutineScope {
                     launch { loadTrendyRepos() }
-                    
+
                     // 如果用户已登录，加载用户相关数据
                     if (hasToken()) {
-                        launch { 
+                        launch {
                             getToken()?.let { token ->
                                 getUserInfo(token)
                             }
@@ -561,7 +589,7 @@ class MainViewModel : ViewModel() {
                         launch { loadStarredRepos() }
                     }
                 }
-                
+
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
@@ -715,10 +743,10 @@ class MainViewModel : ViewModel() {
 
                 // 获取未读消息
                 val unreadResponse = RetrofitClient.httpBaseService.getNotificationList(token, querySettings.toQueryMap())
-                
+
                 if (unreadResponse.code == 200) {
                     val unreadNotifications = unreadResponse.data ?: emptyList()
-                    
+
                     // 如果未读消息不足10条，获取已读消息补充
                     if (unreadNotifications.size < 10) {
                         val remainingCount = 10 - unreadNotifications.size
@@ -729,12 +757,12 @@ class MainViewModel : ViewModel() {
                             sort = "updated",
                             direction = "desc"
                         )
-                        
+
                         val readResponse = RetrofitClient.httpBaseService.getNotificationList(token, readQuerySettings.toQueryMap())
-                        
+
                         if (readResponse.code == 200) {
                             val readNotifications = readResponse.data ?: emptyList()
-                            
+
                             // 合并未读和已读消息
                             _notifications.value = if (isRefresh) {
                                 unreadNotifications + readNotifications

@@ -6,6 +6,7 @@ import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.Issue
+import com.cpy3f2.gixor_mobile.model.entity.IssueComment
 import com.cpy3f2.gixor_mobile.model.entity.IssueDTO
 import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
@@ -113,6 +114,16 @@ interface HttpBaseService {
     suspend fun getTrendyRepoList(
         @Header("gixor-login") tokenValue: String,
     ): ResultData<List<TrendyRepository>>
+
+    //获取指定仓库的详情
+    @GET("/gith/repo/{owner}/{repo}")
+    suspend fun getRepoDetail(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @QueryMap params: Map<String, String>
+    ): ResultData<GitHubRepository>
+
 
     /**
      *Milestone相关
@@ -237,6 +248,57 @@ interface HttpBaseService {
         @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
     ): ResultData<Issue>
+
+    /**
+     * Comment 相关
+     */
+    //获取指定issue的评论列表
+    @GET("/gith/issue/{owner}/{repo}/issues/{issue_number}/comments")
+    suspend fun getIssueComments(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path("issue_number") number: Long,
+        @QueryMap params: Map<String, String>
+    ): ResultData<List<IssueComment>>
+
+    //添加评论
+    @POST("/gith/issue/{owner}/{repo}/issues/{issue_number}/comments")
+    suspend fun addComment(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path("issue_number") number: Long,
+        @Body body: String
+    ): ResultData<Unit>
+
+    //更新评论
+    @PATCH("/gith/issue/{owner}/{repo}/comments/{comment_id}")
+    suspend fun updateComment(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path("comment_id") commentId: Long,
+        @Body body: String
+    ): ResultData<Unit>
+
+    //删除评论
+    @DELETE("/gith/issue/{owner}/{repo}/comments/{comment_id}")
+    suspend fun deleteComment(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path("comment_id") commentId: Long
+    ): ResultData<Unit>
+
+    //获取当个评论
+    @GET("/gith/issue/{owner}/{repo}/comments/{comment_id}")
+    suspend fun getComment(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path("comment_id") commentId: Long
+    ): ResultData<IssueComment>
 
     /**
      * Watch相关
@@ -406,4 +468,36 @@ interface HttpBaseService {
         @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
     ):ResultData<List<Notification>>
+
+    /**
+     * discussion相关
+     */
+    //获取指定仓库的讨论列表
+//    @GET("/gith/disc/{owner}/{repo}")
+//    suspend fun getRepoDiscussionList(
+//        @Header("gixor-login") tokenValue: String,
+//        @Path("owner") owner: String,
+//        @Path("repo") repo: String,
+//        @QueryMap params: Map<String, String>
+//    ): ResultData<List<Discussion>>
+
+    /**
+     * fork 相关
+     */
+    //获取指定仓库的fork列表
+    @GET("/gith/fork/{owner}/{repo}")
+    suspend fun getRepoForkUserList(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @QueryMap params: Map<String, String>
+    ): ResultData<List<SimpleUser>>
+
+    //fork 指定仓库
+    @POST("/gith/fork/{owner}/{repo}")
+    suspend fun forkRepo(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    ): ResultData<Unit>
 }
