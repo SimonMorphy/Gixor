@@ -226,7 +226,7 @@ fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
                     StatItem(
                         icon = Icons.Outlined.RemoveRedEye,
                         label = "Issues",
-                        count = "${repoDetails?.issues ?: 0}"
+                        count = "${repoDetails?.openIssues ?: 0}"
                     )
                 }
 

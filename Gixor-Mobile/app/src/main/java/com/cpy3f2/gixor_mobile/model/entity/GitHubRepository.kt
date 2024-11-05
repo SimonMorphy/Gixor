@@ -1,6 +1,7 @@
 package com.cpy3f2.gixor_mobile.model.entity
 
 import android.annotation.SuppressLint
+import com.google.gson.annotations.SerializedName
 import java.time.LocalDateTime
 
 data class GitHubRepository(
@@ -13,13 +14,16 @@ data class GitHubRepository(
     val description: String? = null,
     val language: String? = null,
 
+    @SerializedName("stargazers_count")
     val stargazersCount: Int? = null,
 
+    @SerializedName("forks_count")
     val forksCount: Int? = null,
     val visibility: String? = null,
     val fork: Boolean? = null,
 
-    val issues:Int? = null,
+    @SerializedName("open_issues")
+    val openIssues: Int? = null,
     val htmlUrl: String? = null,
     val topics: List<String>? = null,
 
