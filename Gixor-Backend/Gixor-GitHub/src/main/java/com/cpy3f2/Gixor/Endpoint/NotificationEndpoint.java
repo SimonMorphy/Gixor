@@ -6,7 +6,7 @@ import com.cpy3f2.Gixor.Domain.ResponseResult;
 import com.cpy3f2.Gixor.Service.NotificationService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.service.annotation.PutExchange;
 import reactor.core.publisher.Mono;
 
@@ -25,7 +25,7 @@ public class NotificationEndpoint {
     @Resource
     private NotificationService notificationService;
 
-    @GetExchange
+    @GetMapping
     public Mono<ResponseResult> getNotification(NotificationQuerySetting settings){
         return notificationService
                 .getNotification(settings)

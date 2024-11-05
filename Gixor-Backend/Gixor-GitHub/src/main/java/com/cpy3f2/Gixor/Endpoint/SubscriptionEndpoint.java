@@ -3,6 +3,8 @@ import com.cpy3f2.Gixor.Annotation.Endpoint;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
 import com.cpy3f2.Gixor.Service.SubscriptionService;
 import jakarta.annotation.Resource;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.service.annotation.*;
 import reactor.core.publisher.Mono;
@@ -32,7 +34,7 @@ public class SubscriptionEndpoint {
     /**
      * 获取仓库的观察者列表
      */
-    @GetExchange("/repo/{owner}/{repo}")
+    @GetMapping("/repo/{owner}/{repo}")
     public Mono<ResponseResult> getRepositoryWatchers(
             @PathVariable String owner,
             @PathVariable String repo) {
@@ -44,7 +46,7 @@ public class SubscriptionEndpoint {
     /**
      * 获取仓库订阅状态
      */
-    @GetExchange("/{owner}/{repo}")
+    @GetMapping("/{owner}/{repo}")
     public Mono<ResponseResult> getRepositorySubscription(
             @PathVariable String owner,
             @PathVariable String repo) {
@@ -68,7 +70,7 @@ public class SubscriptionEndpoint {
     /**
      * 取消仓库订阅
      */
-    @DeleteExchange("/{owner}/{repo}")
+    @DeleteMapping("/{owner}/{repo}")
     public Mono<ResponseResult> deleteRepositorySubscription(
             @PathVariable String owner,
             @PathVariable String repo) {
@@ -79,7 +81,7 @@ public class SubscriptionEndpoint {
     /**
      * 获取认证用户关注的仓库列表
      */
-    @GetExchange("/watching")
+    @GetMapping("/watching")
     public Mono<ResponseResult> getAuthenticatedUserWatching() {
         return subscriptionService.getAuthenticatedUserWatching()
                 .collectList()
@@ -89,7 +91,7 @@ public class SubscriptionEndpoint {
     /**
      * 获取指定用户关注的仓库列表
      */
-    @GetExchange("/watching/{username}")
+    @GetMapping("/watching/{username}")
     public Mono<ResponseResult> getUserWatching(@PathVariable String username) {
         return subscriptionService.getUserWatching(username)
                 .collectList()

@@ -5,6 +5,8 @@ import com.cpy3f2.Gixor.Domain.Query.BaseQuerySetting;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
 import com.cpy3f2.Gixor.Service.GitHubUserService;
 import jakarta.annotation.Resource;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.service.annotation.*;
 import reactor.core.publisher.Mono;
@@ -25,7 +27,7 @@ public class FollowEndpoint {
     /**
      * 获取当前用户的关注者列表
      */
-    @GetExchange("/followers")
+    @GetMapping("/followers")
     public Mono<ResponseResult> getFollowers(BaseQuerySetting settings) {
         return gitHubUserService.getFollowers(settings)
                 .collectList()
@@ -35,7 +37,7 @@ public class FollowEndpoint {
     /**
      * 获取当前用户关注的用户列表
      */
-    @GetExchange("/following") 
+    @GetMapping("/following") 
     public Mono<ResponseResult> getFollowing(BaseQuerySetting settings) {
         return gitHubUserService.getFollowing(settings)
                 .collectList()
@@ -45,7 +47,7 @@ public class FollowEndpoint {
     /**
      * 检查是否关注了指定用户
      */
-    @GetExchange("/{username}")
+    @GetMapping("/{username}")
     public Mono<ResponseResult> checkFollowed(@PathVariable String username) {
         return gitHubUserService.checkFollowed(username)
                 .then(Mono.just(ResponseResult.success("已关注该用户")));
@@ -63,7 +65,7 @@ public class FollowEndpoint {
     /**
      * 取消关注指定用户
      */
-    @DeleteExchange("/{username}")
+    @DeleteMapping("/{username}")
     public Mono<ResponseResult> unfollow(@PathVariable String username) {
         return gitHubUserService.unfollow(username)
                 .then(Mono.just(ResponseResult.success("取消关注成功")));
@@ -72,7 +74,7 @@ public class FollowEndpoint {
     /**
      * 获取指定用户的关注者列表
      */
-    @GetExchange("/{username}/followers")
+    @GetMapping("/{username}/followers")
     public Mono<ResponseResult> listFollowers(@PathVariable String username, BaseQuerySetting settings) {
         return gitHubUserService.listFollowers(username, settings)
                 .collectList()
@@ -82,7 +84,7 @@ public class FollowEndpoint {
     /**
      * 获取指定用户关注的用户列表
      */
-    @GetExchange("/{username}/following")
+    @GetMapping("/{username}/following")
     public Mono<ResponseResult> listFollowing(@PathVariable String username, BaseQuerySetting settings) {
         return gitHubUserService.listFollowing(username, settings)
                 .collectList()

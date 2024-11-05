@@ -10,9 +10,7 @@ import com.cpy3f2.Gixor.Service.IssueCommentService;
 import com.cpy3f2.Gixor.Service.IssueService;
 import com.cpy3f2.Gixor.Service.MilestoneService;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.service.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -40,7 +38,7 @@ public class IssueEndpoint {
      * @param settings 查询参数
      * @return Mono<ResponseResult>
      */
-    @GetExchange
+    @GetMapping
     public Mono<ResponseResult> listIssues(IssueQuerySetting settings) {
         return issueService.listIssues(settings)
                 .collectList()
@@ -54,7 +52,7 @@ public class IssueEndpoint {
      * @param settings 查询参数
      * @return Mono<ResponseResult>
      */
-    @GetExchange("/{owner}/{repo}")
+    @GetMapping("/{owner}/{repo}")
     public Mono<ResponseResult> listRepoIssues(@PathVariable String owner, 
                                              @PathVariable String repo,
                                              IssueQuerySetting settings) {
@@ -70,7 +68,7 @@ public class IssueEndpoint {
      * @param issueDTO Issue信息
      * @return Mono<ResponseResult>
      */
-    @PostExchange("/{owner}/{repo}")
+    @PostMapping("/{owner}/{repo}")
     public Mono<ResponseResult> createIssue(@PathVariable String owner,
                                           @PathVariable String repo,
                                           @RequestBody IssueDTO issueDTO) {
@@ -85,7 +83,7 @@ public class IssueEndpoint {
      * @param number Issue编号
      * @return Mono<ResponseResult>
      */
-    @GetExchange("/{owner}/{repo}/{number}")
+    @GetMapping("/{owner}/{repo}/{number}")
     public Mono<ResponseResult> getIssue(@PathVariable String owner,
                                        @PathVariable String repo,
                                        @PathVariable Integer number) {
@@ -101,7 +99,7 @@ public class IssueEndpoint {
      * @param issueDTO Issue更新信息
      * @return Mono<ResponseResult>
      */
-    @PatchExchange("/{owner}/{repo}/{number}")
+    @PatchMapping("/{owner}/{repo}/{number}")
     public Mono<ResponseResult> updateIssue(@PathVariable String owner,
                                           @PathVariable String repo,
                                           @PathVariable Integer number,
@@ -132,7 +130,7 @@ public class IssueEndpoint {
      * @param issueNumber Issue编号
      * @return Mono<ResponseResult>
      */
-    @DeleteExchange("/{owner}/{repo}/{issueNumber}")
+    @DeleteMapping("/{owner}/{repo}/{issueNumber}")
     public Mono<ResponseResult> unlockIssue(@PathVariable String owner,
                                           @PathVariable String repo,
                                           @PathVariable String issueNumber) {
@@ -145,7 +143,7 @@ public class IssueEndpoint {
      * @param settings 查询参数
      * @return Mono<ResponseResult>
      */
-    @GetExchange("/assigned")
+    @GetMapping("/assigned")
     public Mono<ResponseResult> listAssignedIssues(IssueQuerySetting settings) {
         return issueService.listAssignedIssues(settings)
                 .collectList()
@@ -159,7 +157,7 @@ public class IssueEndpoint {
      * @param settings 查询参数
      * @return Mono<ResponseResult>
      */
-    @GetExchange("/{owner}/{repo}/milestones")
+    @GetMapping("/{owner}/{repo}/milestones")
     public Mono<ResponseResult> listMilestones(@PathVariable String owner,
                                              @PathVariable String repo,
                                                IssueQuerySetting settings) {
@@ -175,7 +173,7 @@ public class IssueEndpoint {
      * @param milestoneNumber 里程碑编号
      * @return Mono<ResponseResult>
      */
-    @GetExchange("/{owner}/{repo}/milestones/{milestone_number}")
+    @GetMapping("/{owner}/{repo}/milestones/{milestone_number}")
     public Mono<ResponseResult> getMilestone(@PathVariable String owner,
                                            @PathVariable String repo,
                                            @PathVariable("milestone_number") Integer milestoneNumber) {
@@ -190,7 +188,7 @@ public class IssueEndpoint {
      * @param milestone 里程碑信息
      * @return Mono<ResponseResult>
      */
-    @PostExchange("/{owner}/{repo}/milestones")
+    @PostMapping("/{owner}/{repo}/milestones")
     public Mono<ResponseResult> createMilestone(@PathVariable String owner,
                                               @PathVariable String repo,
                                               @RequestBody Milestone milestone) {
@@ -206,7 +204,7 @@ public class IssueEndpoint {
      * @param milestone 里程碑更新信息
      * @return Mono<ResponseResult>
      */
-    @PatchExchange("/{owner}/{repo}/milestones/{milestone_number}")
+    @PatchMapping("/{owner}/{repo}/milestones/{milestone_number}")
     public Mono<ResponseResult> updateMilestone(@PathVariable String owner,
                                               @PathVariable String repo,
                                               @PathVariable("milestone_number") Integer milestoneNumber,
@@ -222,7 +220,7 @@ public class IssueEndpoint {
      * @param milestoneNumber 里程碑编号
      * @return Mono<ResponseResult>
      */
-    @DeleteExchange("/{owner}/{repo}/milestones/{milestone_number}")
+    @DeleteMapping("/{owner}/{repo}/milestones/{milestone_number}")
     public Mono<ResponseResult> deleteMilestone(@PathVariable String owner,
                                               @PathVariable String repo,
                                               @PathVariable("milestone_number") Integer milestoneNumber) {
@@ -233,7 +231,7 @@ public class IssueEndpoint {
     /**
      * 获取Issue评论列表
      */
-    @GetExchange("/{owner}/{repo}/issues/{issue_number}/comments")
+    @GetMapping("/{owner}/{repo}/issues/{issue_number}/comments")
     public Mono<ResponseResult> listComments(@PathVariable String owner,
                                              @PathVariable String repo,
                                              @PathVariable("issue_number") Integer issueNumber,
@@ -246,7 +244,7 @@ public class IssueEndpoint {
     /**
      * 获取单个评论
      */
-    @GetExchange("/{owner}/{repo}/comments/{comment_id}")
+    @GetMapping("/{owner}/{repo}/comments/{comment_id}")
     public Mono<ResponseResult> getComment(@PathVariable String owner,
                                            @PathVariable String repo,
                                            @PathVariable("comment_id") Long commentId) {
@@ -257,7 +255,7 @@ public class IssueEndpoint {
     /**
      * 创建评论
      */
-    @PostExchange("/{owner}/{repo}/issues/{issue_number}/comments")
+    @PostMapping("/{owner}/{repo}/issues/{issue_number}/comments")
     public Mono<ResponseResult> createComment(@PathVariable String owner,
                                               @PathVariable String repo,
                                               @PathVariable("issue_number") Integer issueNumber,
@@ -269,7 +267,7 @@ public class IssueEndpoint {
     /**
      * 更新评论
      */
-    @PatchExchange("/{owner}/{repo}/comments/{comment_id}")
+    @PatchMapping("/{owner}/{repo}/comments/{comment_id}")
     public Mono<ResponseResult> updateComment(@PathVariable String owner,
                                               @PathVariable String repo,
                                               @PathVariable("comment_id") Long commentId,
@@ -281,7 +279,7 @@ public class IssueEndpoint {
     /**
      * 删除评论
      */
-    @DeleteExchange("/{owner}/{repo}/comments/{comment_id}")
+    @DeleteMapping("/{owner}/{repo}/comments/{comment_id}")
     public Mono<ResponseResult> deleteComment(@PathVariable String owner,
                                               @PathVariable String repo,
                                               @PathVariable("comment_id") Long commentId) {

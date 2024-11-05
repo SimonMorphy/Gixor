@@ -1,6 +1,5 @@
 package com.cpy3f2.Gixor.Domain;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -9,44 +8,42 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author : simon
- * @description : 评论
- * @last : 2024-11-04 23:16
+ * @description :
+ * @last : 2024-11-05 21:47
  * Copyright (c) 2024. 保留所有权利。
- * @since : 2024-11-04 23:16
+ * @since : 2024-11-05 21:47
  */
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class IssueComment {
-    private Long id;
-
-    @JsonProperty("node_id")
-    private String nodeId;
-
-    private String url;
-
-    @JsonProperty("html_url")
-    private String htmlUrl;
-
+public class Discussion {
+    private String title;
     private String body;
-
-    private GitHubRepository.Owner user;
 
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
 
-    @JsonProperty("updated_at")
-    private LocalDateTime updatedAt;
+    @JsonProperty("author")
+    private String authorName;
 
-    @JsonProperty("issue_url")
-    private String issueUrl;
 
-    @JsonProperty("author_association")
-    private String authorAssociation;
+    @JsonProperty("category")
+    private String categoryName;
+
+
+    private List<Comment> comments;
+
+    @Data
+    @Builder
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Comment {
+        private String body;
+        private String authorName;
+    }
 }

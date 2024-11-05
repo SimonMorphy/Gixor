@@ -4,6 +4,10 @@ import com.cpy3f2.Gixor.Config.GitHubApi;
 import com.cpy3f2.Gixor.Domain.DTO.IssueDTO;
 import com.cpy3f2.Gixor.Domain.Issue;
 import com.cpy3f2.Gixor.Domain.Query.IssueQuerySetting;
+import com.cpy3f2.Gixor.Domain.ResponseResult;
+import com.cpy3f2.Gixor.Exception.constant.GitHubErrorCodes;
+import com.cpy3f2.Gixor.Exception.repository.RepositoryOperationException;
+import com.cpy3f2.Gixor.Exception.util.GitHubErrorMessageUtil;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
@@ -23,6 +27,9 @@ import reactor.core.publisher.Mono;
 public class IssueService {
     @Resource
     private WebClient githubClient;
+
+    @Resource
+    private GitHubErrorMessageUtil errorMessageUtil;
 
     public Flux<Issue> listIssues(final IssueQuerySetting settings){
         return githubClient
@@ -51,7 +58,10 @@ public class IssueService {
                 .bodyValue(issueDTO)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError,
-                        clientResponse -> Mono.error(new RuntimeException("创建失败，请稍后再试")))
+                        clientResponse -> Mono.error(new RepositoryOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.ISSUE_CREATE),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(Void.class);
     }
 
@@ -61,7 +71,10 @@ public class IssueService {
                 .uri(uriBuilder -> uriBuilder.path("/repos/{owner}/{repo}/issues/{number}").build(owner,repo,number))
                 .retrieve()
                 .onStatus(HttpStatusCode::isError,
-                        clientResponse -> Mono.error(new RuntimeException("获取失败，请稍后再试")))
+                        clientResponse -> Mono.error(new RepositoryOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.ISSUE_GET),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(Issue.class);
     }
 

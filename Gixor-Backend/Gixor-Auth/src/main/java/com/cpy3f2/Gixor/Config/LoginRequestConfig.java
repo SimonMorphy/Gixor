@@ -50,7 +50,14 @@ public class LoginRequestConfig {
                         AuthGithubScope.USER,AuthGithubScope.PUBLIC_REPO,
                         AuthGithubScope.GIST,AuthGithubScope.READ_USER,
                         AuthGithubScope.USER_EMAIL,AuthGithubScope.NOTIFICATIONS,
-                        AuthGithubScope.REPO_STATUS,AuthGithubScope.USER_FOLLOW
+                        AuthGithubScope.REPO_STATUS,AuthGithubScope.USER_FOLLOW,
+                        AuthGithubScope.READ_DISCUSSION,
+                        AuthGithubScope.REPO_DEPLOYMENT,
+                        AuthGithubScope.WRITE_DISCUSSION,
+                        AuthGithubScope.WRITE_ORG,
+                        AuthGithubScope.DELETE_REPO,
+                        AuthGithubScope.WRITE_PACKAGES,
+                        AuthGithubScope.READ_PACKAGES
                 ))
                 .build());
 
