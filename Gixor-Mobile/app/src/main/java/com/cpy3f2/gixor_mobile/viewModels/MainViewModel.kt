@@ -409,16 +409,11 @@ class MainViewModel : ViewModel() {
     private val _isIssuesLoading = MutableStateFlow(false)
     val isIssuesLoading: StateFlow<Boolean> = _isIssuesLoading.asStateFlow()
 
-    fun loadRepoIssues(owner: String, repoName: String, state: String) {
+    fun loadRepoIssues(owner: String, repoName: String) {
         viewModelScope.launch {
             try {
                 _isIssuesLoading.value = true  // 开始加载
-                val params = mapOf(
-                    "state" to state,
-                    "per_page" to "30",
-                    "page" to "1"
-                )
-                val response = RetrofitClient.httpBaseService.getRepoIssues(owner, repoName, params)
+                val response = RetrofitClient.httpBaseService.getRepoIssues(owner, repoName, createQueryParams())
                 if (response.code == 200) {
                     _repoIssues.value = response.data
                 }
@@ -438,16 +433,11 @@ class MainViewModel : ViewModel() {
     private val _isPrLoading = MutableStateFlow(false)
     val isPrLoading: StateFlow<Boolean> = _isPrLoading.asStateFlow()
 
-    fun loadRepoPullRequests(owner: String, repoName: String, state: String = "all") {
+    fun loadRepoPullRequests(owner: String, repoName: String) {
         viewModelScope.launch {
             try {
                 _isPrLoading.value = true
-                val params = mapOf(
-                    "state" to state,
-                    "per_page" to "30",
-                    "page" to "1"
-                )
-                val response = RetrofitClient.httpBaseService.getRepoPrList(owner, repoName, params)
+                val response = RetrofitClient.httpBaseService.getRepoPrList(owner, repoName)
                 if (response.code == 200) {
                     _repoPullRequests.value = response.data
                 }

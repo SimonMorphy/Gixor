@@ -76,7 +76,7 @@ fun RepoDetailScreen(
     val isStarred by viewModel.starredRepos.collectAsState()
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
     val context = LocalContext.current
-    
+
     Column(modifier = modifier.fillMaxSize()) {
         // 顶部应用栏
         TopAppBar(
@@ -94,8 +94,8 @@ fun RepoDetailScreen(
                 }
             },
             navigationIcon = {
-                IconButton(onClick = { 
-                    (context as? Activity)?.finish()
+                IconButton(onClick = {
+//                    (context as? Activity)?.finish()
                 }) {
                     Icon(Icons.Default.ArrowBack, "Back")
                 }
@@ -182,7 +182,7 @@ enum class RepoTab(val title: String) {
 @Composable
 fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
     val repoDetails by viewModel.repoDetails.collectAsState()
-    
+
     LaunchedEffect(owner, repoName) {
         viewModel.loadRepoDetails(owner, repoName)
     }
@@ -207,7 +207,7 @@ fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-                
+
                 // 统计信息
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -240,9 +240,9 @@ fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
                 }
             }
         }
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // 文件列表
         LazyColumn {
             items(sampleFiles) { file ->
@@ -353,9 +353,9 @@ fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
     val issues by viewModel.repoIssues.collectAsState()
     val isLoading by viewModel.isIssuesLoading.collectAsState()
     var selectedFilter by remember { mutableStateOf("open") }
-    
+
     LaunchedEffect(owner, repoName, selectedFilter) {
-        viewModel.loadRepoIssues(owner, repoName, selectedFilter)
+        viewModel.loadRepoIssues(owner, repoName)
     }
 
     Column(
@@ -470,9 +470,9 @@ fun IssueItem(issue: Issue) {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Issue 状态和标签
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -484,9 +484,9 @@ fun IssueItem(issue: Issue) {
                     LabelChip(label)
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Issue 元信息
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -575,9 +575,9 @@ fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewMode
     val pullRequests by viewModel.repoPullRequests.collectAsState()
     val isLoading by viewModel.isPrLoading.collectAsState()
     var selectedFilter by remember { mutableStateOf("all") }
-    
+
     LaunchedEffect(owner, repoName, selectedFilter) {
-        viewModel.loadRepoPullRequests(owner, repoName, selectedFilter)
+        viewModel.loadRepoPullRequests(owner, repoName)
     }
 
     Column(
@@ -697,9 +697,9 @@ fun PullRequestItem(pr: PullRequest) {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // PR 状态和元信息
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -730,7 +730,7 @@ fun PullRequestItem(pr: PullRequest) {
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
-                
+
                 // 草稿标签
                 if (pr.isDraft == true) {
                     Surface(
@@ -746,9 +746,9 @@ fun PullRequestItem(pr: PullRequest) {
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // PR 创建者和时间信息
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -764,19 +764,19 @@ fun PullRequestItem(pr: PullRequest) {
                         .clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
-                
+
                 // 用户名
                 Text(
                     text = pr.user?.name ?: "未知用户",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
-                
+
                 Text(
                     text = "•",
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
-                
+
                 // 创建时间
                 Text(
                     text = DateTimeConverters.formatRelativeTime(pr.createdAt),
