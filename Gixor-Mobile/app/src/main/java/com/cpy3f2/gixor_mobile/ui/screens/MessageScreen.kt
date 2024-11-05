@@ -4,21 +4,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -29,18 +25,32 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material.icons.rounded.AlternateEmail
 import androidx.compose.material.icons.rounded.RateReview
-import androidx.navigation.NavType
-import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import android.net.Uri
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
-
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.cpy3f2.gixor_mobile.model.converter.DateTimeConverters
+import com.cpy3f2.gixor_mobile.model.entity.Notification
 
 @Composable
 fun MessageScreen(viewModel: MainViewModel) {
     val systemUiController = rememberSystemUiController()
     val statusBarColor = MaterialTheme.colorScheme.surface
     val isDarkIcons = !isSystemInDarkTheme()
+
+    val notifications by viewModel.notifications.collectAsState()
+    val isLoading by viewModel.isNotificationsLoading.collectAsState()
+    val hasError by viewModel.notificationError.collectAsState()
+    val listState = rememberLazyListState()
+
+    // 监听滚动到底部
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrolledToEnd() }
+            .collect { isEnd ->
+                if (isEnd) {
+                    viewModel.loadNotifications(isRefresh = false)
+                }
+            }
+    }
 
     DisposableEffect(systemUiController) {
         systemUiController.setStatusBarColor(
@@ -51,33 +61,30 @@ fun MessageScreen(viewModel: MainViewModel) {
     }
 
     Scaffold(
-        topBar = { NotificationsTopBar() },
+        topBar = { NotificationsTopBar(viewModel) },
         modifier = Modifier.statusBarsPadding()
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isLoading),
+            onRefresh = { viewModel.loadNotifications(isRefresh = true) }
         ) {
-            // 过滤器
-            item {
-                NotificationFilters()
-            }
-
-            // 通知列表
-            items(10) { index ->
-                NotificationItem(
-                    viewModel = viewModel,
-                    repository = "android/architecture",
-                    title = "Issue #${index + 100}: Update documentation for new features",
-                    reason = if (index % 3 == 0) "mention" else if (index % 3 == 1) "review_requested" else "subscribed",
-                    time = "2小时前",
-                    isUnread = index % 2 == 0,
-                    notificationId = "notification_$index"
-                )
-
-                if (index < 9) {
-                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                when {
+                    hasError != null -> ErrorState(
+                        error = hasError!!,
+                        onRetry = { viewModel.loadNotifications(isRefresh = true) }
+                    )
+                    notifications.isEmpty() && !isLoading -> EmptyState()
+                    else -> NotificationsList(
+                        notifications = notifications,
+                        isLoading = isLoading,
+                        listState = listState,
+                        viewModel = viewModel
+                    )
                 }
             }
         }
@@ -85,7 +92,7 @@ fun MessageScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-private fun NotificationsTopBar() {
+private fun NotificationsTopBar(viewModel: MainViewModel) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 1.dp
@@ -107,14 +114,17 @@ private fun NotificationsTopBar() {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                IconButton(onClick = { /* 标记所有已读 */ }) {
+                IconButton(onClick = { 
+                    // 刷新通知列表
+                    viewModel.loadNotifications(isRefresh = true)
+                }) {
                     Icon(
                         imageVector = Icons.Rounded.DoneAll,
                         contentDescription = "Mark all as read"
                     )
                 }
 
-                IconButton(onClick = { /* 置 */ }) {
+                IconButton(onClick = { /* 设置 */ }) {
                     Icon(
                         imageVector = Icons.Rounded.Settings,
                         contentDescription = "Settings"
@@ -257,6 +267,115 @@ private fun NotificationItem(
             )
         }
     }
+}
+
+@Composable
+private fun NotificationsList(
+    notifications: List<Notification>,
+    isLoading: Boolean,
+    listState: LazyListState,
+    viewModel: MainViewModel
+) {
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        item {
+            NotificationFilters()
+        }
+
+        items(notifications.size) { index ->
+            val notification = notifications[index]
+            NotificationItem(
+                viewModel = viewModel,
+                repository = notification.repository?.fullName ?: "",
+                title = notification.subject?.title ?: "",
+                reason = notification.reason ?: "",
+                time = DateTimeConverters.formatRelativeTime(notification.updatedAt?.toString()),
+                isUnread = notification.unread,
+                notificationId = notification.id ?: ""
+            )
+
+            if (index < notifications.size - 1) {
+                Divider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+        }
+
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Notifications,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "暂无通知",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorState(
+    error: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Error,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.error
+            )
+            Text(
+                text = error,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error
+            )
+            Button(onClick = onRetry) {
+                Text("重试")
+            }
+        }
+    }
+}
+
+// 扩展函数：检查是否滚动到底部
+fun LazyListState.isScrolledToEnd(): Boolean {
+    val lastItem = layoutInfo.totalItemsCount - 1
+    return lastItem > 0 && firstVisibleItemIndex + layoutInfo.visibleItemsInfo.size >= lastItem
 }
 
 @Preview

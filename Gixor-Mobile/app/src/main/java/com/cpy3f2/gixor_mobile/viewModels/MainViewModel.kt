@@ -38,6 +38,8 @@ import createPageQueryParams
 import createStateQueryParams
 import kotlinx.coroutines.coroutineScope
 import android.util.Log
+import com.cpy3f2.gixor_mobile.model.entity.Notification
+import com.cpy3f2.gixor_mobile.model.setting.NotificationQuerySetting
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -288,7 +290,7 @@ class MainViewModel : ViewModel() {
                             _starredRepos.value = _starredRepos.value + "${repo.author}/${repo.name}"
                         }
                     } catch (e: Exception) {
-                        // 单个仓库检查失败不影响其他仓库
+                        // 单个仓库检查失败影响其他仓库
                         e.printStackTrace()
                     }
                 }
@@ -671,5 +673,99 @@ class MainViewModel : ViewModel() {
                 _isReceivedEventsLoading.value = false
             }
         }
+    }
+
+    // 添加通知列表状态
+    private val _notifications = MutableStateFlow<List<Notification>>(emptyList())
+    val notifications: StateFlow<List<Notification>> = _notifications.asStateFlow()
+
+    private val _isNotificationsLoading = MutableStateFlow(false)
+    val isNotificationsLoading: StateFlow<Boolean> = _isNotificationsLoading.asStateFlow()
+
+    // 添加分页状态
+    private var currentPage = 1
+    private var hasMoreNotifications = true
+
+    private val _notificationError = MutableStateFlow<String?>(null)
+    val notificationError: StateFlow<String?> = _notificationError.asStateFlow()
+
+    // 修改通知加载逻辑
+    fun loadNotifications(isRefresh: Boolean = false) {
+        if (_isNotificationsLoading.value) return
+        if (isRefresh) {
+            currentPage = 1
+            hasMoreNotifications = true
+            _notificationError.value = null
+        }
+        if (!hasMoreNotifications) return
+
+        viewModelScope.launch {
+            try {
+                _isNotificationsLoading.value = true
+                val token = getToken() ?: return@launch
+
+                // 创建查询设置，优先获取未读消息并按未读数量排序
+                val querySettings = NotificationQuerySetting(
+                    perPage = 10,
+                    page = currentPage,
+                    isUnread = true,  // 优先获取未读消息
+                    sort = "updated",  // 按更新时间排序
+                    direction = "desc"  // 降序排列
+                )
+
+                // 获取未读消息
+                val unreadResponse = RetrofitClient.httpBaseService.getNotificationList(token, querySettings.toQueryMap())
+                
+                if (unreadResponse.code == 200) {
+                    val unreadNotifications = unreadResponse.data ?: emptyList()
+                    
+                    // 如果未读消息不足10条，获取已读消息补充
+                    if (unreadNotifications.size < 10) {
+                        val remainingCount = 10 - unreadNotifications.size
+                        val readQuerySettings = NotificationQuerySetting(
+                            perPage = remainingCount,
+                            page = 1,
+                            isUnread = false,
+                            sort = "updated",
+                            direction = "desc"
+                        )
+                        
+                        val readResponse = RetrofitClient.httpBaseService.getNotificationList(token, readQuerySettings.toQueryMap())
+                        
+                        if (readResponse.code == 200) {
+                            val readNotifications = readResponse.data ?: emptyList()
+                            
+                            // 合并未读和已读消息
+                            _notifications.value = if (isRefresh) {
+                                unreadNotifications + readNotifications
+                            } else {
+                                _notifications.value + unreadNotifications + readNotifications
+                            }
+                        }
+                    } else {
+                        // 如果未读消息足够，直接使用未读消息
+                        _notifications.value = if (isRefresh) {
+                            unreadNotifications
+                        } else {
+                            _notifications.value + unreadNotifications
+                        }
+                    }
+
+                    // 更新分页状态
+                    hasMoreNotifications = unreadNotifications.size == 10
+                    if (hasMoreNotifications) currentPage++
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _notificationError.value = e.message ?: "加载失败"
+            } finally {
+                _isNotificationsLoading.value = false
+            }
+        }
+    }
+
+    // 添加刷新方法
+    fun refreshNotifications() {
+        loadNotifications(isRefresh = true)
     }
 }

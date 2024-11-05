@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.cpy3f2.gixor_mobile.MyApplication.Companion.preferencesManager
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
+import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
+import com.cpy3f2.gixor_mobile.model.setting.BaseQuerySetting
 import com.cpy3f2.gixor_mobile.network.source.RetrofitClient
 import createQueryParams
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +34,39 @@ class UserProfileViewModel : ViewModel() {
     // 记录初始关注状态
     private var initialFollowingState = false
 
+    // 添加新的状态
+    private val _followers = MutableStateFlow<List<SimpleUser>>(emptyList())
+    val followers: StateFlow<List<SimpleUser>> = _followers.asStateFlow()
+
+    private val _following = MutableStateFlow<List<SimpleUser>>(emptyList())
+    val following: StateFlow<List<SimpleUser>> = _following.asStateFlow()
+
+    // 当前显示的内容类型
+    private val _currentTab = MutableStateFlow<String>("repositories")
+    val currentTab: StateFlow<String> = _currentTab.asStateFlow()
+
+    // 分页状态
+    private var followersPage = 1
+    private var followingPage = 1
+    private var hasMoreFollowers = true
+    private var hasMoreFollowing = true
+
+    // 加载状态
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
+
+    // 添加仓库分页状态
+    private var reposPage = 1
+    private var hasMoreRepos = true
+
+    // 添加用户仓库状态
+    private val _userRepos = MutableStateFlow<List<GitHubRepository>>(emptyList())
+    val userRepos: StateFlow<List<GitHubRepository>> = _userRepos.asStateFlow()
+
+    // 仓库分页状态
+    private var userReposPage = 1
+    private var hasMoreUserRepos = true
+
     fun getToken(): String? = preferencesManager.getToken()
 
     fun loadUserProfile(username: String) {
@@ -39,15 +74,14 @@ class UserProfileViewModel : ViewModel() {
             try {
                 _isLoading.value = true
                 _error.value = null
-                _isFollowing.value = false
-                initialFollowingState = false
+                _currentTab.value = "repositories"
                 
                 val token = getToken() ?: return@launch
                 val response = RetrofitClient.httpBaseService.getGitHubUserInfo(token, username)
                 if (response.code == 200) {
                     _userState.value = response.data!!
-                    loadUserRepositories(username)
                     checkFollowingStatus(username)
+                    loadUserRepos(username, isRefresh = true)
                 } else {
                     _error.value = "Failed to load user profile"
                 }
@@ -147,9 +181,155 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
+    // 加载粉丝列表
+    fun loadFollowers(username: String, isRefresh: Boolean = false) {
+        if (_isLoadingMore.value) return
+        if (isRefresh) {
+            followersPage = 1
+            hasMoreFollowers = true
+            _followers.value = emptyList()
+        }
+        if (!hasMoreFollowers) return
+
+        viewModelScope.launch {
+            try {
+                _isLoadingMore.value = true
+                val token = getToken() ?: return@launch
+                
+                val querySettings = BaseQuerySetting(
+                    perPage = 10,
+                    page = followersPage,
+                    sort = "created",
+                    direction = "desc"
+                )
+                
+                val response = RetrofitClient.httpBaseService.getUserFollowers(token, username, querySettings.toQueryMap())
+                
+                if (response.code == 200) {
+                    val newFollowers = response.data ?: emptyList()
+                    _followers.value = if (isRefresh) {
+                        newFollowers
+                    } else {
+                        _followers.value + newFollowers
+                    }
+                    
+                    hasMoreFollowers = newFollowers.size >= 10
+                    if (hasMoreFollowers) followersPage++
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _error.value = e.message
+            } finally {
+                _isLoadingMore.value = false
+            }
+        }
+    }
+
+    // 加载关注者列表
+    fun loadFollowing(username: String, isRefresh: Boolean = false) {
+        if (_isLoadingMore.value) return
+        if (isRefresh) {
+            followingPage = 1
+            hasMoreFollowing = true
+            _following.value = emptyList()
+        }
+        if (!hasMoreFollowing) return
+
+        viewModelScope.launch {
+            try {
+                _isLoadingMore.value = true
+                val token = getToken() ?: return@launch
+                
+                val querySettings = BaseQuerySetting(
+                    perPage = 10,
+                    page = followingPage,
+                    direction = "desc"
+                )
+                
+                val response = RetrofitClient.httpBaseService.getUserFollowing(token, username, querySettings.toQueryMap())
+                
+                if (response.code == 200) {
+                    val newFollowing = response.data ?: emptyList()
+                    _following.value = if (isRefresh) {
+                        newFollowing
+                    } else {
+                        _following.value + newFollowing
+                    }
+                    
+                    hasMoreFollowing = newFollowing.size >= 10
+                    if (hasMoreFollowing) followingPage++
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _error.value = e.message
+            } finally {
+                _isLoadingMore.value = false
+            }
+        }
+    }
+
+    // 加载用户仓库
+    fun loadUserRepos(username: String, isRefresh: Boolean = false) {
+        if (_isLoadingMore.value) return
+        if (isRefresh) {
+            reposPage = 1
+            hasMoreRepos = true
+            _repositories.value = emptyList()
+        }
+        if (!hasMoreRepos) return
+
+        viewModelScope.launch {
+            try {
+                _isLoadingMore.value = true
+                val token = getToken() ?: return@launch
+                
+                val querySettings = BaseQuerySetting(
+                    perPage = 5,
+                    page = reposPage,
+                    sort = "created",
+                    direction = "desc"
+                )
+                
+                val response = RetrofitClient.httpBaseService.getUserRepoList(
+                    token,
+                    username,
+                    querySettings.toQueryMap()
+                )
+                
+                if (response.code == 200) {
+                    val newRepos = response.data ?: emptyList()
+                    _repositories.value = if (isRefresh) {
+                        newRepos
+                    } else {
+                        _repositories.value + newRepos
+                    }
+                    
+                    hasMoreRepos = newRepos.size >= 5
+                    if (hasMoreRepos) reposPage++
+                }
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unknown error"
+            } finally {
+                _isLoadingMore.value = false
+            }
+        }
+    }
+
     // 清理函数 - 在 ViewModel 被清理时重置状态
     override fun onCleared() {
         super.onCleared()
         initialFollowingState = false
+    }
+
+    // 切换标签并加载数据
+    fun switchTab(tab: String, username: String) {
+        if (_currentTab.value == tab) return
+        
+        _currentTab.value = tab
+        when (tab) {
+            "repositories" -> loadUserRepos(username, isRefresh = true)
+            "followers" -> loadFollowers(username, isRefresh = true)
+            "following" -> loadFollowing(username, isRefresh = true)
+        }
     }
 } 

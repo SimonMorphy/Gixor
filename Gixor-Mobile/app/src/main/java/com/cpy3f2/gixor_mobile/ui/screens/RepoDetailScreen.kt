@@ -233,17 +233,17 @@ fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
                             StatItem(
                                 icon = Icons.Outlined.Star,
                                 label = "Stars",
-                                count = "${repoDetails?.stargazersCount ?: 0}"
+                                count = repoDetails?.stargazersCount?.toString() ?: "0"
                             )
                             StatItem(
                                 icon = Icons.Outlined.AccountTree,
                                 label = "Forks",
-                                count = "${repoDetails?.forksCount ?: 0}"
+                                count = repoDetails?.forksCount?.toString() ?: "0"
                             )
                             StatItem(
                                 icon = Icons.Outlined.RemoveRedEye,
                                 label = "Issues",
-                                count = "${repoDetails?.openIssues ?: 0}"
+                                count = repoDetails?.openIssues?.toString() ?: "0"
                             )
                         }
 

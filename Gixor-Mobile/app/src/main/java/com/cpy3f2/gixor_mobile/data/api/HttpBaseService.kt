@@ -7,6 +7,7 @@ import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.Issue
 import com.cpy3f2.gixor_mobile.model.entity.IssueDTO
+import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import retrofit2.http.*
@@ -295,10 +296,11 @@ interface HttpBaseService {
     ): ResultData<List<SimpleUser>>
 
     //获取指定用户的关注者列表
-    @GET("/gith/follow//{username}following")
+    @GET("/gith/follow/{username}/following")
     suspend fun getUserFollowing(
         @Header("gixor-login") tokenValue: String,
-        @Path("username") username: String
+        @Path("username") username: String,
+        @QueryMap params: Map<String, String>
     ): ResultData<List<SimpleUser>>
 
     //获取当前用户的粉丝列表
@@ -308,10 +310,11 @@ interface HttpBaseService {
     ): ResultData<List<SimpleUser>>
 
     //获取指定用户的粉丝列表
-    @GET("/gith/follow/{username}followers")
+    @GET("/gith/follow/{username}/followers")
     suspend fun getUserFollowers(
         @Header("gixor-login") tokenValue: String,
-        @Path("username") username: String
+        @Path("username") username: String,
+        @QueryMap params: Map<String, String>
     ): ResultData<List<SimpleUser>>
 
     //获取当前用户是否关注了指定用户
@@ -387,4 +390,20 @@ interface HttpBaseService {
         @Path("org") org: String,
     ): ResultData<List<Event>>
 
+    /**
+     * Notification 相关
+     */
+    //获取通知列表
+    @GET("/gith/noti")
+    suspend fun getNotificationList(
+        @Header("gixor-login") tokenValue: String,
+        @QueryMap params: Map<String, String>
+    ): ResultData<List<Notification>>
+
+    //一键已读所有通知列表
+    @GET("/gith/notification/unread")
+    suspend fun getUnreadNotificationList(
+        @Header("gixor-login") tokenValue: String,
+        @QueryMap params: Map<String, String>
+    ):ResultData<List<Notification>>
 }

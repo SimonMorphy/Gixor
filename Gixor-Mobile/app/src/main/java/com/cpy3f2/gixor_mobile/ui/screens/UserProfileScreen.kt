@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,6 +30,10 @@ import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material.icons.outlined.Code
+import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 @Composable
 fun UserProfileScreen(
@@ -40,9 +45,17 @@ fun UserProfileScreen(
     val reposState by viewModel.repositories.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val currentTab by viewModel.currentTab.collectAsState()
+    val followers by viewModel.followers.collectAsState()
+    val following by viewModel.following.collectAsState()
 
     LaunchedEffect(username) {
         viewModel.loadUserProfile(username)
+    }
+
+    LaunchedEffect(username) {
+        viewModel.loadUserRepos(username, isRefresh = true)
+        viewModel.switchTab("repositories", username)
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -74,25 +87,32 @@ fun UserProfileScreen(
                         .padding(16.dp)
                 )
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    // 头部信息
-                    item {
-                        ProfileHeader(userState, username, viewModel)
-                    }
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // 固定的头部内容
+                    ProfileHeader(userState, username, viewModel)
+                    StatsBar(user = userState, viewModel = viewModel, username = username)
 
-                    // 统计信息栏
-                    item {
-                        StatsBar(userState)
-                    }
-
-                    // 仓库列表
-                    item {
-                        RepositorySection(
-                            reposState = reposState,
-                            username = username
-                        )
+                    // 可滚动的内容区域
+                    Box(modifier = Modifier.weight(1f)) {
+                        when (currentTab) {
+                            "repositories" -> RepositorySection(
+                                reposState = reposState,
+                                username = username,
+                                viewModel = viewModel
+                            )
+                            "followers" -> UserList(
+                                users = followers,
+                                viewModel = viewModel,
+                                username = username,
+                                isFollowersList = true
+                            )
+                            "following" -> UserList(
+                                users = following,
+                                viewModel = viewModel,
+                                username = username,
+                                isFollowersList = false
+                            )
+                        }
                     }
                 }
             }
@@ -127,7 +147,7 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 用户名和昵称
+        // 用名和昵称
         Column {
             Text(
                 text = user.name ?: username,
@@ -227,7 +247,11 @@ private fun ProfileHeader(
 }
 
 @Composable
-private fun StatsBar(user: GitHubUser) {
+private fun StatsBar(
+    user: GitHubUser,
+    viewModel: UserProfileViewModel,
+    username: String
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shadowElevation = 1.dp
@@ -241,17 +265,20 @@ private fun StatsBar(user: GitHubUser) {
             StatItem(
                 icon = Icons.Outlined.People,
                 value = user.followers.toString(),
-                label = "followers"
+                label = "followers",
+                onClick = { viewModel.switchTab("followers", username) }
             )
             StatItem(
                 icon = Icons.Outlined.PersonAdd,
                 value = user.following.toString(),
-                label = "following"
+                label = "following",
+                onClick = { viewModel.switchTab("following", username) }
             )
             StatItem(
-                icon = Icons.Outlined.Star,
+                icon = Icons.Outlined.Code,
                 value = user.publicRepos.toString(),
-                label = "repositories"
+                label = "repositories",
+                onClick = { viewModel.switchTab("repositories", username) }
             )
         }
     }
@@ -260,45 +287,90 @@ private fun StatsBar(user: GitHubUser) {
 @Composable
 private fun RepositorySection(
     reposState: List<GitHubRepository>,
-    username: String
+    username: String,
+    viewModel: UserProfileViewModel
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        // 仓库标题栏
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Popular repositories",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            
-            TextButton(onClick = { /* TODO: 查看所有仓库 */ }) {
-                Text("View all")
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrolledToEnd() }
+            .collect { isEnd ->
+                if (isEnd && !isLoadingMore) {
+                    viewModel.loadUserRepos(username, isRefresh = false)
+                }
             }
+    }
+
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isLoadingMore),
+        onRefresh = {
+            viewModel.loadUserRepos(username, isRefresh = true)
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // 仓库列表
-        reposState.take(6).forEach { repo -> // 只显示前6个仓库
-            repo.name?.let {
-                RepositoryCard(
-                    name = it,
-                    description = repo.description,
-                    language = repo.language,
-                    stars = repo.stargazersCount ?: 0,
-                    onClick = {
-                        NavigationManager.navigateToRepoDetail(username, it)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                items(reposState.size) { index ->
+                    reposState[index].name?.let {
+                        RepositoryCard(
+                            name = it,
+                            description = reposState[index].description,
+                            language = reposState[index].language,
+                            stars = reposState[index].stargazersCount ?: 0,
+                            onClick = {
+                                NavigationManager.navigateToRepoDetail(username, it)
+                            }
+                        )
+                        if (index < reposState.size - 1) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                     }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                if (isLoadingMore) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 空状态显示
+            if (reposState.isEmpty() && !isLoadingMore) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Code,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "暂无仓库",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }
@@ -395,11 +467,12 @@ private fun StatItem(
     icon: ImageVector,
     value: String,
     label: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
+        modifier = modifier.clickable(onClick = onClick)
     ) {
         Icon(
             imageVector = icon,
@@ -416,6 +489,140 @@ private fun StatItem(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Composable
+private fun UserList(
+    users: List<SimpleUser>,
+    viewModel: UserProfileViewModel,
+    username: String,
+    isFollowersList: Boolean
+) {
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrolledToEnd() }
+            .collect { isEnd ->
+                if (isEnd && !isLoadingMore) {
+                    if (isFollowersList) {
+                        viewModel.loadFollowers(username, isRefresh = false)
+                    } else {
+                        viewModel.loadFollowing(username, isRefresh = false)
+                    }
+                }
+            }
+    }
+
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isLoadingMore),
+        onRefresh = {
+            if (isFollowersList) {
+                viewModel.loadFollowers(username, isRefresh = true)
+            } else {
+                viewModel.loadFollowing(username, isRefresh = true)
+            }
+        }
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(users.size) { index ->
+                    UserListItem(user = users[index])
+                    if (index < users.size - 1) {
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                }
+
+                if (isLoadingMore) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 空状态显示
+            if (users.isEmpty() && !isLoadingMore) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isFollowersList) Icons.Outlined.People else Icons.Outlined.PersonAdd,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = if (isFollowersList) "暂无关注者" else "暂无关注",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // 初始加载动画
+            if (users.isEmpty() && isLoadingMore) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserListItem(user: SimpleUser) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { NavigationManager.navigateToUserProfile(user.login!!) },
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = user.avatarUrl,
+                contentDescription = "User avatar",
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = user.login!!,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
     }
 }
 
