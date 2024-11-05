@@ -21,3 +21,15 @@ fun createPageQueryParams(
         "page" to page.toString()
     )
 }
+
+fun createStateQueryParams(
+    state: String = "open",
+    page: Int = 1,
+    perPage: Int = 30
+):Map<String, String> {
+    return mapOf(
+        "state" to state,
+        "per_page" to perPage.toString(),
+        "page" to page.toString()
+    )
+}

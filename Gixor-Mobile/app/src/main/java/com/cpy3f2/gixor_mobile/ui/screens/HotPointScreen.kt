@@ -14,6 +14,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
 
 /**
  * 推荐界面
@@ -27,68 +30,63 @@ fun HotPointScreen(
     val starredRepos by viewModel.starredRepos.collectAsState()
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
-    
-    // 监听 UI 状态变化
-    LaunchedEffect(uiState) {
-        when (uiState) {
-            is MainViewModel.UiState.Success -> {
-                // 可以添加一些成功的反馈，比如显示 Snackbar
-            }
-            is MainViewModel.UiState.Error -> {
-                // 显示错误信息
-            }
-            else -> {}
-        }
-    }
-    
+
+    // 当进入页面时加载数据
     LaunchedEffect(Unit) {
-        if (trendyRepos.isEmpty()) {
-            viewModel.loadTrendyRepos()
-        }
-        if (isLoggedIn && starredRepos.isEmpty()) {
+        viewModel.loadTrendyRepos()
+        if (isLoggedIn) {
             viewModel.loadStarredRepos()
         }
     }
-    
-    LazyColumn(
+
+    Box(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp)
+        contentAlignment = Alignment.Center
     ) {
-        items(trendyRepos) { repo ->
-            val repoId = "${repo.author}/${repo.name}"
-            val isStarred = starredRepos.contains(repoId)
-            
-            RecommendedRepoItem(
-                repo = repo,
-                onRepoClick = {
-                    NavigationManager.navigateToRepoDetail(repo.author, repo.name)
-                },
-                onAuthorClick = {
-                    repo.author?.let { username ->
-                        NavigationManager.navigateToUserProfile(username)
+        when (uiState) {
+            is MainViewModel.UiState.Loading -> {
+                CircularProgressIndicator()
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(trendyRepos) { repo ->
+                        val repoId = "${repo.author}/${repo.name}"
+                        val isStarred = starredRepos.contains(repoId)
+
+                        RecommendedRepoItem(
+                            repo = repo,
+                            onRepoClick = {
+                                NavigationManager.navigateToRepoDetail(repo.author, repo.name)
+                            },
+                            onAuthorClick = {
+                                repo.author?.let { username ->
+                                    NavigationManager.navigateToUserProfile(username)
+                                }
+                            },
+                            onLanguageClick = {
+                                // NavigationManager.navigateToLanguageSearch(repo.language)
+                            },
+                            onStarClick = {
+                                if (isLoggedIn) {
+                                    viewModel.toggleStarRepo(repo.author, repo.name, isStarred)
+                                } else {
+                                    viewModel.navigateToLogin()
+                                }
+                            },
+                            onLoginClick = {
+                                viewModel.navigateToLogin()
+                            },
+                            isStarred = isStarred,
+                            isLoggedIn = isLoggedIn
+                        )
+
                     }
-                },
-                onLanguageClick = {
-                    // NavigationManager.navigateToLanguageSearch(repo.language)
-                },
-                onStarClick = {
-                    if (isLoggedIn) {
-                        viewModel.toggleStarRepo(repo.author, repo.name, isStarred)
-                    } else {
-                        viewModel.navigateToLogin()
-                    }
-                },
-                onLoginClick = {
-                    viewModel.navigateToLogin()
-                },
-                isStarred = isStarred,
-                isLoggedIn = isLoggedIn
-            )
+                }
+            }
         }
     }
-}
-@Preview
-@Composable
-fun HotPointPreview() {
-    HotPointScreen(viewModel = MainViewModel())
 }

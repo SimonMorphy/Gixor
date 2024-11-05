@@ -343,6 +343,7 @@ interface HttpBaseService {
         @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
+        @QueryMap params: Map<String, String>
     ): ResultData<List<PullRequest>>
 
     //获取指定的pr

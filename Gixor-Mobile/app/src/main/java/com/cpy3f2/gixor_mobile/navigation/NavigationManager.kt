@@ -68,4 +68,14 @@ object NavigationManager {
             )
         )
     }
+
+    fun navigateToPullRequestDetail(owner: String, repo: String, prNumber: Long) {
+        _navController.value?.navigate(
+            AppDestinations.PullRequestDetail.createRoute(
+                owner = owner,
+                repo = repo,
+                number = prNumber
+            )
+        )
+    }
 } 

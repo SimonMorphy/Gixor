@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.RemoveRedEye
 import androidx.compose.material.icons.outlined.Star
@@ -46,6 +45,7 @@ import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.outlined.Comment
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.darkColorScheme
@@ -181,71 +181,91 @@ enum class RepoTab(val title: String) {
 @Composable
 fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
     val repoDetails by viewModel.repoDetails.collectAsState()
+    val isLoading by viewModel.isRepoDetailsLoading.collectAsState()
 
     LaunchedEffect(owner, repoName) {
         viewModel.loadRepoDetails(owner, repoName)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // 仓库信息卡片
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                // 仓库描述
-                if (!repoDetails?.description.isNullOrEmpty()) {
-                    Text(
-                        text = repoDetails?.description ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // 统计信息
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    StatItem(
-                        icon = Icons.Outlined.Star,
-                        label = "Stars",
-                        count = "${repoDetails?.stargazersCount ?: 0}"
-                    )
-                    StatItem(
-                        icon = Icons.Outlined.AccountTree,
-                        label = "Forks",
-                        count = "${repoDetails?.forksCount ?: 0}"
-                    )
-                    StatItem(
-                        icon = Icons.Outlined.RemoveRedEye,
-                        label = "Issues",
-                        count = "${repoDetails?.openIssues ?: 0}"
-                    )
-                }
-
-                // 语言信息
-                if (!repoDetails?.language.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Language: ${repoDetails?.language}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (isLoading) {
+            // 加载状态
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                CircularProgressIndicator()
+                Text(
+                    text = "正在加载仓库信息...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
             }
-        }
+        } else {
+            // 原有的内容显示
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // 仓库信息卡片
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        // 仓库描述
+                        if (!repoDetails?.description.isNullOrEmpty()) {
+                            Text(
+                                text = repoDetails?.description ?: "",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+                        // 统计信息
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            StatItem(
+                                icon = Icons.Outlined.Star,
+                                label = "Stars",
+                                count = "${repoDetails?.stargazersCount ?: 0}"
+                            )
+                            StatItem(
+                                icon = Icons.Outlined.AccountTree,
+                                label = "Forks",
+                                count = "${repoDetails?.forksCount ?: 0}"
+                            )
+                            StatItem(
+                                icon = Icons.Outlined.RemoveRedEye,
+                                label = "Issues",
+                                count = "${repoDetails?.openIssues ?: 0}"
+                            )
+                        }
 
-        // 文件列表
-        LazyColumn {
-            items(sampleFiles) { file ->
-                FileListItem(file)
+                        // 语言信息
+                        if (!repoDetails?.language.isNullOrEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Language: ${repoDetails?.language}",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 文件列表
+                LazyColumn {
+                    items(sampleFiles) { file ->
+                        FileListItem(file)
+                    }
+                }
             }
         }
     }
@@ -351,9 +371,8 @@ fun RepoDetailScreenDarkPreview() {
 fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
     val issues by viewModel.repoIssues.collectAsState()
     val isLoading by viewModel.isIssuesLoading.collectAsState()
-    var selectedFilter by remember { mutableStateOf("open") }
 
-    LaunchedEffect(owner, repoName, selectedFilter) {
+    LaunchedEffect(owner, repoName, viewModel.selectedFilter) {
         viewModel.loadRepoIssues(owner, repoName)
     }
 
@@ -370,13 +389,13 @@ fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             FilterChip(
-                selected = selectedFilter == "open",
-                onClick = { selectedFilter = "open" },
+                selected = viewModel.selectedFilter == "open",
+                onClick = { viewModel.updateIssueFilter("open") },
                 label = { Text("Open") }
             )
             FilterChip(
-                selected = selectedFilter == "closed",
-                onClick = { selectedFilter = "closed" },
+                selected = viewModel.selectedFilter == "closed",
+                onClick = { viewModel.updateIssueFilter("closed") },
                 label = { Text("Closed") }
             )
         }
@@ -393,7 +412,7 @@ fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
                 ) {
                     CircularProgressIndicator()
                     Text(
-                        text = "Loading issues...",
+                        text = "正在加载issues...",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -416,11 +435,11 @@ fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                     Text(
-                        text = "No issues found",
+                        text = "没有找到issues",
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "There are no ${selectedFilter} issues in this repository",
+                        text = "There are no ${viewModel.selectedFilter} issues in this repository",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -587,9 +606,8 @@ fun LabelChip(label: Issue.Label) {
 fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewModel) {
     val pullRequests by viewModel.repoPullRequests.collectAsState()
     val isLoading by viewModel.isPrLoading.collectAsState()
-    var selectedFilter by remember { mutableStateOf("all") }
 
-    LaunchedEffect(owner, repoName, selectedFilter) {
+    LaunchedEffect(owner, repoName, viewModel.selectedPrFilter) {
         viewModel.loadRepoPullRequests(owner, repoName)
     }
 
@@ -606,18 +624,18 @@ fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewMode
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             FilterChip(
-                selected = selectedFilter == "all",
-                onClick = { selectedFilter = "all" },
+                selected = viewModel.selectedPrFilter == "all",
+                onClick = { viewModel.updatePrFilter("all") },
                 label = { Text("All") }
             )
             FilterChip(
-                selected = selectedFilter == "open",
-                onClick = { selectedFilter = "open" },
+                selected = viewModel.selectedPrFilter == "open",
+                onClick = { viewModel.updatePrFilter("open") },
                 label = { Text("Open") }
             )
             FilterChip(
-                selected = selectedFilter == "closed",
-                onClick = { selectedFilter = "closed" },
+                selected = viewModel.selectedPrFilter == "closed",
+                onClick = { viewModel.updatePrFilter("closed") },
                 label = { Text("Closed") }
             )
         }
@@ -661,7 +679,7 @@ fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewMode
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "There are no ${if (selectedFilter == "all") "" else "$selectedFilter "}pull requests in this repository",
+                        text = "There are no ${if (viewModel.selectedPrFilter == "all") "" else "$viewModel.selectedPrFilter "}pull requests in this repository",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -673,7 +691,20 @@ fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewMode
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(pullRequests) { pr ->
-                    PullRequestItem(pr)
+                    PullRequestItem(
+                        pr = pr,
+                        owner = owner,
+                        repo = repoName,
+                        onClick = {
+                            pr.number?.let { number ->
+                                NavigationManager.navigateToPullRequestDetail(
+                                    owner = owner,
+                                    repo = repoName,
+                                    prNumber = number.toLong()
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -681,11 +712,17 @@ fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewMode
 }
 
 @Composable
-fun PullRequestItem(pr: PullRequest) {
+fun PullRequestItem(
+    pr: PullRequest,
+    owner: String,
+    repo: String,
+    onClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(

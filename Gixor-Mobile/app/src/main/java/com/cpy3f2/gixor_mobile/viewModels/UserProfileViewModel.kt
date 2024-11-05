@@ -36,7 +36,7 @@ class UserProfileViewModel : ViewModel() {
                     getToken()?.let { RetrofitClient.httpBaseService.getGitHubUserInfo(it,username) }
                 if (response != null) {
                     if (response.code == 200) {
-                        _userState.value = response.data
+                        _userState.value = response.data!!
                         loadUserRepositories(username)
                     } else {
                         _error.value = "Failed to load user profile"
@@ -56,7 +56,7 @@ class UserProfileViewModel : ViewModel() {
                 val response = getToken()?.let { RetrofitClient.httpBaseService.getUserRepoList(it,username, createQueryParams()) }
                 if (response != null) {
                     if (response.code == 200) {
-                        _repositories.value = response.data
+                        _repositories.value = response.data!!
                     } else {
                         _error.value = "Failed to load repositories"
                     }

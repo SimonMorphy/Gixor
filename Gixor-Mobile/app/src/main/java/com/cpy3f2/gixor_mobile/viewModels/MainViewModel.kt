@@ -9,7 +9,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpy3f2.gixor_mobile.MyApplication
-import com.cpy3f2.gixor_mobile.database.GixorDatabase
+
 
 import com.cpy3f2.gixor_mobile.model.entity.Category
 import com.cpy3f2.gixor_mobile.model.entity.FocusContentItem
@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import android.content.Context
 import androidx.lifecycle.LiveData
+import com.cpy3f2.gixor_mobile.database.GixorDatabase
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import java.time.LocalDateTime
@@ -33,6 +34,7 @@ import createQueryParams
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.Issue
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
+import createStateQueryParams
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -251,27 +253,31 @@ class MainViewModel : ViewModel() {
     private val _trendyRepos = MutableStateFlow<List<TrendyRepository>>(emptyList())
     val trendyRepos: StateFlow<List<TrendyRepository>> = _trendyRepos.asStateFlow()
 
-    init {
-        loadTrendyRepos()
-    }
+    // 添加一个标志来追踪是否已经加载过数据
+    private var _hasLoadedTrendyRepos = false
 
     fun loadTrendyRepos() {
+        // 如果已经加载过且有数据，就不重复加载
+        if (_hasLoadedTrendyRepos && _trendyRepos.value.isNotEmpty()) return
+        
         viewModelScope.launch {
             try {
+                _uiState.value = UiState.Loading
                 val response = getToken()?.let { RetrofitClient.httpBaseService.getTrendyRepoList(it) }
                 if (response != null) {
                     if (response.code == 200) {
-                        // 先加载仓库列表（此时所有仓库默认未收藏）
-                        _trendyRepos.value = response.data
-
-                        // 如果用户已登录，异步检查每个仓库的收藏状态
+                        _trendyRepos.value = response.data!!
+                        _hasLoadedTrendyRepos = true
+                        
                         if (hasToken()) {
                             checkStarStatusForRepos(response.data)
                         }
                     }
                 }
+                _uiState.value = UiState.Idle
             } catch (e: Exception) {
                 e.printStackTrace()
+                _uiState.value = UiState.Error(e.message ?: "加载失败")
             }
         }
     }
@@ -315,8 +321,11 @@ class MainViewModel : ViewModel() {
                 val token = getToken() ?: return@launch
                 val response = RetrofitClient.httpBaseService.getMyStarRepoList(createQueryParams(),token)
                 if (response.code == 200) {
-                    val starredRepoIds = response.data.map { "${it.owner?.name}/${it.name}" }.toSet()
-                    _starredRepos.value = starredRepoIds
+                    val starredRepoIds = response.data?.map { "${it.owner?.name}/${it.name}" }
+                        ?.toSet()
+                    if (starredRepoIds != null) {
+                        _starredRepos.value = starredRepoIds
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -388,20 +397,26 @@ class MainViewModel : ViewModel() {
     private val _repoDetails = MutableStateFlow<GitHubRepository?>(null)
     val repoDetails: StateFlow<GitHubRepository?> = _repoDetails.asStateFlow()
 
+    // 添加加载状态
+    private val _isRepoDetailsLoading = MutableStateFlow(false)
+    val isRepoDetailsLoading: StateFlow<Boolean> = _isRepoDetailsLoading.asStateFlow()
+
     fun loadRepoDetails(owner: String, repoName: String) {
         viewModelScope.launch {
             try {
+                _isRepoDetailsLoading.value = true  // 开始加载
                 val params = createQueryParams()
-                val response = getToken()?.let { RetrofitClient.httpBaseService.getUserRepoList(it,owner, params) }
+                val response = getToken()?.let { RetrofitClient.httpBaseService.getUserRepoList(it, owner, params) }
                 if (response != null) {
                     if (response.code == 200) {
-                        // 找到匹配的仓库
-                        val repo = response.data.find { it.name == repoName }
+                        val repo = response.data?.find { it.name == repoName }
                         _repoDetails.value = repo
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                _isRepoDetailsLoading.value = false  // 结束加载
             }
         }
     }
@@ -413,14 +428,26 @@ class MainViewModel : ViewModel() {
     private val _isIssuesLoading = MutableStateFlow(false)
     val isIssuesLoading: StateFlow<Boolean> = _isIssuesLoading.asStateFlow()
 
+    // 添加状态跟踪
+    var selectedFilter by mutableStateOf("open")
+        private set
+
+    // 添加更新过滤器状态的方法
+    fun updateIssueFilter(filter: String) {
+        selectedFilter = filter
+    }
+
     fun loadRepoIssues(owner: String, repoName: String) {
         viewModelScope.launch {
             try {
                 _isIssuesLoading.value = true  // 开始加载
-                val response = getToken()?.let { RetrofitClient.httpBaseService.getRepoIssues(it,owner, repoName, createQueryParams()) }
+                val params = createStateQueryParams(state = selectedFilter) // 使用选中的过滤器状态
+                val response = getToken()?.let { 
+                    RetrofitClient.httpBaseService.getRepoIssues(it, owner, repoName, params)
+                }
                 if (response != null) {
                     if (response.code == 200) {
-                        _repoIssues.value = response.data
+                        _repoIssues.value = response.data!!
                     }
                 }
             } catch (e: Exception) {
@@ -439,14 +466,25 @@ class MainViewModel : ViewModel() {
     private val _isPrLoading = MutableStateFlow(false)
     val isPrLoading: StateFlow<Boolean> = _isPrLoading.asStateFlow()
 
+    // Add PR filter state tracking
+    var selectedPrFilter by mutableStateOf("all")
+        private set
+
+    // Add method to update PR filter
+    fun updatePrFilter(filter: String) {
+        selectedPrFilter = filter
+    }
+
     fun loadRepoPullRequests(owner: String, repoName: String) {
         viewModelScope.launch {
             try {
                 _isPrLoading.value = true
-                val response = getToken()?.let { RetrofitClient.httpBaseService.getRepoPrList(it,owner, repoName) }
+                val response = getToken()?.let { 
+                    RetrofitClient.httpBaseService.getRepoPrList(it, owner, repoName, createStateQueryParams(state = selectedPrFilter))
+                }
                 if (response != null) {
                     if (response.code == 200) {
-                        _repoPullRequests.value = response.data
+                        _repoPullRequests.value = response.data!!
                     }
                 }
             } catch (e: Exception) {
@@ -477,6 +515,29 @@ class MainViewModel : ViewModel() {
                 e.printStackTrace()
             } finally {
                 _isIssueDetailLoading.value = false
+            }
+        }
+    }
+
+    private val _currentPullRequest = MutableStateFlow<PullRequest?>(null)
+    val currentPullRequest: StateFlow<PullRequest?> = _currentPullRequest.asStateFlow()
+
+    private val _isPrDetailLoading = MutableStateFlow(false)
+    val isPrDetailLoading: StateFlow<Boolean> = _isPrDetailLoading.asStateFlow()
+
+    fun loadPullRequestDetail(owner: String, repo: String, prNumber: Long) {
+        viewModelScope.launch {
+            try {
+                _isPrDetailLoading.value = true
+                val token = getToken() ?: return@launch
+                val response = RetrofitClient.httpBaseService.getPrDetail(token, owner, repo, prNumber)
+                if (response.code == 200) {
+                    _currentPullRequest.value = response.data
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isPrDetailLoading.value = false
             }
         }
     }
