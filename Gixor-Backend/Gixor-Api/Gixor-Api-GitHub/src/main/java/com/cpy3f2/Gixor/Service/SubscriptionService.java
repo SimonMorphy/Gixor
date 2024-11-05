@@ -1,9 +1,11 @@
 package com.cpy3f2.Gixor.Service;
 
-import com.cpy3f2.Gixor.Domain.DTO.SubscriptionDTO;
+import com.cpy3f2.Gixor.Domain.VO.SubscriptionVO;
+import com.cpy3f2.Gixor.Domain.GitHubRepository;
 import com.cpy3f2.Gixor.Domain.Record.SubscriptionRequest;
 import com.cpy3f2.Gixor.Domain.Watcher;
 import jakarta.annotation.Resource;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -34,23 +36,24 @@ public class SubscriptionService {
     /**
      * 获取当前用户的仓库订阅状态
      */
-    public Mono<SubscriptionDTO> getRepositorySubscription(String owner, String repo) {
+    public Mono<SubscriptionVO> getRepositorySubscription(String owner, String repo) {
         return githubClient.get()
                 .uri("/repos/{owner}/{repo}/subscription", owner, repo)
                 .retrieve()
-                .bodyToMono(SubscriptionDTO.class);
+                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.error(new RuntimeException("未订阅")))
+                .bodyToMono(SubscriptionVO.class);
     }
 
     /**
      * 设置仓库订阅状态
      */
-    public Mono<SubscriptionDTO> setRepositorySubscription(String owner, String repo,
-                                                           boolean subscribed, boolean ignored) {
+    public Mono<SubscriptionVO> setRepositorySubscription(String owner, String repo,
+                                                          boolean subscribed, boolean ignored) {
         return githubClient.put()
                 .uri("/repos/{owner}/{repo}/subscription", owner, repo)
                 .bodyValue(new SubscriptionRequest(subscribed, ignored))
                 .retrieve()
-                .bodyToMono(SubscriptionDTO.class);
+                .bodyToMono(SubscriptionVO.class);
     }
 
     /**
@@ -66,20 +69,20 @@ public class SubscriptionService {
     /**
      * 获取认证用户关注的仓库列表
      */
-    public Flux<Watcher> getAuthenticatedUserWatching() {
+    public Flux<GitHubRepository> getAuthenticatedUserWatching() {
         return githubClient.get()
                 .uri("/user/subscriptions")
                 .retrieve()
-                .bodyToFlux(Watcher.class);
+                .bodyToFlux(GitHubRepository.class);
     }
 
     /**
      * 获取指定用户关注的仓库列表
      */
-    public Flux<Watcher> getUserWatching(String username) {
+    public Flux<GitHubRepository> getUserWatching(String username) {
         return githubClient.get()
                 .uri("/users/{username}/subscriptions", username)
                 .retrieve()
-                .bodyToFlux(Watcher.class);
+                .bodyToFlux(GitHubRepository.class);
     }
 }

@@ -1,2 +1,2 @@
 com.cpy3f2.Gixor.config.RedisConfig
-com.cpy3f2.Gixor.service.RedisService
+com.cpy3f2.Gixor.service.CacheService

@@ -2,10 +2,15 @@ package com.cpy3f2.Gixor.Endpoint;
 
 import com.cpy3f2.Gixor.Annotation.Endpoint;
 import com.cpy3f2.Gixor.Domain.DTO.IssueDTO;
-import com.cpy3f2.Gixor.Domain.QuerySetting;
+import com.cpy3f2.Gixor.Domain.Issue.Milestone;
+import com.cpy3f2.Gixor.Domain.Query.BaseQuerySetting;
+import com.cpy3f2.Gixor.Domain.Query.IssueQuerySetting;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
+import com.cpy3f2.Gixor.Service.IssueCommentService;
 import com.cpy3f2.Gixor.Service.IssueService;
+import com.cpy3f2.Gixor.Service.MilestoneService;
 import jakarta.annotation.Resource;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.*;
@@ -24,13 +29,19 @@ public class IssueEndpoint {
     @Resource
     private IssueService issueService;
 
+    @Resource
+    private MilestoneService milestoneService;
+
+    @Resource
+    private IssueCommentService issueCommentService;
+
     /**
      * 获取Issue列表
      * @param settings 查询参数
      * @return Mono<ResponseResult>
      */
     @GetExchange
-    public Mono<ResponseResult> listIssues(QuerySetting settings) {
+    public Mono<ResponseResult> listIssues(IssueQuerySetting settings) {
         return issueService.listIssues(settings)
                 .collectList()
                 .map(ResponseResult::success);
@@ -46,7 +57,7 @@ public class IssueEndpoint {
     @GetExchange("/{owner}/{repo}")
     public Mono<ResponseResult> listRepoIssues(@PathVariable String owner, 
                                              @PathVariable String repo,
-                                             QuerySetting settings) {
+                                             IssueQuerySetting settings) {
         return issueService.listRepoIssues(owner, repo, settings)
                 .collectList()
                 .map(ResponseResult::success);
@@ -135,9 +146,146 @@ public class IssueEndpoint {
      * @return Mono<ResponseResult>
      */
     @GetExchange("/assigned")
-    public Mono<ResponseResult> listAssignedIssues(QuerySetting settings) {
+    public Mono<ResponseResult> listAssignedIssues(IssueQuerySetting settings) {
         return issueService.listAssignedIssues(settings)
                 .collectList()
                 .map(ResponseResult::success);
+    }
+
+    /**
+     * 获取仓库的里程碑列表
+     * @param owner 仓库所有者
+     * @param repo 仓库名称
+     * @param settings 查询参数
+     * @return Mono<ResponseResult>
+     */
+    @GetExchange("/{owner}/{repo}/milestones")
+    public Mono<ResponseResult> listMilestones(@PathVariable String owner,
+                                             @PathVariable String repo,
+                                               IssueQuerySetting settings) {
+        return milestoneService.listMilestones(owner, repo, settings)
+                .collectList()
+                .map(ResponseResult::success);
+    }
+
+    /**
+     * 获取单个里程碑详情
+     * @param owner 仓库所有者
+     * @param repo 仓库名称
+     * @param milestoneNumber 里程碑编号
+     * @return Mono<ResponseResult>
+     */
+    @GetExchange("/{owner}/{repo}/milestones/{milestone_number}")
+    public Mono<ResponseResult> getMilestone(@PathVariable String owner,
+                                           @PathVariable String repo,
+                                           @PathVariable("milestone_number") Integer milestoneNumber) {
+        return milestoneService.getMilestone(owner, repo, milestoneNumber)
+                .map(ResponseResult::success);
+    }
+
+    /**
+     * 创建里程碑
+     * @param owner 仓库所有者
+     * @param repo 仓库名称
+     * @param milestone 里程碑信息
+     * @return Mono<ResponseResult>
+     */
+    @PostExchange("/{owner}/{repo}/milestones")
+    public Mono<ResponseResult> createMilestone(@PathVariable String owner,
+                                              @PathVariable String repo,
+                                              @RequestBody Milestone milestone) {
+        return milestoneService.createMilestone(owner, repo, milestone)
+                .map(m -> ResponseResult.success("创建成功"));
+    }
+
+    /**
+     * 更新里程碑
+     * @param owner 仓库所有者
+     * @param repo 仓库名称
+     * @param milestoneNumber 里程碑编号
+     * @param milestone 里程碑更新信息
+     * @return Mono<ResponseResult>
+     */
+    @PatchExchange("/{owner}/{repo}/milestones/{milestone_number}")
+    public Mono<ResponseResult> updateMilestone(@PathVariable String owner,
+                                              @PathVariable String repo,
+                                              @PathVariable("milestone_number") Integer milestoneNumber,
+                                              @RequestBody Milestone milestone) {
+        return milestoneService.updateMilestone(owner, repo, milestoneNumber, milestone)
+                .map(m -> ResponseResult.success("更新成功"));
+    }
+
+    /**
+     * 删除里程碑
+     * @param owner 仓库所有者
+     * @param repo 仓库名称
+     * @param milestoneNumber 里程碑编号
+     * @return Mono<ResponseResult>
+     */
+    @DeleteExchange("/{owner}/{repo}/milestones/{milestone_number}")
+    public Mono<ResponseResult> deleteMilestone(@PathVariable String owner,
+                                              @PathVariable String repo,
+                                              @PathVariable("milestone_number") Integer milestoneNumber) {
+        return milestoneService.deleteMilestone(owner, repo, milestoneNumber)
+                .then(Mono.just(ResponseResult.success("删除成功")));
+    }
+
+    /**
+     * 获取Issue评论列表
+     */
+    @GetExchange("/{owner}/{repo}/issues/{issue_number}/comments")
+    public Mono<ResponseResult> listComments(@PathVariable String owner,
+                                             @PathVariable String repo,
+                                             @PathVariable("issue_number") Integer issueNumber,
+                                             BaseQuerySetting settings) {
+        return issueCommentService.listComments(owner, repo, issueNumber, settings)
+                .collectList()
+                .map(ResponseResult::success);
+    }
+
+    /**
+     * 获取单个评论
+     */
+    @GetExchange("/{owner}/{repo}/comments/{comment_id}")
+    public Mono<ResponseResult> getComment(@PathVariable String owner,
+                                           @PathVariable String repo,
+                                           @PathVariable("comment_id") Long commentId) {
+        return issueCommentService.getComment(owner, repo, commentId)
+                .map(ResponseResult::success);
+    }
+
+    /**
+     * 创建评论
+     */
+    @PostExchange("/{owner}/{repo}/issues/{issue_number}/comments")
+    public Mono<ResponseResult> createComment(@PathVariable String owner,
+                                              @PathVariable String repo,
+                                              @PathVariable("issue_number") Integer issueNumber,
+                                              @RequestBody String body) {
+        return issueCommentService.createComment(owner, repo, issueNumber, body)
+                .map(comment -> ResponseResult.success("评论创建成功"));
+    }
+
+    /**
+     * 更新评论
+     */
+    @PatchExchange("/{owner}/{repo}/comments/{comment_id}")
+    public Mono<ResponseResult> updateComment(@PathVariable String owner,
+                                              @PathVariable String repo,
+                                              @PathVariable("comment_id") Long commentId,
+                                              @RequestBody String body) {
+        return issueCommentService.updateComment(owner, repo, commentId, body)
+                .map(comment -> ResponseResult.success("评论更新成功"));
+    }
+
+    /**
+     * 删除评论
+     */
+    @DeleteExchange("/{owner}/{repo}/comments/{comment_id}")
+    public Mono<ResponseResult> deleteComment(@PathVariable String owner,
+                                              @PathVariable String repo,
+                                              @PathVariable("comment_id") Long commentId) {
+        return issueCommentService.deleteComment(owner, repo, commentId)
+                .then(Mono.just(ResponseResult.success("评论删除成功")));
     }
 }

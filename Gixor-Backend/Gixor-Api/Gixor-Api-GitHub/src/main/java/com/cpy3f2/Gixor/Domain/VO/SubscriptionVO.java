@@ -1,4 +1,4 @@
-package com.cpy3f2.Gixor.Domain.DTO;
+package com.cpy3f2.Gixor.Domain.VO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -6,11 +6,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- *  SubscriptionDTO
+ *  SubscriptionVO
  * @author simon
  * @since 2024/11/4 */
 @Data
-public class SubscriptionDTO {
+public class SubscriptionVO {
     private Boolean subscribed;
     private Boolean ignored;
     private String reason;

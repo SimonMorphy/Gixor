@@ -1,9 +1,12 @@
 package com.cpy3f2.Gixor.Endpoint;
 
 import com.cpy3f2.Gixor.Annotation.Endpoint;
-import com.cpy3f2.Gixor.Domain.QuerySetting;
+import com.cpy3f2.Gixor.Constant.Constants;
+import com.cpy3f2.Gixor.Domain.Query.RepositoryQuerySetting;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
+import com.cpy3f2.Gixor.Domain.TrendyRepository;
 import com.cpy3f2.Gixor.Service.RepositoryService;
+import com.cpy3f2.Gixor.service.CacheService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,13 +30,12 @@ public class RepositoryEndpoint {
 
 
 
-    @GetExchange("/trendy")
-    public Mono<ResponseResult> listTrendyRepositories(){
-        return repositoryService.listTrendyRepos()
-                .collectList()
+
+    @GetExchange("/{owner}/{repo}")
+    public Mono<ResponseResult> getRepository(@PathVariable String owner, @PathVariable String repo){
+        return repositoryService.getRepo(owner,repo)
                 .map(ResponseResult::success);
     }
-
     /**
      * 获取仓库列表
      * @param settings 查询参数
@@ -42,14 +44,14 @@ public class RepositoryEndpoint {
      * @since 2024/11/1
      */
     @GetExchange
-    public Mono<ResponseResult> listRepositories(QuerySetting settings){
+    public Mono<ResponseResult> listRepositories(RepositoryQuerySetting settings){
         return repositoryService.listRepos(settings)
                 .collectList()
                 .map(ResponseResult::success);
     }
 
     @GetExchange("/{username}")
-    public Mono<ResponseResult> listRepositories(@PathVariable String username, QuerySetting settings){
+    public Mono<ResponseResult> listRepositories(@PathVariable String username, RepositoryQuerySetting settings){
         return repositoryService.listRepos(username,settings)
                 .collectList()
                 .map(ResponseResult::success);
@@ -66,7 +68,7 @@ public class RepositoryEndpoint {
      * @since 2024/10/31
      */
     @GetExchange("/starred")
-    public Mono<ResponseResult> listStarredRepositories(QuerySetting settings){
+    public Mono<ResponseResult> listStarredRepositories(RepositoryQuerySetting settings){
         return repositoryService.listStarredRepo(settings)
                 .collectList()
                 .map(ResponseResult::success);
@@ -79,7 +81,7 @@ public class RepositoryEndpoint {
      * @since 2024/10/31
      */
     @GetExchange("/starred/{username}")
-    public Mono<ResponseResult> listStarredRepositories(@PathVariable String username, QuerySetting settings) {
+    public Mono<ResponseResult> listStarredRepositories(@PathVariable String username, RepositoryQuerySetting settings) {
         return repositoryService.listStarredRepo(username,settings)
                 .collectList()
                 .map(ResponseResult::success);

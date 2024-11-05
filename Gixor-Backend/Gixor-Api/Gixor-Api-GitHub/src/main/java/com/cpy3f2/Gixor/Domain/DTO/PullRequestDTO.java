@@ -1,39 +1,30 @@
 package com.cpy3f2.Gixor.Domain.DTO;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
  * @author : simon
  * @description :
- * @last : 2024-11-04 00:48
+ * @last : 2024-11-05 09:36
  * Copyright (c) 2024. 保留所有权利。
- * @since : 2024-11-04 00:48
+ * @since : 2024-11-05 09:36
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class IssueDTO {
+public class PullRequestDTO {
     private String title;
+    private String head;
+    private String base;
     private String body;
-    private List<String> assignees;
-
-    @JsonProperty("milestone_number")
-    private Long milestone;
-
-    private List<String> labels;
-    private String state;
-    @JsonProperty("state_reason")
-    private String stateReason;
+    private Boolean draft;
+    @JsonProperty("maintainer_can_modify")
+    private Boolean maintainerCanModify;
 }
-

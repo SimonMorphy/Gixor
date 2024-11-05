@@ -1,5 +1,6 @@
 package com.cpy3f2.Gixor.service;
 
+import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.*;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * @since : 2024-10-25 11:04
  */
 @Service
-public class RedisService {
+public class CacheService {
     @Resource
     private ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
 
@@ -47,7 +48,13 @@ public class RedisService {
     }
 
     public <T>  Mono<T> getCacheObject(final String key,final Class<T> clazz) {
-        return reactiveRedisTemplate.opsForValue().get(key).cast(clazz);
+        return reactiveRedisTemplate.opsForValue().get(key)
+                .map(obj -> JSON.parseObject(JSON.toJSONString(obj), clazz));
+    }
+    public <T> Flux<T> getCacheObjectFlux(final String key, final Class<T> clazz) {
+        return reactiveRedisTemplate.opsForValue().get(key)
+                .map(obj -> JSON.parseArray(JSON.toJSONString(obj), clazz))
+                .flatMapMany(Flux::fromIterable);
     }
 
     public Mono<Long> deleteObject(final String key) {
@@ -63,7 +70,12 @@ public class RedisService {
     }
 
     public <T> Flux<T> getCacheList(final String key,final Class<T> clazz) {
-        return reactiveRedisTemplate.opsForList().range(key, 0, -1).cast(clazz);
+        return reactiveRedisTemplate.opsForList().range(key, 0, -1)
+                .map(obj -> JSON.parseObject(JSON.toJSONString(obj), clazz));
+    }
+    public <T> Flux<T> getCacheList(final String key,final Class<T> clazz,final int start, final int end) {
+        return reactiveRedisTemplate.opsForList().range(key, start, end)
+                .map(obj -> JSON.parseObject(JSON.toJSONString(obj), clazz));
     }
 
     public <T> Mono<Long> setCacheSet(final String key, final Set<T> dataSet) {
@@ -71,7 +83,8 @@ public class RedisService {
     }
 
     public <T> Flux<T> getCacheSet(final String key,final Class<T> clazz) {
-        return reactiveRedisTemplate.opsForSet().members(key).cast(clazz);
+        return reactiveRedisTemplate.opsForSet().members(key)
+                .map(obj -> JSON.parseObject(JSON.toJSONString(obj), clazz));
     }
 
     public <T> Mono<Boolean> setCacheMap(final String key, final Map<String, T> dataMap) {
@@ -87,11 +100,13 @@ public class RedisService {
     }
 
     public <T> Mono<T> getCacheMapValue(final String key, final String hKey,final Class<T> clazz) {
-        return reactiveRedisTemplate.opsForHash().get(key, hKey).cast(clazz);
+        return reactiveRedisTemplate.opsForHash().get(key, hKey)
+                .map(obj -> JSON.parseObject(JSON.toJSONString(obj), clazz));
     }
 
     public <T> Flux<T> getMultiCacheMapValue(final String key, final Collection<Object> hKeys,final Class<T> clazz) {
-        return reactiveRedisTemplate.opsForHash().multiGet(key, hKeys).flatMapMany(Flux::fromIterable).cast(clazz);
+        return reactiveRedisTemplate.opsForHash().multiGet(key, hKeys).flatMapMany(Flux::fromIterable)
+                .map(obj -> JSON.parseObject(JSON.toJSONString(obj), clazz));
     }
 
     public Mono<Long> deleteCacheMapValue(final String key, final String hKey) {
