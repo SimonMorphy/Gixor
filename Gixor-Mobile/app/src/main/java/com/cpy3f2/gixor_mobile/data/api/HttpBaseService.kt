@@ -1,5 +1,6 @@
 package com.cpy3f2.gixor_mobile.data.api
 
+import com.cpy3f2.gixor_mobile.model.entity.Event
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
@@ -362,29 +363,28 @@ interface HttpBaseService {
     @GET("/gith/event/public")
     suspend fun getPublicEvent(
         @Header("gixor-login") tokenValue: String,
-        @Query("page") page: Int,
-        @Query("per_page") perPage: Int
-    )
+        @QueryMap params: Map<String, String>
+    ): ResultData<List<Event>>
 
     //获取指定用户收到接收到的动态
     @GET("/gith/event/users/{username}/received")
     suspend fun getReceivedEvent(
         @Header("gixor-login") tokenValue: String,
         @Path("username") username: String,
-    )
+    ): ResultData<List<Event>>
 
     //获取与某用户相关的动态
     @GET("/gith/event/users/{username}")
     suspend fun getRelatedEvent(
         @Header("gixor-login") tokenValue: String,
         @Path("username") username: String,
-    )
+    ): ResultData<List<Event>>
 
     //获取与某组织相关的动态
     @GET("/gith/event/orgs/{org}")
     suspend fun getOrgEvent(
         @Header("gixor-login") tokenValue: String,
         @Path("org") org: String,
-    )
+    ): ResultData<List<Event>>
 
 }

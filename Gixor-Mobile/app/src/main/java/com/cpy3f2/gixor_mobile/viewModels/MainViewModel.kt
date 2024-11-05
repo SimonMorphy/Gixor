@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import android.content.Context
 import androidx.lifecycle.LiveData
 import com.cpy3f2.gixor_mobile.database.GixorDatabase
+import com.cpy3f2.gixor_mobile.model.entity.Event
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import java.time.LocalDateTime
@@ -33,8 +34,10 @@ import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.Issue
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
+import createPageQueryParams
 import createStateQueryParams
 import kotlinx.coroutines.coroutineScope
+import android.util.Log
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -587,6 +590,85 @@ class MainViewModel : ViewModel() {
                 e.printStackTrace()
             } finally {
                 _isFollowingLoading.value = false
+            }
+        }
+    }
+
+    // 添加公共动态列表状态
+    private val _publicEvents = MutableStateFlow<List<Event>>(emptyList())
+    val publicEvents: StateFlow<List<Event>> = _publicEvents.asStateFlow()
+
+    private val _isEventsLoading = MutableStateFlow(false)
+    val isEventsLoading: StateFlow<Boolean> = _isEventsLoading.asStateFlow()
+
+    // 获取公共动态
+    fun loadPublicEvents() {
+        viewModelScope.launch {
+            try {
+                _isEventsLoading.value = true
+                val token = getToken() ?: return@launch
+                val response = RetrofitClient.httpBaseService.getPublicEvent(token, createPageQueryParams())
+                if (response.code == 200) {
+                    _publicEvents.value = response.data ?: emptyList()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isEventsLoading.value = false
+            }
+        }
+    }
+
+    // 添加用户相关动态状态
+    private val _relatedEvents = MutableStateFlow<List<Event>>(emptyList())
+    val relatedEvents: StateFlow<List<Event>> = _relatedEvents.asStateFlow()
+
+    private val _isRelatedEventsLoading = MutableStateFlow(false)
+    val isRelatedEventsLoading: StateFlow<Boolean> = _isRelatedEventsLoading.asStateFlow()
+
+    // 加载用户相关动态
+    fun loadRelatedEvents(username: String) {
+        viewModelScope.launch {
+            try {
+                Log.d("MainViewModel", "Starting to load related events for: $username")
+                _isRelatedEventsLoading.value = true
+                val token = getToken() ?: return@launch
+                val response = RetrofitClient.httpBaseService.getRelatedEvent(token, username)
+                Log.d("MainViewModel", "Related events response: ${response.code}")
+                if (response.code == 200) {
+                    val events = response.data ?: emptyList()
+                    Log.d("MainViewModel", "Received ${events.size} related events")
+                    _relatedEvents.value = events
+                }
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error loading related events", e)
+            } finally {
+                _isRelatedEventsLoading.value = false
+            }
+        }
+    }
+
+    // 添加接收到的动态列表状态
+    private val _receivedEvents = MutableStateFlow<List<Event>>(emptyList())
+    val receivedEvents: StateFlow<List<Event>> = _receivedEvents.asStateFlow()
+
+    private val _isReceivedEventsLoading = MutableStateFlow(false)
+    val isReceivedEventsLoading: StateFlow<Boolean> = _isReceivedEventsLoading.asStateFlow()
+
+    // 加载接收到的动态
+    fun loadReceivedEvents(username: String) {
+        viewModelScope.launch {
+            try {
+                _isReceivedEventsLoading.value = true
+                val token = getToken() ?: return@launch
+                val response = RetrofitClient.httpBaseService.getReceivedEvent(token, username)
+                if (response.code == 200) {
+                    _receivedEvents.value = response.data ?: emptyList()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isReceivedEventsLoading.value = false
             }
         }
     }

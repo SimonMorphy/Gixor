@@ -14,7 +14,7 @@ data class SimpleUser(
     val githubId: String? = null,
     
     @SerializedName("login")
-    val login: String? = null,
+    val login: String,
     
     @SerializedName("avatar_url")
     val avatarUrl: String? = null,

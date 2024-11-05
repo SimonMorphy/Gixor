@@ -1,6 +1,5 @@
 package com.cpy3f2.gixor_mobile.model.entity
 import java.math.BigDecimal
-import java.time.LocalDateTime
 import com.google.gson.annotations.SerializedName
 
 data class GitHubUser(

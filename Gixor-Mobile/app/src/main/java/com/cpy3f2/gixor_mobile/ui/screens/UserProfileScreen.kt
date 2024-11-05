@@ -113,7 +113,7 @@ private fun ProfileHeader(
             .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp)
     ) {
-        // 头像行
+        // 头像
         AsyncImage(
             model = user.avatarUrl,
             contentDescription = "User avatar",
@@ -124,41 +124,19 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 用户名和关注按钮行
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 用户名和昵称
-            Column {
-                Text(
-                    text = user.name ?: username,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Text(
-                    text = username,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+        // 用户名和昵称
+        Column {
+            Text(
+                text = user.name ?: username,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
             
-            // 关注按钮
-            Button(
-                onClick = { isFollowing = !isFollowing },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isFollowing) Color.White else Color.Red,
-                    contentColor = if (isFollowing) Color.Black else Color.White
-                ),
-                border = if (isFollowing) {
-                    BorderStroke(1.dp, Color.LightGray)
-                } else null,
-                modifier = Modifier.padding(start = 16.dp)
-            ) {
-                Text(if (isFollowing) "已关注" else "关注")
-            }
+            Text(
+                text = username,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         // Bio
@@ -186,13 +164,36 @@ private fun ProfileHeader(
             )
         }
 
+        // 关注按钮 - 移到这里
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(
+            onClick = { isFollowing = !isFollowing },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isFollowing) Color.White else MaterialTheme.colorScheme.primary,
+                contentColor = if (isFollowing) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
+            ),
+            border = if (isFollowing) {
+                BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            } else null,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = if (isFollowing) Icons.Outlined.People else Icons.Outlined.PersonAdd,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(if (isFollowing) "已关注" else "关注")
+        }
+
         // 网站链接
         if (!user.blog.isNullOrEmpty()) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = user.blog!!,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable { /* TODO: 打开网站链接 */ }
             )
         }
     }
