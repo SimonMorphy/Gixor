@@ -10,4 +10,4 @@ fun createQueryParams(
         "per_page" to perPage.toString(),
         "page" to page.toString()
     )
-} 
+}

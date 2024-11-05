@@ -1,5 +1,6 @@
 package com.cpy3f2.gixor_mobile.data.api
 
+import GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
@@ -19,11 +20,20 @@ interface HttpBaseService {
     suspend fun getMyUserInfo(
         @Header("gixor-login") tokenValue: String
     ): ResultData<GitHubUser>
+
     //GitHub指定用户信息接口
     @GET("/sys/user/{username}")
     suspend fun getGitHubUserInfo(
         @Path("username") username: String
     ): ResultData<GitHubUser>
+
+    //获取用户排行榜
+    @GET("/sys/user/rank")
+    suspend fun getUserRank(
+        @QueryMap params: Map<String, String>
+    ): ResultData<List<GitHubUser>>
+
+
 
     /***
      * star接口
@@ -64,6 +74,7 @@ interface HttpBaseService {
     //查看本人的仓库
     @GET("/gith/repo")
     suspend fun getMyRepoList(
+        @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
     ): ResultData<List<GitHubRepository>>
 
@@ -108,6 +119,7 @@ interface HttpBaseService {
     //创建里程碑
     @POST("/gith/issue/{owner}/{repo}/milestones")
     suspend fun createMilestone(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Body body: Any
@@ -116,6 +128,7 @@ interface HttpBaseService {
     //更新里程碑
     @PATCH("/gith/issue/{owner}/{repo}/milestones/{milestoneNumber}")
     suspend fun updateMilestone(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Path("milestoneNumber") number: Long,
@@ -126,6 +139,7 @@ interface HttpBaseService {
     //删除里程碑
     @DELETE("/gith/issue/{owner}/{repo}/milestones/{milestoneNumber}")
     suspend fun deleteMilestone(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Path("milestoneNumber") number: Long,
@@ -139,6 +153,7 @@ interface HttpBaseService {
     //向指定仓库添加issue
     @POST("/gith/issue/{owner}/{repo}")
     suspend fun createIssue(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Body body: Any
@@ -147,6 +162,7 @@ interface HttpBaseService {
     //向指定仓库更新issue
     @PATCH("/gith/issue/{owner}/{repo}")
     suspend fun updateIssue(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Body body: Any
@@ -155,6 +171,7 @@ interface HttpBaseService {
     //锁定指定issue
     @POST("/gith/issue/{owner}/{repo}/{number}")
     suspend fun lockIssue(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Path("number") number: Long,
@@ -164,6 +181,7 @@ interface HttpBaseService {
     //解锁指定 issue
     @DELETE("/gith/issue/{owner}/{repo}/{number}")
     suspend fun unlockIssue(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Path("number") number: Long
@@ -188,12 +206,67 @@ interface HttpBaseService {
     //获取当前用户的issue
     @GET("/gith/issue")
     suspend fun getMyIssueList(
+        @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
     ): ResultData<Any>
 
     //获取指派给当前用户的issue
     @GET("/gith/issue/assigned")
     suspend fun getMyAssignIssueList(
+        @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
     ): ResultData<Any>
+
+    /**
+     * Watch相关
+     */
+    //获取指定仓库的关注者列表
+    @GET("/gith/sub/repo/{owner}/{repo}")
+    suspend fun getSubscriberList(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    ): ResultData<List<Any>>
+
+    //查看是否订阅了指定仓库
+    @GET("/gith/sub/{owner}/{repo}")
+    suspend fun isSubscribed(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    ): ResultData<Boolean>
+
+    //获取当前用户的关注列表
+    @GET("/gith/sub/watching")
+    suspend fun getMySubscribedList(
+        @Header("gixor-login") tokenValue: String
+    ): ResultData<List<Any>>
+
+    //获取指定用户关注的仓库列表
+    @GET("/gith/sub/watching/{username}")
+    suspend fun getUserSubscribedList(
+        @Path("username") username: String
+    ): ResultData<List<GitHubRepository>>
+
+    //取消订阅指定仓库
+    @DELETE("/gith/sub/{owner}/{repo}")
+    suspend fun unsubscribeRepo(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    ): ResultData<Any>
+
+    //订阅指定仓库
+    @PUT("/gith/sub/{owner}/{repo}")
+    suspend fun subscribeRepo(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String
+    ): ResultData<Any>
+
+    /**
+     * follow相关
+     */
+    //获取当前用户的关注者列表
+    //获取指定用户的关注者列表
+
 }
