@@ -109,11 +109,11 @@ class MainViewModel : ViewModel() {
     //从本地获取搜索数据
 
     private val searchHistoryDao = GixorDatabase.database.getSearchHistoryItemDao()
-    
+
     // 使用 StateFlow 管理搜索历史
     private val _searchHistoryItems = MutableStateFlow<List<SearchHistoryItem>>(emptyList())
     val searchHistoryItems: StateFlow<List<SearchHistoryItem>> = _searchHistoryItems.asStateFlow()
-    
+
     init {
         // 初始化时加载搜索历史
         viewModelScope.launch {
@@ -132,11 +132,11 @@ class MainViewModel : ViewModel() {
     @SuppressLint("NewApi")
     fun addSearchHistory(searchText: String) {
         if (searchText.isBlank()) return
-        
+
         viewModelScope.launch(Dispatchers.IO) {
             // 先查找是否存在相同的搜索记录
             val existingItem = searchHistoryDao.findByName(searchText)
-            
+
             if (existingItem != null) {
                 // 如果存在，只更新时间
                 searchHistoryDao.updateTime(searchText, LocalDateTime.now())
@@ -149,7 +149,7 @@ class MainViewModel : ViewModel() {
                 )
                 searchHistoryDao.insert(searchItem)
             }
-            
+
             // 重新加载搜索历史（已经按时间降序排序）
             loadSearchHistory()
         }
@@ -222,10 +222,10 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _loginState.value = LoginState.Loading
-                
+
                 // 保存完整的响应
                 preferencesManager.saveToken(jsonResponse)
-                
+
                 // 更新登录状态
                 _isLoggedIn.value = true
                 _loginState.value = LoginState.Success
@@ -250,22 +250,24 @@ class MainViewModel : ViewModel() {
 
     private val _trendyRepos = MutableStateFlow<List<TrendyRepository>>(emptyList())
     val trendyRepos: StateFlow<List<TrendyRepository>> = _trendyRepos.asStateFlow()
-    
+
     init {
         loadTrendyRepos()
     }
-    
+
     fun loadTrendyRepos() {
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.httpBaseService.getTrendyRepoList()
-                if (response.code == 200) {
-                    // 先加载仓库列表（此时所有仓库默认未收藏）
-                    _trendyRepos.value = response.data
-                    
-                    // 如果用户已登录，异步检查每个仓库的收藏状态
-                    if (hasToken()) {
-                        checkStarStatusForRepos(response.data)
+                val response = getToken()?.let { RetrofitClient.httpBaseService.getTrendyRepoList(it) }
+                if (response != null) {
+                    if (response.code == 200) {
+                        // 先加载仓库列表（此时所有仓库默认未收藏）
+                        _trendyRepos.value = response.data
+
+                        // 如果用户已登录，异步检查每个仓库的收藏状态
+                        if (hasToken()) {
+                            checkStarStatusForRepos(response.data)
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -276,7 +278,7 @@ class MainViewModel : ViewModel() {
 
     private fun checkStarStatusForRepos(repos: List<TrendyRepository>) {
         if (!hasToken()) return
-        
+
         viewModelScope.launch {
             try {
                 val token = getToken() ?: return@launch
@@ -306,7 +308,7 @@ class MainViewModel : ViewModel() {
     // 加载用户的收藏仓库列表
     fun loadStarredRepos() {
         if (!hasToken()) return
-        
+
         viewModelScope.launch {
             try {
                 createQueryParams()
@@ -329,7 +331,7 @@ class MainViewModel : ViewModel() {
                 _uiState.value = UiState.Loading
                 val token = getToken() ?: return@launch
                 val repoId = "$owner/$name"
-                
+
                 val success = if (isCurrentlyStarred) {
                     // 取消收藏
                     val response = RetrofitClient.httpBaseService.unStarRepo(owner, name, token)
@@ -351,7 +353,7 @@ class MainViewModel : ViewModel() {
                 } else {
                     _uiState.value = UiState.Error("操作失败")
                 }
-                
+
             } catch (e: Exception) {
                 e.printStackTrace()
                 _uiState.value = UiState.Error(e.message ?: "操作失败")
@@ -390,11 +392,13 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val params = createQueryParams()
-                val response = RetrofitClient.httpBaseService.getUserRepoList(owner, params)
-                if (response.code == 200) {
-                    // 找到匹配的仓库
-                    val repo = response.data.find { it.name == repoName }
-                    _repoDetails.value = repo
+                val response = getToken()?.let { RetrofitClient.httpBaseService.getUserRepoList(it,owner, params) }
+                if (response != null) {
+                    if (response.code == 200) {
+                        // 找到匹配的仓库
+                        val repo = response.data.find { it.name == repoName }
+                        _repoDetails.value = repo
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -413,9 +417,11 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _isIssuesLoading.value = true  // 开始加载
-                val response = RetrofitClient.httpBaseService.getRepoIssues(owner, repoName, createQueryParams())
-                if (response.code == 200) {
-                    _repoIssues.value = response.data
+                val response = getToken()?.let { RetrofitClient.httpBaseService.getRepoIssues(it,owner, repoName, createQueryParams()) }
+                if (response != null) {
+                    if (response.code == 200) {
+                        _repoIssues.value = response.data
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -437,9 +443,11 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _isPrLoading.value = true
-                val response = RetrofitClient.httpBaseService.getRepoPrList(owner, repoName)
-                if (response.code == 200) {
-                    _repoPullRequests.value = response.data
+                val response = getToken()?.let { RetrofitClient.httpBaseService.getRepoPrList(it,owner, repoName) }
+                if (response != null) {
+                    if (response.code == 200) {
+                        _repoPullRequests.value = response.data
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

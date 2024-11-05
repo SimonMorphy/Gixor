@@ -767,7 +767,7 @@ fun PullRequestItem(pr: PullRequest) {
 
                 // 用户名
                 Text(
-                    text = pr.user?.name ?: "未知用户",
+                    text = pr.user?.login ?: "未知用户",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )

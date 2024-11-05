@@ -2,6 +2,7 @@ package com.cpy3f2.gixor_mobile.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpy3f2.gixor_mobile.MyApplication.Companion.preferencesManager
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.network.source.RetrofitClient
@@ -23,6 +24,7 @@ class UserProfileViewModel : ViewModel() {
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+    fun getToken(): String? = preferencesManager.getToken()
 
     fun loadUserProfile(username: String) {
         viewModelScope.launch {
@@ -30,12 +32,15 @@ class UserProfileViewModel : ViewModel() {
                 _isLoading.value = true
                 _error.value = null
                 
-                val response = RetrofitClient.httpBaseService.getGitHubUserInfo(username)
-                if (response.code == 200) {
-                    _userState.value = response.data
-                    loadUserRepositories(username)
-                } else {
-                    _error.value = "Failed to load user profile"
+                val response =
+                    getToken()?.let { RetrofitClient.httpBaseService.getGitHubUserInfo(it,username) }
+                if (response != null) {
+                    if (response.code == 200) {
+                        _userState.value = response.data
+                        loadUserRepositories(username)
+                    } else {
+                        _error.value = "Failed to load user profile"
+                    }
                 }
             } catch (e: Exception) {
                 _error.value = e.message ?: "Unknown error"
@@ -48,11 +53,13 @@ class UserProfileViewModel : ViewModel() {
     private fun loadUserRepositories(username: String) {
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.httpBaseService.getUserRepoList(username, createQueryParams())
-                if (response.code == 200) {
-                    _repositories.value = response.data
-                } else {
-                    _error.value = "Failed to load repositories"
+                val response = getToken()?.let { RetrofitClient.httpBaseService.getUserRepoList(it,username, createQueryParams()) }
+                if (response != null) {
+                    if (response.code == 200) {
+                        _repositories.value = response.data
+                    } else {
+                        _error.value = "Failed to load repositories"
+                    }
                 }
             } catch (e: Exception) {
                 _error.value = e.message ?: "Unknown error"

@@ -26,18 +26,21 @@ interface HttpBaseService {
     //GitHub指定用户信息接口
     @GET("/sys/user/{username}")
     suspend fun getGitHubUserInfo(
+        @Header("gixor-login") tokenValue: String,
         @Path("username") username: String
     ): ResultData<GitHubUser>
 
     //获取用户排行榜
     @GET("/sys/user/rank")
     suspend fun getUserRank(
+        @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
     ): ResultData<List<GitHubUser>>
 
     //获取热点用户
     @GET("/sys/user/trendy")
     suspend fun getHotUserList(
+        @Header("gixor-login") tokenValue: String,
     ): ResultData<List<SimpleUser>>
 
 
@@ -88,6 +91,7 @@ interface HttpBaseService {
     //查看某人收藏的仓库
     @GET("/gith/repo/starred/{username}")
     suspend fun getUserStarRepoList(
+        @Header("gixor-login") tokenValue: String,
         @Path("username") username: String,
         @QueryMap params: Map<String, String>
     ): ResultData<List<GitHubRepository>>
@@ -95,13 +99,16 @@ interface HttpBaseService {
     //查看某人的仓库
     @GET("/gith/repo/{username}")
     suspend fun getUserRepoList(
+        @Header("gixor-login") tokenValue: String,
         @Path("username") username: String,
         @QueryMap params: Map<String, String>
     ): ResultData<List<GitHubRepository>>
 
     //获得热点项目
     @GET("/sys/repo/trendy")
-    suspend fun getTrendyRepoList(): ResultData<List<TrendyRepository>>
+    suspend fun getTrendyRepoList(
+        @Header("gixor-login") tokenValue: String,
+    ): ResultData<List<TrendyRepository>>
 
     /**
      *Milestone相关
@@ -109,6 +116,7 @@ interface HttpBaseService {
     //获取指定仓库的Milestone列表
     @GET("/gith/issue/{owner}/{repo}/milestones")
     suspend fun getMilestoneList(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @QueryMap params: Map<String, String>
@@ -117,6 +125,7 @@ interface HttpBaseService {
     //获取指定仓库的Milestone详情
     @GET("/gith/issue/{owner}/{repo}/milestones/{milestoneNumber}")
     suspend fun getMilestoneDetail(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Path("milestoneNumber") number: Long,
@@ -197,6 +206,7 @@ interface HttpBaseService {
     //获取指定仓库的issue
     @GET("/gith/issue/{owner}/{repo}")
     suspend fun getRepoIssues(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @QueryMap params: Map<String, String>
@@ -230,6 +240,7 @@ interface HttpBaseService {
     //获取指定仓库的关注者列表
     @GET("/gith/sub/repo/{owner}/{repo}")
     suspend fun getSubscriberList(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String
     ): ResultData<List<Any>>
@@ -251,6 +262,7 @@ interface HttpBaseService {
     //获取指定用户关注的仓库列表
     @GET("/gith/sub/watching/{username}")
     suspend fun getUserSubscribedList(
+        @Header("gixor-login") tokenValue: String,
         @Path("username") username: String
     ): ResultData<List<GitHubRepository>>
 
@@ -282,6 +294,7 @@ interface HttpBaseService {
     //获取指定用户的关注者列表
     @GET("/gith/follow//{username}following")
     suspend fun getUserFollowing(
+        @Header("gixor-login") tokenValue: String,
         @Path("username") username: String
     ): ResultData<List<SimpleUser>>
 
@@ -294,6 +307,7 @@ interface HttpBaseService {
     //获取指定用户的粉丝列表
     @GET("/gith/follow/{username}followers")
     suspend fun getUserFollowers(
+        @Header("gixor-login") tokenValue: String,
         @Path("username") username: String
     ): ResultData<List<SimpleUser>>
 
@@ -324,6 +338,7 @@ interface HttpBaseService {
     //获取指定仓库的pr列表
     @GET("/gith/pr/{owner}/{repo}")
     suspend fun getRepoPrList(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
     ): ResultData<List<PullRequest>>
@@ -331,6 +346,7 @@ interface HttpBaseService {
     //获取指定的pr
     @GET("/gith/pr/{owner}/{repo}/{number}")
     suspend fun getPrDetail(
+        @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Path("number") number: Long
