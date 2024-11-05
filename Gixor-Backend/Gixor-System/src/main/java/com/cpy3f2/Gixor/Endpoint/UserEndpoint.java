@@ -5,16 +5,22 @@ import com.cpy3f2.Gixor.Annotation.Endpoint;
 import com.cpy3f2.Gixor.Constant.Constants;
 import com.cpy3f2.Gixor.Domain.GitHubUser;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
+import com.cpy3f2.Gixor.Domain.TrendyUser;
 import com.cpy3f2.Gixor.Domain.User;
 import com.cpy3f2.Gixor.Service.GitHubUserService;
 import com.cpy3f2.Gixor.Service.UserService;
 import com.cpy3f2.Gixor.service.CacheService;
 import jakarta.annotation.Resource;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.PostExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 /**
  * @author : simon
@@ -61,6 +67,12 @@ public class UserEndpoint {
                 .map(ResponseResult::success);
     }
 
+    @GetExchange("/trendy")
+    public Mono<ResponseResult> list(){
+        return cacheService.getCacheObjectFlux(Constants.TRENDY_USER_KEY, TrendyUser.class)
+                .collectList()
+                .map(ResponseResult::success);
+    }
     @GetExchange("/rank")
     public Mono<ResponseResult> list(int page,int pageSize){
         return cacheService.getCacheList(Constants.RANK_KEY, GitHubUser.class,page,pageSize)

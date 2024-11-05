@@ -3,11 +3,14 @@ package com.cpy3f2.Gixor.Endpoint;
 import com.cpy3f2.Gixor.Annotation.Endpoint;
 import com.cpy3f2.Gixor.Domain.DTO.IssueDTO;
 import com.cpy3f2.Gixor.Domain.Issue.Milestone;
+import com.cpy3f2.Gixor.Domain.Query.BaseQuerySetting;
 import com.cpy3f2.Gixor.Domain.Query.IssueQuerySetting;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
+import com.cpy3f2.Gixor.Service.IssueCommentService;
 import com.cpy3f2.Gixor.Service.IssueService;
 import com.cpy3f2.Gixor.Service.MilestoneService;
 import jakarta.annotation.Resource;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.*;
@@ -28,6 +31,9 @@ public class IssueEndpoint {
 
     @Resource
     private MilestoneService milestoneService;
+
+    @Resource
+    private IssueCommentService issueCommentService;
 
     /**
      * 获取Issue列表
@@ -219,8 +225,67 @@ public class IssueEndpoint {
     @DeleteExchange("/{owner}/{repo}/milestones/{milestone_number}")
     public Mono<ResponseResult> deleteMilestone(@PathVariable String owner,
                                               @PathVariable String repo,
-                                              @PathVariable Integer milestoneNumber) {
+                                              @PathVariable("milestone_number") Integer milestoneNumber) {
         return milestoneService.deleteMilestone(owner, repo, milestoneNumber)
                 .then(Mono.just(ResponseResult.success("删除成功")));
+    }
+
+    /**
+     * 获取Issue评论列表
+     */
+    @GetExchange("/{owner}/{repo}/issues/{issue_number}/comments")
+    public Mono<ResponseResult> listComments(@PathVariable String owner,
+                                             @PathVariable String repo,
+                                             @PathVariable("issue_number") Integer issueNumber,
+                                             BaseQuerySetting settings) {
+        return issueCommentService.listComments(owner, repo, issueNumber, settings)
+                .collectList()
+                .map(ResponseResult::success);
+    }
+
+    /**
+     * 获取单个评论
+     */
+    @GetExchange("/{owner}/{repo}/comments/{comment_id}")
+    public Mono<ResponseResult> getComment(@PathVariable String owner,
+                                           @PathVariable String repo,
+                                           @PathVariable("comment_id") Long commentId) {
+        return issueCommentService.getComment(owner, repo, commentId)
+                .map(ResponseResult::success);
+    }
+
+    /**
+     * 创建评论
+     */
+    @PostExchange("/{owner}/{repo}/issues/{issue_number}/comments")
+    public Mono<ResponseResult> createComment(@PathVariable String owner,
+                                              @PathVariable String repo,
+                                              @PathVariable("issue_number") Integer issueNumber,
+                                              @RequestBody String body) {
+        return issueCommentService.createComment(owner, repo, issueNumber, body)
+                .map(comment -> ResponseResult.success("评论创建成功"));
+    }
+
+    /**
+     * 更新评论
+     */
+    @PatchExchange("/{owner}/{repo}/comments/{comment_id}")
+    public Mono<ResponseResult> updateComment(@PathVariable String owner,
+                                              @PathVariable String repo,
+                                              @PathVariable("comment_id") Long commentId,
+                                              @RequestBody String body) {
+        return issueCommentService.updateComment(owner, repo, commentId, body)
+                .map(comment -> ResponseResult.success("评论更新成功"));
+    }
+
+    /**
+     * 删除评论
+     */
+    @DeleteExchange("/{owner}/{repo}/comments/{comment_id}")
+    public Mono<ResponseResult> deleteComment(@PathVariable String owner,
+                                              @PathVariable String repo,
+                                              @PathVariable("comment_id") Long commentId) {
+        return issueCommentService.deleteComment(owner, repo, commentId)
+                .then(Mono.just(ResponseResult.success("评论删除成功")));
     }
 }

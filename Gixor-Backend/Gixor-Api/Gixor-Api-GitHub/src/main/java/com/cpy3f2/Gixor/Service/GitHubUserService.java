@@ -4,10 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import com.cpy3f2.Gixor.Config.GitHubApi;
+import com.cpy3f2.Gixor.Domain.SimpleUser;
 import com.cpy3f2.Gixor.Domain.GitHubUser;
 import com.cpy3f2.Gixor.Domain.Query.BaseQuerySetting;
 import jakarta.annotation.Resource;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
@@ -122,7 +122,7 @@ public class GitHubUserService {
                             return githubUser;
                         }));
     }
-    public Flux<GitHubUser> getFollowers(BaseQuerySetting querySetting) {
+    public Flux<SimpleUser> getFollowers(BaseQuerySetting querySetting) {
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
@@ -133,9 +133,9 @@ public class GitHubUserService {
                 .onStatus(HttpStatusCode::is4xxClientError,
                         response -> Mono.error(new RuntimeException("获取GitHub用户信息失败"))
                         )
-                .bodyToFlux(GitHubUser.class);
+                .bodyToFlux(SimpleUser.class);
     }
-    public Flux<GitHubUser> getFollowing(BaseQuerySetting querySetting) {
+    public Flux<SimpleUser> getFollowing(BaseQuerySetting querySetting) {
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
@@ -146,7 +146,7 @@ public class GitHubUserService {
                 .onStatus(HttpStatusCode::is4xxClientError,
                         response -> Mono.error(new RuntimeException("获取GitHub用户信息失败"))
                 )
-                .bodyToFlux(GitHubUser.class);
+                .bodyToFlux(SimpleUser.class);
     }
     public Mono<Void> checkFollowed(String username){
         return githubClient
@@ -178,7 +178,7 @@ public class GitHubUserService {
                 )
                 .bodyToMono(Void.class);
     }
-    public Flux<GitHubUser> listFollowers(String username, BaseQuerySetting querySetting) {
+    public Flux<SimpleUser> listFollowers(String username, BaseQuerySetting querySetting) {
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
@@ -189,9 +189,9 @@ public class GitHubUserService {
                 .onStatus(HttpStatusCode::is4xxClientError,
                         response -> Mono.error(new RuntimeException("搜索失败"))
                 )
-                .bodyToFlux(GitHubUser.class);
+                .bodyToFlux(SimpleUser.class);
     }
-    public Flux<GitHubUser> listFollowing(String username, BaseQuerySetting querySetting) {
+    public Flux<SimpleUser> listFollowing(String username, BaseQuerySetting querySetting) {
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
@@ -201,7 +201,7 @@ public class GitHubUserService {
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
                         response -> Mono.error(new RuntimeException("搜索失败"))
-               ).bodyToFlux(GitHubUser.class);
+               ).bodyToFlux(SimpleUser.class);
     }
 
 }

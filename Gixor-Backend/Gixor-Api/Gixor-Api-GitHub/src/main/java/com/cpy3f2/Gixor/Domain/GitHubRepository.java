@@ -29,6 +29,8 @@ public class GitHubRepository {
     private Owner owner;
     private License license;
     private String description;
+    @JsonProperty("open_issues")
+    private Integer issues;
     private String language;
     @JsonProperty("stargazers_count")
     private Integer stargazersCount;

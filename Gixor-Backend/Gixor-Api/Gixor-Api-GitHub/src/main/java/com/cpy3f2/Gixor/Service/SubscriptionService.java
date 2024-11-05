@@ -1,6 +1,6 @@
 package com.cpy3f2.Gixor.Service;
 
-import com.cpy3f2.Gixor.Domain.DTO.SubscriptionDTO;
+import com.cpy3f2.Gixor.Domain.VO.SubscriptionVO;
 import com.cpy3f2.Gixor.Domain.GitHubRepository;
 import com.cpy3f2.Gixor.Domain.Record.SubscriptionRequest;
 import com.cpy3f2.Gixor.Domain.Watcher;
@@ -36,24 +36,24 @@ public class SubscriptionService {
     /**
      * 获取当前用户的仓库订阅状态
      */
-    public Mono<SubscriptionDTO> getRepositorySubscription(String owner, String repo) {
+    public Mono<SubscriptionVO> getRepositorySubscription(String owner, String repo) {
         return githubClient.get()
                 .uri("/repos/{owner}/{repo}/subscription", owner, repo)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.error(new RuntimeException("未订阅")))
-                .bodyToMono(SubscriptionDTO.class);
+                .bodyToMono(SubscriptionVO.class);
     }
 
     /**
      * 设置仓库订阅状态
      */
-    public Mono<SubscriptionDTO> setRepositorySubscription(String owner, String repo,
-                                                           boolean subscribed, boolean ignored) {
+    public Mono<SubscriptionVO> setRepositorySubscription(String owner, String repo,
+                                                          boolean subscribed, boolean ignored) {
         return githubClient.put()
                 .uri("/repos/{owner}/{repo}/subscription", owner, repo)
                 .bodyValue(new SubscriptionRequest(subscribed, ignored))
                 .retrieve()
-                .bodyToMono(SubscriptionDTO.class);
+                .bodyToMono(SubscriptionVO.class);
     }
 
     /**

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * @author : simon
@@ -53,6 +54,13 @@ public class RepositoryService {
                 .bodyToFlux(GitHubRepository.class);
     }
 
+    public Mono<GitHubRepository> getRepo(String owner, String repo){
+        return githubClient
+                .get()
+                .uri("/repos/{owner}/{repo}", owner, repo)
+                .retrieve()
+                .bodyToMono(GitHubRepository.class);
+    }
     public Flux<GitHubRepository> listRepos(RepositoryQuerySetting querySetting){
         return githubClient
                 .get()

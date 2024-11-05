@@ -51,6 +51,11 @@ public class CacheService {
         return reactiveRedisTemplate.opsForValue().get(key)
                 .map(obj -> JSON.parseObject(JSON.toJSONString(obj), clazz));
     }
+    public <T> Flux<T> getCacheObjectFlux(final String key, final Class<T> clazz) {
+        return reactiveRedisTemplate.opsForValue().get(key)
+                .map(obj -> JSON.parseArray(JSON.toJSONString(obj), clazz))
+                .flatMapMany(Flux::fromIterable);
+    }
 
     public Mono<Long> deleteObject(final String key) {
         return reactiveRedisTemplate.delete(key);

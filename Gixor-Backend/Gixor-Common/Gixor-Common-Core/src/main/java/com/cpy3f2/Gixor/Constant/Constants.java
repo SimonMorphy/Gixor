@@ -53,5 +53,5 @@ public class Constants {
     public static final Character EFFECTIVE = '1';
     public static final String RANK_KEY = "user-rank";
     public static final String TRENDY_REPO_KEY = "trendy-repos";
-    public static final String TRENDY_USER_KEY = "trendy-users";
+    public static final String TRENDY_USER_KEY = "trendy-developers";
 }

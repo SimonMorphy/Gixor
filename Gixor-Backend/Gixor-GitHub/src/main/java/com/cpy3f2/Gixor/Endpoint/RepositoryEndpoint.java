@@ -29,20 +29,13 @@ public class RepositoryEndpoint {
     private RepositoryService repositoryService;
 
 
-    @Resource
-    private CacheService cacheService;
 
 
-
-
-    @GetExchange("/trendy")
-    public Mono<ResponseResult> listTrendyRepositories(){
-        return cacheService.getCacheList(Constants.TRENDY_REPO_KEY, TrendyRepository.class)
-                .collectList()
-                .defaultIfEmpty(repositoryService.listTrendyRepos().collectList().block())
+    @GetExchange("/{owner}/{repo}")
+    public Mono<ResponseResult> getRepository(@PathVariable String owner, @PathVariable String repo){
+        return repositoryService.getRepo(owner,repo)
                 .map(ResponseResult::success);
     }
-
     /**
      * 获取仓库列表
      * @param settings 查询参数
