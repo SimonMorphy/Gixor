@@ -10,7 +10,7 @@ import java.lang.annotation.*;
 
 /**
  * @author : simon
- * @description :
+ * @description : 端点注解，标注一个面向外界用于交换数据的端口
  * @last : 2024-10-30 15:12
  * Copyright (c) 2024. 保留所有权利。
  * @since : 2024-10-30 15:12

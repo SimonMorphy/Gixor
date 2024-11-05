@@ -4,9 +4,13 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import com.cpy3f2.Gixor.Config.GitHubApi;
+import com.cpy3f2.Gixor.Domain.ResponseResult;
 import com.cpy3f2.Gixor.Domain.SimpleUser;
 import com.cpy3f2.Gixor.Domain.GitHubUser;
 import com.cpy3f2.Gixor.Domain.Query.BaseQuerySetting;
+import com.cpy3f2.Gixor.Exception.constant.GitHubErrorCodes;
+import com.cpy3f2.Gixor.Exception.user.UserOperationException;
+import com.cpy3f2.Gixor.Exception.util.GitHubErrorMessageUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,17 +45,21 @@ public class GitHubUserService {
     @Resource
     private ReactiveElasticsearchOperations esOperations;
 
+    @Resource
+    private GitHubErrorMessageUtil errorMessageUtil;
+
     public Mono<GitHubUser> getInfo(){
         return githubClient
                 .get()
                 .uri("/user")
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("获取GitHub用户信息失败")))
+                        response -> Mono.error(new UserOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.USER_INFO_GET),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(GitHubUser.class)
-                .flatMap(this::getStats)
-                .doOnSuccess(user -> log.info("Successfully retrieved user info for: {}", user.getLogin()))
-                .doOnError(error -> log.error("Error retrieving user info: {}", error.getMessage()));
+                .flatMap(this::getStats);
     }
 
     public Mono<GitHubUser> getGitHubUser(String username) {
@@ -60,7 +68,10 @@ public class GitHubUserService {
                 .uri("/users/{username}", username)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("获取GitHub用户信息失败")))
+                        response -> Mono.error(new UserOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.USER_INFO_GET),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(GitHubUser.class);
     }
     /**
@@ -131,8 +142,10 @@ public class GitHubUserService {
                 ).build())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("获取GitHub用户信息失败"))
-                        )
+                        response -> Mono.error(new UserOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.USER_INFO_GET),
+                                new ResponseResult()
+                        )))
                 .bodyToFlux(SimpleUser.class);
     }
     public Flux<SimpleUser> getFollowing(BaseQuerySetting querySetting) {
@@ -144,8 +157,10 @@ public class GitHubUserService {
                 ).build())
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("获取GitHub用户信息失败"))
-                )
+                        response -> Mono.error(new UserOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.USER_INFO_GET),
+                                new ResponseResult()
+                        )))
                 .bodyToFlux(SimpleUser.class);
     }
     public Mono<Void> checkFollowed(String username){
@@ -154,8 +169,10 @@ public class GitHubUserService {
                 .uri("/user/following/{username}", username)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("未关注该用户"))
-                )
+                        response -> Mono.error(new UserOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.USER_NOT_FOLLOWED),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(Void.class);
     }
     public Mono<Void> follow(String username){
@@ -164,8 +181,10 @@ public class GitHubUserService {
                 .uri("/user/following/{username}", username)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("关注失败"))
-                )
+                        response -> Mono.error(new UserOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.USER_FOLLOW),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(Void.class);
     }
     public Mono<Void> unfollow(String username){
@@ -174,8 +193,10 @@ public class GitHubUserService {
                 .uri("/user/following/{username}", username)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("取消关注失败"))
-                )
+                        response -> Mono.error(new UserOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.USER_UNFOLLOW),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(Void.class);
     }
     public Flux<SimpleUser> listFollowers(String username, BaseQuerySetting querySetting) {

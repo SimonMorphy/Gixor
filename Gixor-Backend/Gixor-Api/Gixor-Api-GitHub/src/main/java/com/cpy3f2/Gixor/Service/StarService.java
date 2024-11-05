@@ -1,5 +1,9 @@
 package com.cpy3f2.Gixor.Service;
 
+import com.cpy3f2.Gixor.Domain.ResponseResult;
+import com.cpy3f2.Gixor.Exception.constant.GitHubErrorCodes;
+import com.cpy3f2.Gixor.Exception.star.StarOperationException;
+import com.cpy3f2.Gixor.Exception.util.GitHubErrorMessageUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
@@ -22,13 +26,21 @@ public class StarService {
     @Resource
     private WebClient githubClient;
 
+
+    @Resource
+    private GitHubErrorMessageUtil errorMessageUtil;
+
+
     public Mono<Void> isStarred(String owner,String repo) {
         return githubClient
                 .get()
                 .uri("/user/starred/{owner}/{repo}", owner, repo)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("未收藏")))
+                        response -> Mono.error(new StarOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.STAR_NOT_STARRED),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(Void.class);
     }
     public Mono<Void> star(String owner,String repo) {
@@ -37,7 +49,10 @@ public class StarService {
                 .uri("/user/starred/{owner}/{repo}", owner, repo)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("已收藏，无法继续收藏")))
+                        response -> Mono.error(new StarOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.STAR_ALREADY_STARRED),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(Void.class);
     }
 
@@ -47,7 +62,10 @@ public class StarService {
                 .uri("/user/starred/{owner}/{repo}", owner, repo)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError,
-                        response -> Mono.error(new RuntimeException("未收藏，无法继续取消收藏")))
+                        response -> Mono.error(new StarOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.STAR_NOT_FOUND),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(Void.class);
     }
 

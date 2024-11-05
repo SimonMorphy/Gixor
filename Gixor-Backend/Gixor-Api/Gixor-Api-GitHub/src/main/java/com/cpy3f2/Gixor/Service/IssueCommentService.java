@@ -5,6 +5,11 @@ package com.cpy3f2.Gixor.Service;
 import com.cpy3f2.Gixor.Config.GitHubApi;
 import com.cpy3f2.Gixor.Domain.IssueComment;
 import com.cpy3f2.Gixor.Domain.Query.BaseQuerySetting;
+import com.cpy3f2.Gixor.Domain.Record.CommentRequest;
+import com.cpy3f2.Gixor.Domain.ResponseResult;
+import com.cpy3f2.Gixor.Exception.constant.GitHubErrorCodes;
+import com.cpy3f2.Gixor.Exception.repository.RepositoryOperationException;
+import com.cpy3f2.Gixor.Exception.util.GitHubErrorMessageUtil;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -25,6 +30,9 @@ public class IssueCommentService {
     @Resource
     private WebClient githubClient;
 
+    @Resource
+    private GitHubErrorMessageUtil errorMessageUtil;
+
     /**
      * 获取仓库Issue的评论列表
      */
@@ -36,7 +44,10 @@ public class IssueCommentService {
                         .build(owner, repo, issueNumber))
                 .retrieve()
                 .onStatus(HttpStatusCode::isError,
-                        response -> Mono.error(new RuntimeException("获取评论列表失败")))
+                        response -> Mono.error(new RepositoryOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.ISSUE_COMMENT_LIST),
+                                new ResponseResult()
+                        )))
                 .bodyToFlux(IssueComment.class);
     }
 
@@ -49,7 +60,10 @@ public class IssueCommentService {
                         owner, repo, commentId)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError,
-                        response -> Mono.error(new RuntimeException("获取评论失败")))
+                        response -> Mono.error(new RepositoryOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.ISSUE_COMMENT_GET),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(IssueComment.class);
     }
 
@@ -63,7 +77,10 @@ public class IssueCommentService {
                 .bodyValue(new CommentRequest(body))
                 .retrieve()
                 .onStatus(HttpStatusCode::isError,
-                        response -> Mono.error(new RuntimeException("创建评论失败")))
+                        response -> Mono.error(new RepositoryOperationException(
+                                errorMessageUtil.getMessage(GitHubErrorCodes.ISSUE_COMMENT_CREATE),
+                                new ResponseResult()
+                        )))
                 .bodyToMono(IssueComment.class);
     }
 
@@ -93,6 +110,4 @@ public class IssueCommentService {
                         response -> Mono.error(new RuntimeException("删除评论失败")))
                 .bodyToMono(Void.class);
     }
-
-    private record CommentRequest(String body) {}
 }

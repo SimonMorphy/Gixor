@@ -16,8 +16,8 @@ import jakarta.json.JsonObject;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.service.annotation.GetExchange;
-import org.springframework.web.service.annotation.PostExchange;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -49,37 +49,37 @@ public class UserEndpoint {
 
 
 
-    @PostExchange
+    @PostMapping
     @SaCheckRole(Constants.ADMIN)
     public Mono<Boolean> addUser(@RequestBody User user) {
         return userService.add(user);
     }
 
-    @GetExchange("/exists/{uuid}")
+    @GetMapping("/exists/{uuid}")
     public Mono<Boolean> exists(@PathVariable String uuid) {
         return userService.exists(uuid);
     }
 
-    @GetExchange
+    @GetMapping
     public Mono<ResponseResult> getInfo()
     {
         return gitUserService.getInfo()
                 .map(ResponseResult::success);
     }
 
-    @GetExchange("/trendy")
+    @GetMapping("/trendy")
     public Mono<ResponseResult> list(){
         return cacheService.getCacheObjectFlux(Constants.TRENDY_USER_KEY, TrendyUser.class)
                 .collectList()
                 .map(ResponseResult::success);
     }
-    @GetExchange("/rank")
+    @GetMapping("/rank")
     public Mono<ResponseResult> list(int page,int pageSize){
         return cacheService.getCacheList(Constants.RANK_KEY, GitHubUser.class,page,pageSize)
                 .collectList()
                 .map(ResponseResult::success);
     }
-    @GetExchange("/{username}")
+    @GetMapping("/{username}")
     public Mono<ResponseResult> getInfo(@PathVariable String username)
     {
         return gitUserService.getInfo(username)

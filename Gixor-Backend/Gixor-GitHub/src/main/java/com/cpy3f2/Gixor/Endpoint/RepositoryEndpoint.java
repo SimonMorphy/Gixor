@@ -10,7 +10,7 @@ import com.cpy3f2.Gixor.service.CacheService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.bind.annotation.GetMapping;
 import reactor.core.publisher.Mono;
 
 /**
@@ -31,7 +31,7 @@ public class RepositoryEndpoint {
 
 
 
-    @GetExchange("/{owner}/{repo}")
+    @GetMapping("/{owner}/{repo}")
     public Mono<ResponseResult> getRepository(@PathVariable String owner, @PathVariable String repo){
         return repositoryService.getRepo(owner,repo)
                 .map(ResponseResult::success);
@@ -43,14 +43,14 @@ public class RepositoryEndpoint {
      * @author simon
      * @since 2024/11/1
      */
-    @GetExchange
+    @GetMapping
     public Mono<ResponseResult> listRepositories(RepositoryQuerySetting settings){
         return repositoryService.listRepos(settings)
                 .collectList()
                 .map(ResponseResult::success);
     }
 
-    @GetExchange("/{username}")
+    @GetMapping("/{username}")
     public Mono<ResponseResult> listRepositories(@PathVariable String username, RepositoryQuerySetting settings){
         return repositoryService.listRepos(username,settings)
                 .collectList()
@@ -67,7 +67,7 @@ public class RepositoryEndpoint {
      * @author simon
      * @since 2024/10/31
      */
-    @GetExchange("/starred")
+    @GetMapping("/starred")
     public Mono<ResponseResult> listStarredRepositories(RepositoryQuerySetting settings){
         return repositoryService.listStarredRepo(settings)
                 .collectList()
@@ -80,7 +80,7 @@ public class RepositoryEndpoint {
      * @author simon
      * @since 2024/10/31
      */
-    @GetExchange("/starred/{username}")
+    @GetMapping("/starred/{username}")
     public Mono<ResponseResult> listStarredRepositories(@PathVariable String username, RepositoryQuerySetting settings) {
         return repositoryService.listStarredRepo(username,settings)
                 .collectList()

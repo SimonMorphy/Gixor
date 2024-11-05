@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.bind.annotation.GetMapping;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -48,7 +48,7 @@ public class LoginHandler {
                 .build();
     }
 
-    @GetExchange("/callback")
+    @GetMapping("/callback")
     public Mono<ResponseResult> login(AuthCallback callback) {
         return Mono.just(authGithubRequest.login(callback).getData())
                 .cast(AuthUser.class)

@@ -7,7 +7,7 @@ import com.cpy3f2.Gixor.Domain.TrendyRepository;
 import com.cpy3f2.Gixor.Service.RepositoryService;
 import com.cpy3f2.Gixor.service.CacheService;
 import jakarta.annotation.Resource;
-import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.bind.annotation.GetMapping;
 import reactor.core.publisher.Mono;
 
 /**
@@ -28,7 +28,7 @@ public class RepositoryEndpoint {
     private CacheService cacheService;
 
 
-    @GetExchange("/trendy")
+    @GetMapping("/trendy")
     public Mono<ResponseResult> listTrendyRepositories(){
         return cacheService.getCacheObjectFlux(Constants.TRENDY_REPO_KEY, TrendyRepository.class)
                 .collectList()

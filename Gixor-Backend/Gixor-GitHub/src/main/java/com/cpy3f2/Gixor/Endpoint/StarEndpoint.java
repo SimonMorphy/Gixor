@@ -5,8 +5,8 @@ import com.cpy3f2.Gixor.Domain.ResponseResult;
 import com.cpy3f2.Gixor.Service.StarService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.service.annotation.DeleteExchange;
-import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.service.annotation.PutExchange;
 import reactor.core.publisher.Mono;
 
@@ -33,7 +33,7 @@ public class StarEndpoint {
      * @author simon
      * @since 2024/10/31
      * */
-    @GetExchange("/{owner}/{repo}")
+    @GetMapping("/{owner}/{repo}")
     public Mono<ResponseResult> check(@PathVariable String owner, @PathVariable String repo){
         return starService.isStarred(owner, repo)
                 .then(Mono.fromCallable(() -> ResponseResult.success("已收藏")));
@@ -62,7 +62,7 @@ public class StarEndpoint {
      * @author simon
      * @since 2024/10/31
      */
-    @DeleteExchange("/{owner}/{repo}")
+    @DeleteMapping("/{owner}/{repo}")
     public Mono<ResponseResult> unStar(@PathVariable String owner, @PathVariable String repo){
         return starService.unStar(owner, repo)
                 .then(Mono.fromCallable(() -> ResponseResult.success("取消收藏成功")));
