@@ -79,7 +79,7 @@ fun UserProfileScreen(
                 ) {
                     // 头部信息
                     item {
-                        ProfileHeader(userState, username)
+                        ProfileHeader(userState, username, viewModel)
                     }
 
                     // 统计信息栏
@@ -103,9 +103,12 @@ fun UserProfileScreen(
 @Composable
 private fun ProfileHeader(
     user: GitHubUser,
-    username: String
+    username: String,
+    viewModel: UserProfileViewModel
 ) {
-    var isFollowing by remember { mutableStateOf(false) }
+    val isFollowing by viewModel.isFollowing.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Column(
         modifier = Modifier
@@ -164,26 +167,50 @@ private fun ProfileHeader(
             )
         }
 
-        // 关注按钮 - 移到这里
+        // 关注按钮
         Spacer(modifier = Modifier.height(12.dp))
         Button(
-            onClick = { isFollowing = !isFollowing },
+            onClick = { 
+                if (isFollowing) {
+                    viewModel.unfollowUser(username)
+                } else {
+                    viewModel.followUser(username)
+                }
+            },
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isFollowing) Color.White else MaterialTheme.colorScheme.primary,
+                containerColor = if (isFollowing) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary,
                 contentColor = if (isFollowing) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
             ),
             border = if (isFollowing) {
                 BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             } else null,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
         ) {
-            Icon(
-                imageVector = if (isFollowing) Icons.Outlined.People else Icons.Outlined.PersonAdd,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Icon(
+                    imageVector = if (isFollowing) Icons.Outlined.People else Icons.Outlined.PersonAdd,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(if (isFollowing) "已关注" else "关注")
+            }
+        }
+
+        // 显示错误信息
+        if (error != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = error!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(if (isFollowing) "已关注" else "关注")
         }
 
         // 网站链接
