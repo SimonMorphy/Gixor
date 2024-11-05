@@ -27,6 +27,8 @@ import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.WindowInsets
 
 @Composable
 fun UserProfileScreen(
@@ -43,39 +45,55 @@ fun UserProfileScreen(
         viewModel.loadUserProfile(username)
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center)
-            )
-        } else if (error != null) {
-            Text(
-                text = error ?: "Unknown error",
-                color = MaterialTheme.colorScheme.error,
+    Column(modifier = modifier.fillMaxSize()) {
+        // 系统状态栏
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 1.dp
+        ) {
+            Spacer(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.statusBars)
             )
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // 头部信息
-                item {
-                    ProfileHeader(userState, username)
-                }
+        }
 
-                // 统计信息栏
-                item {
-                    StatsBar(userState)
-                }
+        // 主要内容
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else if (error != null) {
+                Text(
+                    text = error ?: "Unknown error",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(16.dp)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // 头部信息
+                    item {
+                        ProfileHeader(userState, username)
+                    }
 
-                // 仓库列表
-                item {
-                    RepositorySection(
-                        reposState = reposState,
-                        username = username
-                    )
+                    // 统计信息栏
+                    item {
+                        StatsBar(userState)
+                    }
+
+                    // 仓库列表
+                    item {
+                        RepositorySection(
+                            reposState = reposState,
+                            username = username
+                        )
+                    }
                 }
             }
         }
@@ -87,48 +105,61 @@ private fun ProfileHeader(
     user: GitHubUser,
     username: String
 ) {
+    var isFollowing by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
             .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            // 左侧：头像
-            AsyncImage(
-                model = user.avatarUrl,
-                contentDescription = "User avatar",
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-            )
-            
-            // 右侧：关注按钮
-            Button(
-                onClick = { /* TODO: 实现关注功能 */ },
-                modifier = Modifier.padding(start = 16.dp)
-            ) {
-                Text("Follow")
-            }
-        }
+        // 头像行
+        AsyncImage(
+            model = user.avatarUrl,
+            contentDescription = "User avatar",
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 用户名和昵称
-        Text(
-            text = user.name ?: username,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-        
-        Text(
-            text = username,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        // 用户名和关注按钮行
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 用户名和昵称
+            Column {
+                Text(
+                    text = user.name ?: username,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Text(
+                    text = username,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            // 关注按钮
+            Button(
+                onClick = { isFollowing = !isFollowing },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isFollowing) Color.White else Color.Red,
+                    contentColor = if (isFollowing) Color.Black else Color.White
+                ),
+                border = if (isFollowing) {
+                    BorderStroke(1.dp, Color.LightGray)
+                } else null,
+                modifier = Modifier.padding(start = 16.dp)
+            ) {
+                Text(if (isFollowing) "已关注" else "关注")
+            }
+        }
 
         // Bio
         if (!user.bio.isNullOrEmpty()) {
@@ -139,7 +170,7 @@ private fun ProfileHeader(
             )
         }
 
-        // 其他信息
+        // 位置信息
         Spacer(modifier = Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -152,6 +183,16 @@ private fun ProfileHeader(
                 text = user.location ?: "No location",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // 网站链接
+        if (!user.blog.isNullOrEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = user.blog!!,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
