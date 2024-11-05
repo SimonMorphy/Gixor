@@ -94,7 +94,7 @@ fun RepoDetailScreen(
             },
             navigationIcon = {
                 IconButton(onClick = {
-//                    (context as? Activity)?.finish()
+                    NavigationManager.navigateBack()
                 }) {
                     Icon(Icons.Default.ArrowBack, "Back")
                 }

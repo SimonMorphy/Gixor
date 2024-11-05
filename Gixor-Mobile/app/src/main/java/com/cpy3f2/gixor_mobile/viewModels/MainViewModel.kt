@@ -12,8 +12,6 @@ import com.cpy3f2.gixor_mobile.MyApplication
 
 
 import com.cpy3f2.gixor_mobile.model.entity.Category
-import com.cpy3f2.gixor_mobile.model.entity.FocusContentItem
-import com.cpy3f2.gixor_mobile.model.entity.FocusItem
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.SearchHistoryItem
 import com.cpy3f2.gixor_mobile.network.source.RetrofitClient
@@ -34,7 +32,9 @@ import createQueryParams
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.Issue
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
+import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import createStateQueryParams
+import kotlinx.coroutines.coroutineScope
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -90,24 +90,12 @@ class MainViewModel : ViewModel() {
      *获取关注数据
      */
     //TODO 获取网络请求中的数据
-    var focusData  =  listOf(
-        FocusItem("https://img13.360buyimg.com/n1/s450x450_jfs/t1/230553/4/14312/28419/65e97139F8d0b7587/fe216871f88cf51b.jpg","测试数据"),
-        FocusItem("https://img13.360buyimg.com/n1/s450x450_jfs/t1/230553/4/14312/28419/65e97139F8d0b7587/fe216871f88cf51b.jpg","测试数据"),
-        FocusItem("https://img13.360buyimg.com/n1/s450x450_jfs/t1/230553/4/14312/28419/65e97139F8d0b7587/fe216871f88cf51b.jpg","测试数据"),
-        FocusItem("https://img13.360buyimg.com/n1/s450x450_jfs/t1/230553/4/14312/28419/65e97139F8d0b7587/fe216871f88cf51b.jpg","测试数据"),
-        FocusItem("https://img13.360buyimg.com/n1/s450x450_jfs/t1/230553/4/14312/28419/65e97139F8d0b7587/fe216871f88cf51b.jpg","测试数据"),
-        FocusItem("https://img13.360buyimg.com/n1/s450x450_jfs/t1/230553/4/14312/28419/65e97139F8d0b7587/fe216871f88cf51b.jpg","测试数据"),
-        FocusItem("https://img13.360buyimg.com/n1/s450x450_jfs/t1/230553/4/14312/28419/65e97139F8d0b7587/fe216871f88cf51b.jpg","测试数据"),
-        FocusItem("https://img13.360buyimg.com/n1/s450x450_jfs/t1/230553/4/14312/28419/65e97139F8d0b7587/fe216871f88cf51b.jpg","测试数据"),
-        FocusItem("https://img13.360buyimg.com/n1/s450x450_jfs/t1/230553/4/14312/28419/65e97139F8d0b7587/fe216871f88cf51b.jpg","测试数据"))
 
     /**
      * 获取关注对象的动态
      * //TODO 获取网络请求中的数据
      */
-    var focusContentData = listOf(
-        FocusContentItem("https://img13.360buyimg.com/imagetools/jfs/t1/148456/39/13392/164681/605279caE5a940775/7c4d345f6b834795.jpg","关注1"),
-    )
+
     //从本地获取搜索数据
 
     private val searchHistoryDao = GixorDatabase.database.getSearchHistoryItemDao()
@@ -538,6 +526,67 @@ class MainViewModel : ViewModel() {
                 e.printStackTrace()
             } finally {
                 _isPrDetailLoading.value = false
+            }
+        }
+    }
+
+    // 添加预加载状态
+    private val _isPreloading = MutableStateFlow(false)
+    val isPreloading: StateFlow<Boolean> = _isPreloading.asStateFlow()
+
+    // 预加载数据方法
+    suspend fun preloadData() {
+        if (_isPreloading.value) return
+        
+        viewModelScope.launch {
+            try {
+                _isPreloading.value = true
+                
+                // 并行加载多个数据
+                coroutineScope {
+                    launch { loadTrendyRepos() }
+                    
+                    // 如果用户已登录，加载用户相关数据
+                    if (hasToken()) {
+                        launch { 
+                            getToken()?.let { token ->
+                                getUserInfo(token)
+                            }
+                        }
+                        launch { loadStarredRepos() }
+                    }
+                }
+                
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isPreloading.value = false
+            }
+        }
+    }
+
+    // 添加关注者列表状态
+    private val _followingList = MutableStateFlow<List<SimpleUser>>(emptyList())
+    val followingList: StateFlow<List<SimpleUser>> = _followingList.asStateFlow()
+
+    // 添加加载状态
+    private val _isFollowingLoading = MutableStateFlow(false)
+    val isFollowingLoading: StateFlow<Boolean> = _isFollowingLoading.asStateFlow()
+
+    // 获取关注者列表
+    fun loadFollowingList() {
+        viewModelScope.launch {
+            try {
+                _isFollowingLoading.value = true
+                val token = getToken() ?: return@launch
+                val response = RetrofitClient.httpBaseService.getMyFollowing(token)
+                if (response.code == 200) {
+                    _followingList.value = response.data ?: emptyList()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isFollowingLoading.value = false
             }
         }
     }

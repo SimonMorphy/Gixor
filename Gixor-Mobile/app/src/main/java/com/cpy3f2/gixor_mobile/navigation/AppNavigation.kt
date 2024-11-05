@@ -21,6 +21,7 @@ import com.cpy3f2.gixor_mobile.ui.screens.UserProfileScreen
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
 import com.cpy3f2.gixor_mobile.ui.screens.PullRequestDetailScreen
+import com.cpy3f2.gixor_mobile.ui.screens.SplashScreen
 
 @Composable
 fun AppNavigation(
@@ -37,8 +38,11 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = AppDestinations.Main.route
+        startDestination = AppDestinations.Splash.route
     ) {
+        composable(AppDestinations.Splash.route) {
+            SplashScreen(viewModel = viewModel)
+        }
         composable(AppDestinations.Login.route) {
             LoginScreen(viewModel = viewModel)
         }

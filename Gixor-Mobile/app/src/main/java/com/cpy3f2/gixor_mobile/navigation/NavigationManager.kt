@@ -78,4 +78,8 @@ object NavigationManager {
             )
         )
     }
+
+    fun navigateToSplash() {
+        _navController.value?.navigate(AppDestinations.Splash.route)
+    }
 } 

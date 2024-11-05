@@ -97,8 +97,8 @@ fun HorizontalPagerWithIndicator(vm: MainViewModel,navController: NavController)
             state = pagerState,
         ) { page ->
             when(page) {
-                0 -> DynamicScreen()
-                1 -> RecommendScreen()
+                0 -> DynamicScreen(vm)
+                1 -> RecommendScreen(vm)
                 2 -> HotPointScreen(vm)
             }
         }

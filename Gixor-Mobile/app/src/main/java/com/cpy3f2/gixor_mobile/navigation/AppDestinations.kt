@@ -1,6 +1,7 @@
 import android.net.Uri
 
 sealed class AppDestinations(val route: String) {
+    object Splash : AppDestinations("splash")
     object Login : AppDestinations("login")
     object Main : AppDestinations("main")
     object Search : AppDestinations("search")
@@ -39,6 +40,7 @@ sealed class AppDestinations(val route: String) {
     companion object {
         fun fromRoute(route: String): AppDestinations {
             return when(route) {
+                "splash" -> Splash
                 "login" -> Login
                 "main" -> Main
                 "search" -> Search
