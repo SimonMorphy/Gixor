@@ -58,4 +58,14 @@ object NavigationManager {
     fun navigateToUserProfile(username: String) {
         _navController.value?.navigate(AppDestinations.UserProfile.createRoute(username))
     }
+
+    fun navigateToIssueDetail(owner: String, repo: String, issueNumber: Int) {
+        _navController.value?.navigate(
+            AppDestinations.IssueDetail.createRoute(
+                owner = owner,
+                repo = repo,
+                issueNumber = issueNumber
+            )
+        )
+    }
 } 

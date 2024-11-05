@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import android.net.Uri
 import androidx.navigation.NavType
+import com.cpy3f2.gixor_mobile.ui.screens.IssueDetailScreen
 import com.cpy3f2.gixor_mobile.ui.screens.LoginScreen
 import com.cpy3f2.gixor_mobile.ui.screens.MainFrame
 import com.cpy3f2.gixor_mobile.ui.screens.MessageScreen
@@ -88,6 +89,26 @@ fun AppNavigation(
             UserProfileScreen(
                 username = username,
                 viewModel = userModel
+            )
+        }
+        composable(
+            route = AppDestinations.IssueDetail.route,
+            arguments = listOf(
+                navArgument("owner") { type = NavType.StringType },
+                navArgument("repo") { type = NavType.StringType },
+                navArgument("issueNumber") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val owner = backStackEntry.arguments?.getString("owner") ?: ""
+            val repo = backStackEntry.arguments?.getString("repo") ?: ""
+            val issueNumber = backStackEntry.arguments?.getLong("issueNumber") ?: 0L
+            
+            IssueDetailScreen(
+                viewModel = viewModel,
+                owner = owner,
+                repo = repo,
+                issueNumber = issueNumber,
+                onBackClick = { NavigationManager.navigateBack() }
             )
         }
     }

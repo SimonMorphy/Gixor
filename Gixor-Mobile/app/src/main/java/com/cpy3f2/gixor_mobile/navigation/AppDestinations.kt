@@ -25,6 +25,11 @@ sealed class AppDestinations(val route: String) {
             return "user_profile/${Uri.encode(username)}"
         }
     }
+    object IssueDetail : AppDestinations("issue_detail/{owner}/{repo}/{issueNumber}") {
+        fun createRoute(owner: String, repo: String, issueNumber: Int): String {
+            return "issue_detail/$owner/$repo/$issueNumber"
+        }
+    }
     
     companion object {
         fun fromRoute(route: String): AppDestinations {
@@ -37,6 +42,7 @@ sealed class AppDestinations(val route: String) {
                 "notification" -> NotificationDetail
                 "repo_detail" -> RepoDetail
                 "user_profile" -> UserProfile
+                "issue_detail" -> IssueDetail
                 else -> Main
             }
         }

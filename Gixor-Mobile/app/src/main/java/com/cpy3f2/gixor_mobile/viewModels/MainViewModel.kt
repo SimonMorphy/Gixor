@@ -286,7 +286,7 @@ class MainViewModel : ViewModel() {
                 repos.forEach { repo ->
                     try {
                         val response = RetrofitClient.httpBaseService.isStarRepo(repo.author, repo.name, token)
-                        if (response.code == 200 && response.data == true) {
+                        if (response.code == 200) {
                             // 如果仓库被收藏，将其ID添加到收藏集合中
                             _starredRepos.value = _starredRepos.value + "${repo.author}/${repo.name}"
                         }
@@ -453,6 +453,30 @@ class MainViewModel : ViewModel() {
                 e.printStackTrace()
             } finally {
                 _isPrLoading.value = false
+            }
+        }
+    }
+
+    private val _currentIssue = MutableStateFlow<Issue?>(null)
+    val currentIssue: StateFlow<Issue?> = _currentIssue.asStateFlow()
+
+    private val _isIssueDetailLoading = MutableStateFlow(false)
+    val isIssueDetailLoading: StateFlow<Boolean> = _isIssueDetailLoading.asStateFlow()
+
+    fun loadIssueDetail(owner: String, repo: String, issueNumber: Long) {
+        viewModelScope.launch {
+            try {
+                _isIssueDetailLoading.value = true
+                val response = getToken()?.let { 
+                    RetrofitClient.httpBaseService.getIssueDetail(owner, repo, issueNumber)
+                }
+                if (response?.code == 200) {
+                    _currentIssue.value = response.data as Issue
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isIssueDetailLoading.value = false
             }
         }
     }

@@ -1,4 +1,3 @@
-import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,12 +56,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import com.cpy3f2.gixor_mobile.model.entity.Issue
 import com.cpy3f2.gixor_mobile.model.converter.DateTimeConverters
-import java.time.LocalDateTime
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
+import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -433,7 +432,18 @@ fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(issues) { issue ->
-                    IssueItem(issue)
+                    IssueItem(
+                        issue = issue,
+                        onClick = {
+                            issue.number?.let { number ->
+                                NavigationManager.navigateToIssueDetail(
+                                    owner = owner,
+                                    repo = repoName,
+                                    issueNumber = number
+                                )
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -441,11 +451,14 @@ fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
 }
 
 @Composable
-fun IssueItem(issue: Issue) {
+fun IssueItem(
+    issue: Issue,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* TODO: Navigate to issue detail */ },
+            .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
