@@ -1,3 +1,4 @@
+package com.cpy3f2.gixor_mobile.model.entity
 import java.math.BigDecimal
 import java.time.LocalDateTime
 

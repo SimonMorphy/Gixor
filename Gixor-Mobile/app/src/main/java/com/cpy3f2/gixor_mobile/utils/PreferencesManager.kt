@@ -1,3 +1,4 @@
+package com.cpy3f2.gixor_mobile.utils
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.JsonObject

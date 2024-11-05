@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Gixor-Mobile"
+rootProject.name = "gixor_mobile"
 include ':app'

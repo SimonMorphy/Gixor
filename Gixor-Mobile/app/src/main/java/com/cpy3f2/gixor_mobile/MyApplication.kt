@@ -1,6 +1,6 @@
 package com.cpy3f2.gixor_mobile
 
-import PreferencesManager
+import com.cpy3f2.gixor_mobile.utils.PreferencesManager
 import android.app.Application
 import android.content.Context
 

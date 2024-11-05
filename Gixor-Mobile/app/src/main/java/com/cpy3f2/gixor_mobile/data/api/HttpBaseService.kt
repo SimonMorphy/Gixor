@@ -1,9 +1,9 @@
 package com.cpy3f2.gixor_mobile.data.api
 
-import GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
+import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import retrofit2.http.*
 
 interface HttpBaseService {
