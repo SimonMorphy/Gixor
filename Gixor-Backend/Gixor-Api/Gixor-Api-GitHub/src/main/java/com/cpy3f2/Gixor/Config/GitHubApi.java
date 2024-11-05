@@ -1,24 +1,21 @@
 package com.cpy3f2.Gixor.Config;
 
-import com.cpy3f2.Gixor.Domain.QuerySetting;
+import com.cpy3f2.Gixor.Domain.Query.BaseQuerySetting;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.WebClient;
 import cn.dev33.satoken.stp.StpUtil;
 import org.springframework.web.util.UriBuilder;
-import reactor.core.publisher.Mono;
-import cn.dev33.satoken.reactor.context.SaReactorSyncHolder;
 import lombok.extern.slf4j.Slf4j;
-import cn.dev33.satoken.context.SaTokenContext;
+
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
-import java.util.Optional;
 
 /**
  * @author : simon
@@ -30,6 +27,9 @@ import java.util.Optional;
 @Configuration
 @Slf4j
 public class GitHubApi {
+
+    @Value("${admin.token}")
+    private String adminToken;
 
     @Bean
     public WebClient.Builder gitHubClientBuilder() {
@@ -47,6 +47,14 @@ public class GitHubApi {
                     return next.exchange(request);
                 });
     }
+    @Bean
+    public WebClient.Builder gitHubClientBuilderWithoutToken() {
+        return WebClient.builder()
+                .baseUrl("https://api.github.com")
+                .defaultHeader(HttpHeaders.ACCEPT, "application/vnd.github+json")
+                .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken);
+    }
 
     /**
      * 使用反射动态添加查询参数
@@ -54,25 +62,30 @@ public class GitHubApi {
      * @param querySetting 查询设置
      * @return 更新后的UriBuilder
      */
-    public static UriBuilder addQueryParams(UriBuilder builder, QuerySetting querySetting) {
+    public  static  UriBuilder addQueryParams(UriBuilder builder,  BaseQuerySetting querySetting) {
         if (querySetting == null) {
             return builder;
         }
 
         try {
-            Field[] fields = QuerySetting.class.getDeclaredFields();
-            for (Field field : fields) {
-                field.setAccessible(true);
-                Object value = field.get(querySetting);
-                
-                if (value != null) {
-                    String paramName = getParamName(field);
-                    String paramValue = formatValue(value);
+            // 获取当前类及其所有父类的字段
+            Class<?> currentClass = querySetting.getClass();
+            while (currentClass != null && currentClass != Object.class) {
+                Field[] fields = currentClass.getDeclaredFields();
+                for (Field field : fields) {
+                    field.setAccessible(true);
+                    Object value = field.get(querySetting);
                     
-                    if (paramValue != null) {
-                        builder.queryParam(paramName, paramValue);
+                    if (value != null) {
+                        String paramName = getParamName(field);
+                        String paramValue = formatValue(value);
+                        
+                        if (paramValue != null) {
+                            builder.queryParam(paramName, paramValue);
+                        }
                     }
                 }
+                currentClass = currentClass.getSuperclass();
             }
         } catch (IllegalAccessException e) {
             log.error("反射获取QuerySetting属性失败", e);
@@ -104,7 +117,13 @@ public class GitHubApi {
     }
 
     @Bean
-    public WebClient gitHubClient(WebClient.Builder builder) {
-        return builder.build();
+    @Primary
+    public WebClient gitHubClient(WebClient.Builder gitHubClientBuilder) {
+        return gitHubClientBuilder.build();
     }
+    @Bean
+    public WebClient gitHubClientWithoutToken(WebClient.Builder gitHubClientBuilderWithoutToken) {
+        return gitHubClientBuilderWithoutToken.build();
+    }
+
 }

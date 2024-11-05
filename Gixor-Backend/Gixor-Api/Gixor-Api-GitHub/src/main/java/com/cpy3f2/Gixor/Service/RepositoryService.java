@@ -2,7 +2,7 @@ package com.cpy3f2.Gixor.Service;
 
 import com.cpy3f2.Gixor.Config.GitHubApi;
 import com.cpy3f2.Gixor.Domain.GitHubRepository;
-import com.cpy3f2.Gixor.Domain.QuerySetting;
+import com.cpy3f2.Gixor.Domain.Query.RepositoryQuerySetting;
 import com.cpy3f2.Gixor.Domain.TrendyRepository;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ public class RepositoryService {
                 .retrieve()
                 .bodyToFlux(TrendyRepository.class);
     }
-    public Flux<GitHubRepository> listStarredRepo(String username, QuerySetting querySetting) {
+    public Flux<GitHubRepository> listStarredRepo(String username, RepositoryQuerySetting querySetting) {
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
@@ -42,7 +42,7 @@ public class RepositoryService {
                 .retrieve()
                 .bodyToFlux(GitHubRepository.class);
     }
-    public Flux<GitHubRepository> listStarredRepo(QuerySetting querySetting) {
+    public Flux<GitHubRepository> listStarredRepo(RepositoryQuerySetting querySetting) {
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
@@ -53,7 +53,7 @@ public class RepositoryService {
                 .bodyToFlux(GitHubRepository.class);
     }
 
-    public Flux<GitHubRepository> listRepos(QuerySetting querySetting){
+    public Flux<GitHubRepository> listRepos(RepositoryQuerySetting querySetting){
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
@@ -64,7 +64,7 @@ public class RepositoryService {
                 .bodyToFlux(GitHubRepository.class);
     }
 
-    public Flux<GitHubRepository> listRepos(String username,QuerySetting querySetting){
+    public Flux<GitHubRepository> listRepos(String username,RepositoryQuerySetting querySetting){
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(

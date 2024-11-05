@@ -3,12 +3,12 @@ package com.cpy3f2.Gixor.Service;
 import com.cpy3f2.Gixor.Config.GitHubApi;
 import com.cpy3f2.Gixor.Domain.DTO.IssueDTO;
 import com.cpy3f2.Gixor.Domain.Issue;
-import com.cpy3f2.Gixor.Domain.QuerySetting;
+import com.cpy3f2.Gixor.Domain.Query.IssueQuerySetting;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.service.annotation.GetExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,7 +24,7 @@ public class IssueService {
     @Resource
     private WebClient githubClient;
 
-    public Flux<Issue> listIssues(final QuerySetting settings){
+    public Flux<Issue> listIssues(final IssueQuerySetting settings){
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
@@ -34,7 +34,7 @@ public class IssueService {
                 .retrieve()
                 .bodyToFlux(Issue.class);
     }
-    public Flux<Issue> listRepoIssues(final String owner, final String repo, final QuerySetting settings){
+    public Flux<Issue> listRepoIssues(final String owner, final String repo, final IssueQuerySetting settings){
         return githubClient
                 .get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
@@ -94,7 +94,7 @@ public class IssueService {
                         clientResponse -> Mono.error(new RuntimeException("解锁失败，请稍后再试")))
                 .bodyToMono(Void.class);
     }
-    public Flux<Issue> listAssignedIssues(final QuerySetting settings) {
+    public Flux<Issue> listAssignedIssues(final IssueQuerySetting settings) {
         return githubClient
                 .get()
                 .uri(uriBuilder-> GitHubApi.addQueryParams(uriBuilder.path("/user/issues"),settings).build())
