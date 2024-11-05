@@ -19,6 +19,7 @@ data class GitHubRepository(
     val visibility: String? = null,
     val fork: Boolean? = null,
 
+    val issues:Int? = null,
     val htmlUrl: String? = null,
     val topics: List<String>? = null,
 

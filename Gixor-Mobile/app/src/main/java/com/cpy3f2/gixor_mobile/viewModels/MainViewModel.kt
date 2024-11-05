@@ -30,6 +30,9 @@ import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import java.time.LocalDateTime
 import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
 import createQueryParams
+import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
+import com.cpy3f2.gixor_mobile.model.entity.Issue
+import com.cpy3f2.gixor_mobile.model.entity.PullRequest
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -378,5 +381,81 @@ class MainViewModel : ViewModel() {
     // 如果需要检查单个仓库的收藏状态，可以使用这个扩展方法
     fun isRepoStarred(owner: String, name: String): Boolean {
         return "$owner/$name" in _starredRepos.value
+    }
+
+    private val _repoDetails = MutableStateFlow<GitHubRepository?>(null)
+    val repoDetails: StateFlow<GitHubRepository?> = _repoDetails.asStateFlow()
+
+    fun loadRepoDetails(owner: String, repoName: String) {
+        viewModelScope.launch {
+            try {
+                val params = createQueryParams()
+                val response = RetrofitClient.httpBaseService.getUserRepoList(owner, params)
+                if (response.code == 200) {
+                    // 找到匹配的仓库
+                    val repo = response.data.find { it.name == repoName }
+                    _repoDetails.value = repo
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    //issue
+    private val _repoIssues = MutableStateFlow<List<Issue>>(emptyList())
+    val repoIssues: StateFlow<List<Issue>> = _repoIssues.asStateFlow()
+
+    private val _isIssuesLoading = MutableStateFlow(false)
+    val isIssuesLoading: StateFlow<Boolean> = _isIssuesLoading.asStateFlow()
+
+    fun loadRepoIssues(owner: String, repoName: String, state: String) {
+        viewModelScope.launch {
+            try {
+                _isIssuesLoading.value = true  // 开始加载
+                val params = mapOf(
+                    "state" to state,
+                    "per_page" to "30",
+                    "page" to "1"
+                )
+                val response = RetrofitClient.httpBaseService.getRepoIssues(owner, repoName, params)
+                if (response.code == 200) {
+                    _repoIssues.value = response.data
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isIssuesLoading.value = false  // 结束加载
+            }
+        }
+    }
+
+
+    //pr
+    private val _repoPullRequests = MutableStateFlow<List<PullRequest>>(emptyList())
+    val repoPullRequests: StateFlow<List<PullRequest>> = _repoPullRequests.asStateFlow()
+
+    private val _isPrLoading = MutableStateFlow(false)
+    val isPrLoading: StateFlow<Boolean> = _isPrLoading.asStateFlow()
+
+    fun loadRepoPullRequests(owner: String, repoName: String, state: String = "all") {
+        viewModelScope.launch {
+            try {
+                _isPrLoading.value = true
+                val params = mapOf(
+                    "state" to state,
+                    "per_page" to "30",
+                    "page" to "1"
+                )
+                val response = RetrofitClient.httpBaseService.getRepoPrList(owner, repoName, params)
+                if (response.code == 200) {
+                    _repoPullRequests.value = response.data
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isPrLoading.value = false
+            }
+        }
     }
 }

@@ -11,3 +11,13 @@ fun createQueryParams(
         "page" to page.toString()
     )
 }
+
+fun createPageQueryParams(
+    page: Int = 1,
+    perPage: Int = 30
+): Map<String, String> {
+    return mapOf(
+        "per_page" to perPage.toString(),
+        "page" to page.toString()
+    )
+}

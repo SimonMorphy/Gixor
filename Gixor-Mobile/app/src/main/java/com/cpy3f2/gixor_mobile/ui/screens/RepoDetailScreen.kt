@@ -30,6 +30,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,10 +45,24 @@ import androidx.compose.ui.unit.dp
 import com.cpy3f2.gixor_mobile.R
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.outlined.Comment
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
+import com.cpy3f2.gixor_mobile.model.entity.Issue
+import com.cpy3f2.gixor_mobile.model.converter.DateTimeConverters
+import java.time.LocalDateTime
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import com.cpy3f2.gixor_mobile.model.entity.PullRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,7 +142,9 @@ fun RepoDetailScreen(
         // 内容区域
         Box(modifier = Modifier.fillMaxSize()) {
             when (selectedTab) {
-                RepoTab.Code -> RepoCodeTab(owner, repoName)
+                RepoTab.Code -> RepoCodeTab(owner, repoName, viewModel)
+                RepoTab.Issues -> RepoIssuesTab(owner, repoName, viewModel)
+                RepoTab.PullRequests -> RepoPullRequestsTab(owner, repoName, viewModel)
                 else -> {
                     // 其他标签页显示开发中提示
                     Column(
@@ -159,15 +176,17 @@ enum class RepoTab(val title: String) {
     Issues("Issues"),
     PullRequests("Pull Requests"),
     Discussions("Discussions"),
-    Actions("Actions"),
-    Projects("Projects"),
-    Security("Security"),
-    Insights("Insights")
 }
 
 // 示例 Tab 内容
 @Composable
-fun RepoCodeTab(owner: String, repoName: String) {
+fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
+    val repoDetails by viewModel.repoDetails.collectAsState()
+    
+    LaunchedEffect(owner, repoName) {
+        viewModel.loadRepoDetails(owner, repoName)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -179,11 +198,15 @@ fun RepoCodeTab(owner: String, repoName: String) {
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "About",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                // 仓库描述
+                if (!repoDetails?.description.isNullOrEmpty()) {
+                    Text(
+                        text = repoDetails?.description ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
                 
                 // 统计信息
                 Row(
@@ -193,17 +216,26 @@ fun RepoCodeTab(owner: String, repoName: String) {
                     StatItem(
                         icon = Icons.Outlined.Star,
                         label = "Stars",
-                        count = "1.2k"
+                        count = "${repoDetails?.stargazersCount ?: 0}"
                     )
                     StatItem(
                         icon = Icons.Outlined.AccountTree,
                         label = "Forks",
-                        count = "234"
+                        count = "${repoDetails?.forksCount ?: 0}"
                     )
                     StatItem(
                         icon = Icons.Outlined.RemoveRedEye,
-                        label = "Watching",
-                        count = "45"
+                        label = "Issues",
+                        count = "${repoDetails?.issues ?: 0}"
+                    )
+                }
+
+                // 语言信息
+                if (!repoDetails?.language.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Language: ${repoDetails?.language}",
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
@@ -314,4 +346,444 @@ fun RepoDetailScreenDarkPreview() {
             )
         }
     }
-} 
+}
+
+@Composable
+fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
+    val issues by viewModel.repoIssues.collectAsState()
+    val isLoading by viewModel.isIssuesLoading.collectAsState()
+    var selectedFilter by remember { mutableStateOf("open") }
+    
+    LaunchedEffect(owner, repoName, selectedFilter) {
+        viewModel.loadRepoIssues(owner, repoName, selectedFilter)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // 筛选器
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = selectedFilter == "open",
+                onClick = { selectedFilter = "open" },
+                label = { Text("Open") }
+            )
+            FilterChip(
+                selected = selectedFilter == "closed",
+                onClick = { selectedFilter = "closed" },
+                label = { Text("Closed") }
+            )
+        }
+
+        // 加载状态显示
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = "Loading issues...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        } else if (issues.isEmpty()) {
+            // 无数据状态
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Comment,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    Text(
+                        text = "No issues found",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "There are no ${selectedFilter} issues in this repository",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        } else {
+            // Issues 列表
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(issues) { issue ->
+                    IssueItem(issue)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun IssueItem(issue: Issue) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { /* TODO: Navigate to issue detail */ },
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // Issue 标题和编号
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = issue.title ?: "",
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "#${issue.number}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Issue 状态和标签
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StatusChip(issue.state ?: "")
+                issue.labels?.take(3)?.forEach { label ->
+                    LabelChip(label)
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Issue 元信息
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Opened by ${issue.user?.login}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = "",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = DateTimeConverters.formatRelativeTime(issue.createdAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                if (issue.comments ?: 0 > 0) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Comment,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = "${issue.comments}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatusChip(state: String) {
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = when (state.lowercase()) {
+            "open" -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            "closed" -> MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+            else -> MaterialTheme.colorScheme.surface
+        }
+    ) {
+        Text(
+            text = state.uppercase(),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = when (state.lowercase()) {
+                "open" -> MaterialTheme.colorScheme.primary
+                "closed" -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurface
+            }
+        )
+    }
+}
+
+@Composable
+fun LabelChip(label: Issue.Label) {
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = Color(android.graphics.Color.parseColor("#${label.color}")).copy(alpha = 0.2f)
+    ) {
+        Text(
+            text = label.name ?: "",
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(android.graphics.Color.parseColor("#${label.color}"))
+        )
+    }
+}
+
+
+
+@Composable
+fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewModel) {
+    val pullRequests by viewModel.repoPullRequests.collectAsState()
+    val isLoading by viewModel.isPrLoading.collectAsState()
+    var selectedFilter by remember { mutableStateOf("all") }
+    
+    LaunchedEffect(owner, repoName, selectedFilter) {
+        viewModel.loadRepoPullRequests(owner, repoName, selectedFilter)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // 筛选器
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = selectedFilter == "all",
+                onClick = { selectedFilter = "all" },
+                label = { Text("All") }
+            )
+            FilterChip(
+                selected = selectedFilter == "open",
+                onClick = { selectedFilter = "open" },
+                label = { Text("Open") }
+            )
+            FilterChip(
+                selected = selectedFilter == "closed",
+                onClick = { selectedFilter = "closed" },
+                label = { Text("Closed") }
+            )
+        }
+
+        // 加载状态显示
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = "Loading pull requests...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        } else if (pullRequests.isEmpty()) {
+            // 无数据状态
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.AccountTree,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    Text(
+                        text = "No pull requests found",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "There are no ${if (selectedFilter == "all") "" else "$selectedFilter "}pull requests in this repository",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        } else {
+            // PR 列表
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(pullRequests) { pr ->
+                    PullRequestItem(pr)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PullRequestItem(pr: PullRequest) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // PR 标题和编号
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = pr.title ?: "",
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "#${pr.number}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // PR 状态和元信息
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 状态标签
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = when (pr.state) {
+                        "open" -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        "closed" -> MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    }
+                ) {
+                    Text(
+                        text = when (pr.state) {
+                            "open" -> "开放"
+                            "closed" -> "已关闭"
+                            else -> pr.state ?: ""
+                        },
+                        color = when (pr.state) {
+                            "open" -> MaterialTheme.colorScheme.primary
+                            "closed" -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+                
+                // 草稿标签
+                if (pr.isDraft == true) {
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Text(
+                            text = "草稿",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // PR 创建者和时间信息
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 用户头像
+                AsyncImage(
+                    model = pr.user?.avatarUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+                
+                // 用户名
+                Text(
+                    text = pr.user?.name ?: "未知用户",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                
+                Text(
+                    text = "•",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                
+                // 创建时间
+                Text(
+                    text = DateTimeConverters.formatRelativeTime(pr.createdAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+        }
+    }
+}

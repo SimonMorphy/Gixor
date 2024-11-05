@@ -26,14 +26,25 @@ fun HotPointScreen(
     val trendyRepos by viewModel.trendyRepos.collectAsState()
     val starredRepos by viewModel.starredRepos.collectAsState()
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     
-    // 只在首次进入页面时加载数据
+    // 监听 UI 状态变化
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is MainViewModel.UiState.Success -> {
+                // 可以添加一些成功的反馈，比如显示 Snackbar
+            }
+            is MainViewModel.UiState.Error -> {
+                // 显示错误信息
+            }
+            else -> {}
+        }
+    }
+    
     LaunchedEffect(Unit) {
-        // 检查是否已经加载过数据
         if (trendyRepos.isEmpty()) {
             viewModel.loadTrendyRepos()
         }
-        // 只在登录状态下且未加载过收藏数据时加载
         if (isLoggedIn && starredRepos.isEmpty()) {
             viewModel.loadStarredRepos()
         }
@@ -58,7 +69,7 @@ fun HotPointScreen(
                     }
                 },
                 onLanguageClick = {
-//                    NavigationManager.navigateToLanguageSearch(repo.language)
+                    // NavigationManager.navigateToLanguageSearch(repo.language)
                 },
                 onStarClick = {
                     if (isLoggedIn) {

@@ -4,6 +4,9 @@ import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
+import com.cpy3f2.gixor_mobile.model.entity.Issue
+import com.cpy3f2.gixor_mobile.model.entity.PullRequest
+import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import retrofit2.http.*
 
 interface HttpBaseService {
@@ -31,6 +34,11 @@ interface HttpBaseService {
     suspend fun getUserRank(
         @QueryMap params: Map<String, String>
     ): ResultData<List<GitHubUser>>
+
+    //获取热点用户
+    @GET("/sys/user/trendy")
+    suspend fun getHotUserList(
+    ): ResultData<List<SimpleUser>>
 
 
 
@@ -91,8 +99,8 @@ interface HttpBaseService {
         @QueryMap params: Map<String, String>
     ): ResultData<List<GitHubRepository>>
 
-    //获得推荐的项目
-    @GET("/gith/repo/trendy")
+    //获得热点项目
+    @GET("/sys/repo/trendy")
     suspend fun getTrendyRepoList(): ResultData<List<TrendyRepository>>
 
     /**
@@ -186,13 +194,13 @@ interface HttpBaseService {
         @Path("number") number: Long
     ): ResultData<Any>
 
-    //获取指定issue
+    //获取指定仓库的issue
     @GET("/gith/issue/{owner}/{repo}")
-    suspend fun getIssue(
+    suspend fun getRepoIssues(
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @QueryMap params: Map<String, String>
-    ): ResultData<Any>
+    ): ResultData<List<Issue>>
 
     //获取单个issue的详情
     @GET("/gith/issue/{owner}/{repo}/{number}")
@@ -266,6 +274,67 @@ interface HttpBaseService {
      * follow相关
      */
     //获取当前用户的关注者列表
+    @GET("/gith/follow/following")
+    suspend fun getMyFollowing(
+        @Header("gixor-login") tokenValue: String
+    ): ResultData<List<SimpleUser>>
+
     //获取指定用户的关注者列表
+    @GET("/gith/follow//{username}following")
+    suspend fun getUserFollowing(
+        @Path("username") username: String
+    ): ResultData<List<SimpleUser>>
+
+    //获取当前用户的粉丝列表
+    @GET("/gith/follow/followers")
+    suspend fun getMyFollowers(
+        @Header("gixor-login") tokenValue: String
+    ): ResultData<List<SimpleUser>>
+
+    //获取指定用户的粉丝列表
+    @GET("/gith/follow/{username}followers")
+    suspend fun getUserFollowers(
+        @Path("username") username: String
+    ): ResultData<List<SimpleUser>>
+
+    //获取当前用户是否关注了指定用户
+    @GET("/gith/follow/{username}")
+    suspend fun isFollowing(
+        @Header("gixor-login") tokenValue: String,
+        @Path("username") username: String
+    ): ResultData<Boolean>
+
+    //关注指定用户
+    @PUT("/gith/follow/{username}")
+    suspend fun followUser(
+        @Header("gixor-login") tokenValue: String,
+        @Path("username") username: String
+    ): ResultData<Any>
+
+    //取关指定用户
+    @DELETE("/gith/follow/{username}")
+    suspend fun unfollowUser(
+        @Header("gixor-login") tokenValue: String,
+        @Path("username") username: String
+    ): ResultData<Any>
+
+    /**
+     * pr相关
+     */
+    //获取指定仓库的pr列表
+    @GET("/gith/pr/{owner}/{repo}")
+    suspend fun getRepoPrList(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @QueryMap params: Map<String, String>
+    ): ResultData<List<PullRequest>>
+
+    //获取指定的pr
+    @GET("/gith/pr/{owner}/{repo}/{number}")
+    suspend fun getPrDetail(
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @Path("number") number: Long
+    ): ResultData<PullRequest>
 
 }

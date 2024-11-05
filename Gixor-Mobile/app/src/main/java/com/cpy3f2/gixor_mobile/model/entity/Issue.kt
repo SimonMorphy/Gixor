@@ -1,6 +1,7 @@
 package com.cpy3f2.gixor_mobile.model.entity
 
-import java.time.LocalDateTime
+import com.google.gson.annotations.SerializedName
+
 
 data class Issue(
     val id: Long? = null,
@@ -18,11 +19,14 @@ data class Issue(
     val activeLockReason: String? = null,
     val comments: Int? = null,
 
-    val closedAt: LocalDateTime? = null,
+    @SerializedName("closed_at")
+    val closedAt: String? = null,
 
-    val createdAt: LocalDateTime? = null,
+    @SerializedName("created_at")
+    val createdAt: String? = null,
 
-    val updatedAt: LocalDateTime? = null,
+    @SerializedName("updated_at")
+    val updatedAt: String? = null,
     val repository: GitHubRepository? = null
 ) {
 
@@ -43,16 +47,22 @@ data class Issue(
         val description: String? = null,
         val creator: GitHubUser? = null,
 
+        @SerializedName("open_issues")
         val openIssues: Int? = null,
 
+        @SerializedName("closed_issues")
         val closedIssues: Int? = null,
 
-        val createdAt: LocalDateTime? = null,
+        @SerializedName("created_at")
+        val createdAt: String? = null,
 
-        val updatedAt: LocalDateTime? = null,
+        @SerializedName("updated_at")
+        val updatedAt: String? = null,
 
-        val closedAt: LocalDateTime? = null,
+        @SerializedName("closed_at")
+        val closedAt: String? = null,
 
-        val dueOn: LocalDateTime? = null
+        @SerializedName("due_on")
+        val dueOn: String? = null
     )
 }

@@ -8,7 +8,7 @@ data class ResultData<T>(
     //返回的数据
     val data: T) {
     companion object {
-        const val CODE_SUCCESS = 0
+        const val CODE_SUCCESS = 200
     }
     fun httpData() :T{
         if(code==CODE_SUCCESS){
