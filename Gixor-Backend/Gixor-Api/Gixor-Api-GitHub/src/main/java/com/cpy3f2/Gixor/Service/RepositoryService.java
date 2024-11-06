@@ -1,6 +1,7 @@
 package com.cpy3f2.Gixor.Service;
 
 import com.cpy3f2.Gixor.Config.GitHubApi;
+import com.cpy3f2.Gixor.Convertor.HtmlConvertor;
 import com.cpy3f2.Gixor.Domain.GitHubRepository;
 import com.cpy3f2.Gixor.Domain.Query.RepositoryQuerySetting;
 import com.cpy3f2.Gixor.Domain.TrendyRepository;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import java.util.Base64;
+import java.util.Map;
 
 /**
  * @author : simon
@@ -60,6 +63,14 @@ public class RepositoryService {
                 .uri("/repos/{owner}/{repo}", owner, repo)
                 .retrieve()
                 .bodyToMono(GitHubRepository.class);
+    }
+    public Mono<String> getReadmeHtml(String owner, String repo) {
+        return githubClient
+                .get()
+                .uri("/repos/{owner}/{repo}/readme", owner, repo)
+                .retrieve()
+                .bodyToMono(String.class)
+                .map(html-> HtmlConvertor.convert(owner, repo, html));
     }
     public Flux<GitHubRepository> listRepos(RepositoryQuerySetting querySetting){
         return githubClient

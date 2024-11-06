@@ -11,6 +11,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 /**
@@ -48,6 +49,10 @@ public class RepositoryEndpoint {
         return repositoryService.listRepos(settings)
                 .collectList()
                 .map(ResponseResult::success);
+    }
+    @GetMapping("/{owner}/{repo}/readme")
+    public Mono<String> getReadme(@PathVariable String owner, @PathVariable String repo){
+        return repositoryService.getReadmeHtml(owner,repo);
     }
 
     @GetMapping("/{username}")

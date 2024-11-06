@@ -4,6 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import com.cpy3f2.Gixor.Config.GitHubApi;
+import com.cpy3f2.Gixor.Constant.Constants;
+import com.cpy3f2.Gixor.Domain.Query.UserQueryBuilder;
 import com.cpy3f2.Gixor.Domain.ResponseResult;
 import com.cpy3f2.Gixor.Domain.SimpleUser;
 import com.cpy3f2.Gixor.Domain.GitHubUser;
@@ -11,6 +13,8 @@ import com.cpy3f2.Gixor.Domain.Query.BaseQuerySetting;
 import com.cpy3f2.Gixor.Exception.constant.GitHubErrorCodes;
 import com.cpy3f2.Gixor.Exception.user.UserOperationException;
 import com.cpy3f2.Gixor.Exception.util.GitHubErrorMessageUtil;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,6 +27,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.stream.StreamSupport;
+
+import static com.cpy3f2.Gixor.Convertor.UserConvertor.convertToGitHubUser;
+
 
 /**
  * @author : simon
@@ -74,6 +86,34 @@ public class GitHubUserService {
                         )))
                 .bodyToMono(GitHubUser.class);
     }
+    public Mono<GitHubUser> getUserDetail(String username) {
+        return githubClient.post()
+                .uri("/graphql")
+                .bodyValue(UserQueryBuilder.buildUserQuery(username))
+                .retrieve()
+                .bodyToMono(String.class)
+                .handle((response, sink) -> {
+                    try {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        JsonNode rootNode = objectMapper.readTree(response);
+                        if (rootNode.has(Constants.ERROR)) {
+                            sink.error(new RuntimeException("GitHub API 查询失败"));
+                            return;
+                        }
+                        JsonNode userNode = rootNode.path("data").path("user");
+                        if (userNode.isMissingNode() || userNode.isNull()) {
+                            sink.error(new RuntimeException("未找到用户数据"));
+                            return;
+                        }
+
+                        sink.next(convertToGitHubUser(userNode));
+                    } catch (Exception e) {
+                        sink.error(new RuntimeException("解析GitHub响应失败", e));
+                    }
+                });
+    }
+
+
     /**
      * 根据用户名获取用户信息并补充统计数据
      */
