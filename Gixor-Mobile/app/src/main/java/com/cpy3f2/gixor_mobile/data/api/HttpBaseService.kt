@@ -201,14 +201,13 @@ interface HttpBaseService {
     ): ResultData<Unit>
 
     //锁定指定issue
-    @POST("/gith/issue/{owner}/{repo}/{number}")
+    @PUT("/gith/issue/{owner}/{repo}/{number}")
     suspend fun lockIssue(
         @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Path("number") number: Long,
-        @Body body: Any
-    ): ResultData<Any>
+    ): ResultData<Unit>
 
     //解锁指定 issue
     @DELETE("/gith/issue/{owner}/{repo}/{number}")
@@ -241,14 +240,14 @@ interface HttpBaseService {
     suspend fun getMyIssueList(
         @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
-    ): ResultData<Issue>
+    ): ResultData<List<Issue>>
 
     //获取指派给当前用户的issue
     @GET("/gith/issue/assigned")
     suspend fun getMyAssignIssueList(
         @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
-    ): ResultData<Issue>
+    ): ResultData<List<Issue>>
 
     /**
      * Comment 相关
