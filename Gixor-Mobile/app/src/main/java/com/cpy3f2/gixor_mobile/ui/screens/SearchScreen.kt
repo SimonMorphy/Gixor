@@ -89,8 +89,8 @@ import coil3.compose.AsyncImage
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) {
-    var searchText by remember { mutableStateOf("") }
-    var selectedTab by remember { mutableIntStateOf(0) }
+    val searchText by vm.searchText.collectAsState()
+    val selectedTab by vm.selectedSearchTab.collectAsState()
     val tabs = listOf("人物热榜", "项目热榜")
 
     val pagerState = rememberPagerState(pageCount = { tabs.size })
@@ -101,7 +101,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
     }
 
     LaunchedEffect(pagerState.currentPage) {
-        selectedTab = pagerState.currentPage
+        vm.updateSelectedSearchTab(pagerState.currentPage)
     }
 
     fun handleSearch() {
@@ -156,7 +156,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
 
                     BasicTextField(
                         value = searchText,
-                        onValueChange = { searchText = it },
+                        onValueChange = { vm.updateSearchText(it) },
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 8.dp),
@@ -194,7 +194,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
                             tint = Color.Gray,
                             modifier = Modifier
                                 .size(20.dp)
-                                .clickable { searchText = "" }
+                                .clickable { vm.updateSearchText("") }
                         )
                     }
                 }
@@ -206,7 +206,7 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
             SearchHistoryComponent(
                 vm = vm,
                 onHistoryItemClick = { historyText ->
-                    searchText = historyText
+                    vm.updateSearchText(historyText)
                     handleSearch()
                     vm.search(historyText)
                 }
