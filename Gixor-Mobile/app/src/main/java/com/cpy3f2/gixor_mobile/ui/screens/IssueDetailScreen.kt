@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,7 +40,9 @@ fun IssueDetailScreen(
     val isLoading by viewModel.isIssueDetailLoading.collectAsState()
     val comments by viewModel.issueComments.collectAsState()
     val isCommentsLoading by viewModel.isCommentsLoading.collectAsState()
-    
+    val userComments by viewModel.userComments.collectAsState()
+    val isUserCommentsLoading by viewModel.isUserCommentsLoading.collectAsState()
+
     var commentText by remember { mutableStateOf("") }
     var showSuccessDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
@@ -48,6 +51,7 @@ fun IssueDetailScreen(
     LaunchedEffect(owner, repo, issueNumber) {
         viewModel.loadIssueDetail(owner, repo, issueNumber)
         viewModel.loadIssueComments(owner, repo, issueNumber)
+        viewModel.loadUserComments(owner, repo, issueNumber)
     }
 
     Scaffold(
@@ -133,9 +137,9 @@ fun IssueDetailScreen(
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
-                        
+
                         Spacer(modifier = Modifier.width(8.dp))
-                        
+
                         Text(
                             text = "opened by ${issue?.user?.login} · ${
                                 DateTimeConverters.formatDateTimeString(issue?.createdAt.toString())
@@ -174,9 +178,9 @@ fun IssueDetailScreen(
                                     style = MaterialTheme.typography.titleMedium
                                 )
                             }
-                            
+
                             Divider(modifier = Modifier.padding(vertical = 8.dp))
-                            
+
                             Text(
                                 text = issue?.body ?: "",
                                 style = MaterialTheme.typography.bodyMedium
@@ -199,7 +203,16 @@ fun IssueDetailScreen(
                     count = comments.size,
                     key = { index -> comments[index].id ?: index }
                 ) { index ->
-                    CommentItem(comment = comments[index])
+                    val comment = comments[index]
+                    val isUserComment = userComments.any { it.id == comment.id }
+                    CommentItem(
+                        comment = comment,
+                        isUserComment = isUserComment,
+                        owner = owner,
+                        repo = repo,
+                        issueNumber = issueNumber,
+                        viewModel = viewModel
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
@@ -294,9 +307,105 @@ fun IssueDetailScreen(
 }
 
 @Composable
-private fun CommentItem(comment: IssueComment) {
+private fun CommentItem(
+    comment: IssueComment,
+    isUserComment: Boolean,
+    owner: String,
+    repo: String,
+    issueNumber: Long,
+    viewModel: MainViewModel
+) {
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editedComment by remember { mutableStateOf("") }
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+
+    // 编辑对话框
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("编辑评论") },
+            text = {
+                OutlinedTextField(
+                    value = editedComment,
+                    onValueChange = { editedComment = it },
+                    label = { Text("评论内容") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        comment.id?.let { commentId ->
+                            viewModel.updateComment(
+                                owner = owner,
+                                repo = repo,
+                                commentId = commentId,
+                                body = editedComment,
+                                issueNumber = issueNumber,
+                                onSuccess = {
+                                    showEditDialog = false
+                                    showSuccessDialog = true
+                                },
+                                onError = {
+                                    errorMessage = it
+                                    showErrorDialog = true
+                                }
+                            )
+                        }
+                    }
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // 成功提示对话框
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showSuccessDialog = false },
+            title = { Text("成功") },
+            text = { Text("评论更新成功") },
+            confirmButton = {
+                TextButton(onClick = { showSuccessDialog = false }) {
+                    Text("确定")
+                }
+            }
+        )
+    }
+
+    // 错误提示对话框
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            title = { Text("错误") },
+            text = { Text(errorMessage) },
+            confirmButton = {
+                TextButton(onClick = { showErrorDialog = false }) {
+                    Text("确定")
+                }
+            }
+        )
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isUserComment) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -304,42 +413,89 @@ private fun CommentItem(comment: IssueComment) {
             // Comment header
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // User avatar
-                AsyncImage(
-                    model = comment.user?.avatarUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                // Username
-                Text(
-                    text = comment.user?.login ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                // Comment time
-                Text(
-                    text = DateTimeConverters.formatDateTimeString(comment.createdAt.toString()),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                // 左侧用户信息
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AsyncImage(
+                        model = comment.user?.avatarUrl,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = comment.user?.login ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = DateTimeConverters.formatDateTimeString(comment.createdAt.toString()),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+
+                // 右侧更多按钮，仅在是用户自己的评论时显示
+                if (isUserComment) {
+                    var showMenu by remember { mutableStateOf(false) }
+                    
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options",
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("编辑") },
+                                onClick = {
+                                    // 使用正则表达式提取 body 中的内容
+                                    val rawBody = comment.body ?: ""
+                                    val regex = "\\{\"body\":\"(.*)\"\\}".toRegex()
+                                    val matchResult = regex.find(rawBody)
+                                    editedComment = matchResult?.groupValues?.get(1) ?: rawBody
+                                    showEditDialog = true
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("删除") },
+                                onClick = {
+                                    // TODO: 处理删除操作
+                                    showMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Comment content
             Text(
-                text = comment.body ?: "",
+                text = comment.body?.let { rawBody ->
+                    val regex = "\\{\"body\":\"(.*)\"\\}".toRegex()
+                    val matchResult = regex.find(rawBody)
+                    matchResult?.groupValues?.get(1) ?: rawBody
+                } ?: "",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
