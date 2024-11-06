@@ -893,7 +893,9 @@ class MainViewModel : ViewModel() {
                     body = comment
                 )
                 if (response.code == 200) {
+                    // 重新加载所有评论和用户评论
                     loadIssueComments(owner, repo, issueNumber)
+                    loadUserComments(owner, repo, issueNumber)
                     onSuccess()
                 } else {
                     throw Exception(response.msg ?: "Failed to add comment")
@@ -1023,6 +1025,39 @@ class MainViewModel : ViewModel() {
                     onSuccess()
                 } else {
                     throw Exception(response.msg ?: "Failed to update comment")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Unknown error occurred")
+            }
+        }
+    }
+
+    // 删除评论
+    fun deleteComment(
+        owner: String,
+        repo: String,
+        commentId: Long,
+        issueNumber: Long,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = getToken() ?: throw Exception("Token not found")
+                val response = RetrofitClient.httpBaseService.deleteComment(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    commentId = commentId
+                )
+                
+                if (response.code == 200) {
+                    // 删除成功后重新加载评论列表
+                    loadIssueComments(owner, repo, issueNumber)
+                    loadUserComments(owner, repo, issueNumber)
+                    onSuccess()
+                } else {
+                    throw Exception(response.msg ?: "Failed to delete comment")
                 }
             } catch (e: Exception) {
                 onError(e.message ?: "Unknown error occurred")

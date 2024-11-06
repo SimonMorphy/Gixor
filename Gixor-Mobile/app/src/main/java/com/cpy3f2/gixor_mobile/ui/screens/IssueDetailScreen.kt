@@ -2,6 +2,7 @@ package com.cpy3f2.gixor_mobile.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -199,12 +200,10 @@ fun IssueDetailScreen(
                 }
 
                 // Comments list
-                items(
-                    count = comments.size,
-                    key = { index -> comments[index].id ?: index }
-                ) { index ->
-                    val comment = comments[index]
-                    val isUserComment = userComments.any { it.id == comment.id }
+                items(comments) { comment ->
+                    val currentUser = viewModel.gitHubUser.value?.data?.login
+                    val isUserComment = comment.user?.login == currentUser
+
                     CommentItem(
                         comment = comment,
                         isUserComment = isUserComment,
@@ -213,7 +212,8 @@ fun IssueDetailScreen(
                         issueNumber = issueNumber,
                         viewModel = viewModel
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 if (isCommentsLoading) {
@@ -320,6 +320,7 @@ private fun CommentItem(
     var showSuccessDialog by remember { mutableStateOf(false) }
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     // 编辑对话框
     if (showEditDialog) {
@@ -397,6 +398,44 @@ private fun CommentItem(
         )
     }
 
+    // 删除确认对话框
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("确认删除") },
+            text = { Text("确定要删除这条评论吗？") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        comment.id?.let { commentId ->
+                            viewModel.deleteComment(
+                                owner = owner,
+                                repo = repo,
+                                commentId = commentId,
+                                issueNumber = issueNumber,
+                                onSuccess = {
+                                    showDeleteDialog = false
+                                    showSuccessDialog = true
+                                },
+                                onError = {
+                                    errorMessage = it
+                                    showErrorDialog = true
+                                }
+                            )
+                        }
+                    }
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -466,11 +505,7 @@ private fun CommentItem(
                             DropdownMenuItem(
                                 text = { Text("编辑") },
                                 onClick = {
-                                    // 使用正则表达式提取 body 中的内容
-                                    val rawBody = comment.body ?: ""
-                                    val regex = "\\{\"body\":\"(.*)\"\\}".toRegex()
-                                    val matchResult = regex.find(rawBody)
-                                    editedComment = matchResult?.groupValues?.get(1) ?: rawBody
+                                    editedComment = extractCommentBody(comment.body ?: "")
                                     showEditDialog = true
                                     showMenu = false
                                 }
@@ -478,7 +513,7 @@ private fun CommentItem(
                             DropdownMenuItem(
                                 text = { Text("删除") },
                                 onClick = {
-                                    // TODO: 处理删除操作
+                                    showDeleteDialog = true
                                     showMenu = false
                                 }
                             )
@@ -491,13 +526,21 @@ private fun CommentItem(
 
             // Comment content
             Text(
-                text = comment.body?.let { rawBody ->
-                    val regex = "\\{\"body\":\"(.*)\"\\}".toRegex()
-                    val matchResult = regex.find(rawBody)
-                    matchResult?.groupValues?.get(1) ?: rawBody
-                } ?: "",
+                text = extractCommentBody(comment.body ?: ""),
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+}
+
+// 处理评论内容的函数
+fun extractCommentBody(rawBody: String): String {
+    return try {
+        // 尝试解析 JSON 格式
+        val regex = "\\{\"body\":\"(.*)\"\\}".toRegex()
+        val matchResult = regex.find(rawBody)
+        matchResult?.groupValues?.get(1) ?: rawBody.trim('"')  // 如果解析失败，直接去掉首尾双引号
+    } catch (e: Exception) {
+        rawBody.trim('"')  // 发生异常时直接去掉首尾双引号
     }
 } 
