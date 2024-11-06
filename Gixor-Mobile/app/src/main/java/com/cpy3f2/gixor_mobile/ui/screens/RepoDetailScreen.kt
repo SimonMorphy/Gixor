@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Folder
@@ -47,6 +48,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.InsertDriveFile
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Comment
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -60,11 +62,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.cpy3f2.gixor_mobile.model.entity.Issue
 import com.cpy3f2.gixor_mobile.model.converter.DateTimeConverters
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
+import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -108,6 +112,21 @@ fun RepoDetailScreen(
                 }
             },
             actions = {
+                // Fork 按钮
+                IconButton(
+                    onClick = {
+                        if (isLoggedIn) {
+                            NavigationManager.navigateToForkRepo(owner, repoName)
+                        } else {
+                            viewModel.navigateToLogin()
+                        }
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.mipmap.fork),
+                        contentDescription = "Fork repository"
+                    )
+                }
                 // Star 按钮
                 IconButton(
                     onClick = {
@@ -149,9 +168,16 @@ fun RepoDetailScreen(
         // 内容区域
         Box(modifier = Modifier.fillMaxSize()) {
             when (selectedTab) {
-                RepoTab.Code -> RepoCodeTab(owner, repoName, viewModel)
+                RepoTab.Code -> RepoCodeTab(
+                    owner = owner,
+                    repoName = repoName,
+                    viewModel = viewModel,
+                    onNavigateToTab = { tab -> selectedTab = tab }
+                )
                 RepoTab.Issues -> RepoIssuesTab(owner, repoName, viewModel)
                 RepoTab.PullRequests -> RepoPullRequestsTab(owner, repoName, viewModel)
+                RepoTab.Stars -> RepoStarsTab(owner, repoName, viewModel)
+                RepoTab.Forks -> RepoForkUsersTab(owner, repoName, viewModel)
                 else -> {
                     // 其他标签页显示开发中提示
                     Column(
@@ -183,11 +209,18 @@ enum class RepoTab(val title: String) {
     Issues("Issues"),
     PullRequests("Pull Requests"),
     Discussions("Discussions"),
+    Stars("Stars"),
+    Forks("Forks"),
 }
 
 // 示例 Tab 内容
 @Composable
-fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
+fun RepoCodeTab(
+    owner: String,
+    repoName: String,
+    viewModel: MainViewModel,
+    onNavigateToTab: (RepoTab) -> Unit
+) {
     val repoDetails by viewModel.repoDetails.collectAsState()
     val isLoading by viewModel.isRepoDetailsLoading.collectAsState()
 
@@ -233,23 +266,28 @@ fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
 
                         // 统计信息
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             StatItem(
                                 icon = Icons.Outlined.Star,
-                                label = "Stars",
-                                count = repoDetails?.stargazersCount?.toString() ?: "0"
+                                count = repoDetails?.stargazersCount ?: 0,
+                                label = "stars",
+                                onClick = { onNavigateToTab(RepoTab.Stars) }
                             )
                             StatItem(
                                 icon = Icons.Outlined.AccountTree,
-                                label = "Forks",
-                                count = repoDetails?.forksCount?.toString() ?: "0"
+                                count = repoDetails?.forksCount ?: 0,
+                                label = "forks",
+                                onClick = { onNavigateToTab(RepoTab.Forks) }
                             )
                             StatItem(
-                                icon = Icons.Outlined.RemoveRedEye,
-                                label = "Issues",
-                                count = repoDetails?.openIssues?.toString() ?: "0"
+                                icon = Icons.Outlined.BugReport,
+                                count = repoDetails?.openIssues ?: 0,
+                                label = "issues",
+                                onClick = { onNavigateToTab(RepoTab.Issues) }
                             )
                         }
                     }
@@ -262,26 +300,48 @@ fun RepoCodeTab(owner: String, repoName: String, viewModel: MainViewModel) {
 @Composable
 fun StatItem(
     icon: ImageVector,
+    count: Int,
     label: String,
-    count: String
+    onClick: (() -> Unit)? = null
 ) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            )
+            .padding(vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
+        // 数字
         Text(
-            text = count,
-            style = MaterialTheme.typography.bodyMedium
+            text = count.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
         )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
+        
+        // 图标和标签
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
     }
 }
 
@@ -845,6 +905,166 @@ fun PullRequestItem(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun RepoForkUsersTab(owner: String, repoName: String, viewModel: MainViewModel) {
+    val forkUsers by viewModel.forkUsers.collectAsState()
+    val isLoading by viewModel.isForkUsersLoading.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(owner, repoName) {
+        viewModel.loadForkUsers(owner, repoName, true)
+    }
+
+    // 检测是否需要加载更多
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastIndex ->
+                if (lastIndex != null && lastIndex >= forkUsers.size - 3) {
+                    viewModel.loadForkUsers(owner, repoName, false)
+                }
+            }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        LazyColumn(
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(forkUsers) { user ->
+                ForkUserItem(user = user)
+            }
+
+            if (isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ForkUserItem(user: SimpleUser) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { NavigationManager.navigateToUserProfile(user.login ?: "") }
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = user.avatarUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Text(
+                text = user.login ?: "",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+    }
+}
+
+@Composable
+fun RepoStarsTab(owner: String, repoName: String, viewModel: MainViewModel) {
+    val starUsers by viewModel.starUsers.collectAsState()
+    val isLoading by viewModel.isStarUsersLoading.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(owner, repoName) {
+        viewModel.loadStarUsers(owner, repoName, true)
+    }
+
+    // 检测是否需要加载更多
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastIndex ->
+                if (lastIndex != null && lastIndex >= starUsers.size - 3) {
+                    viewModel.loadStarUsers(owner, repoName, false)
+                }
+            }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(starUsers) { user ->
+                UserListItem(user = user)
+            }
+
+            if (isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UserListItem(user: SimpleUser) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { NavigationManager.navigateToUserProfile(user.login ?: "") }
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = user.avatarUrl,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Text(
+                text = user.login ?: "",
+                style = MaterialTheme.typography.titleMedium
+            )
         }
     }
 }

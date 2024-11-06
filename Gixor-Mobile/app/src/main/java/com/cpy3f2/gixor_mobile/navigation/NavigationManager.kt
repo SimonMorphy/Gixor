@@ -86,4 +86,13 @@ object NavigationManager {
     fun navigateToCreateIssue(owner: String, repo: String) {
         _navController.value?.navigate(AppDestinations.CreateIssue.createRoute(owner, repo))
     }
+
+    fun navigateToForkRepo(owner: String, repoName: String) {
+        _navController.value?.navigate(
+            AppDestinations.ForkRepo.createRoute(
+                owner = owner,
+                repo = repoName
+            )
+        )
+    }
 } 

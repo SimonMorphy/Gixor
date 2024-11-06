@@ -41,6 +41,11 @@ sealed class AppDestinations(val route: String) {
             return "create_issue/$owner/$repo"
         }
     }
+    object ForkRepo : AppDestinations("fork_repo/{owner}/{repo}") {
+        fun createRoute(owner: String, repo: String): String {
+            return "fork_repo/$owner/$repo"
+        }
+    }
     
     companion object {
         fun fromRoute(route: String): AppDestinations {
@@ -57,6 +62,7 @@ sealed class AppDestinations(val route: String) {
                 "issue_detail" -> IssueDetail
                 "pr_detail" -> PullRequestDetail
                 "create_issue" -> CreateIssue
+                "fork_repo" -> ForkRepo
                 else -> Main
             }
         }

@@ -2,6 +2,7 @@ package com.cpy3f2.gixor_mobile.navigation
 
 import AppDestinations
 import ChatScreen
+import ForkRepoScreen
 import RepoDetailScreen
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
@@ -151,6 +152,21 @@ fun AppNavigation(
                 owner = owner,
                 repo = repo,
                 onBackClick = { NavigationManager.navigateBack() }
+            )
+        }
+        composable(
+            route = AppDestinations.ForkRepo.route,
+            arguments = listOf(
+                navArgument("owner") { type = NavType.StringType },
+                navArgument("repo") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val owner = backStackEntry.arguments?.getString("owner") ?: ""
+            val repo = backStackEntry.arguments?.getString("repo") ?: ""
+            ForkRepoScreen(
+                viewModel = viewModel,
+                owner = owner,
+                repoName = repo
             )
         }
     }

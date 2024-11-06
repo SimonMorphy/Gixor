@@ -308,7 +308,8 @@ interface HttpBaseService {
     suspend fun getSubscriberList(
         @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
-        @Path("repo") repo: String
+        @Path("repo") repo: String,
+        @QueryMap params: Map<String, String>
     ): ResultData<List<SimpleUser>>
 
     //查看是否订阅了指定仓库
@@ -497,6 +498,7 @@ interface HttpBaseService {
     suspend fun forkRepo(
         @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
-        @Path("repo") repo: String
+        @Path("repo") repo: String,
+        @Body body: GitHubRepository
     ): ResultData<Unit>
 }

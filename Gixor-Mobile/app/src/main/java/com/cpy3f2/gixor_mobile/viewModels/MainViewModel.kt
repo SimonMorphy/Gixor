@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import android.content.Context
-import androidx.lifecycle.LiveData
 import com.cpy3f2.gixor_mobile.database.GixorDatabase
 import com.cpy3f2.gixor_mobile.model.entity.Event
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
@@ -44,6 +43,7 @@ import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.setting.NotificationQuerySetting
 import com.cpy3f2.gixor_mobile.model.entity.IssueComment
 import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
+import com.cpy3f2.gixor_mobile.model.setting.BaseQuerySetting
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -114,7 +114,7 @@ class MainViewModel : ViewModel() {
     val searchHistoryItems: StateFlow<List<SearchHistoryItem>> = _searchHistoryItems.asStateFlow()
 
     init {
-        // 初始化时加载搜索历史
+        // 初始化加载搜索历史
         viewModelScope.launch {
             loadSearchHistory()
         }
@@ -979,7 +979,7 @@ class MainViewModel : ViewModel() {
                 )
                 
                 if (response.code == 200) {
-                    // 过滤出当前用户的评论
+                    // 过滤出前用户的评论
                     val currentUser = gitHubUser.value?.data?.login
                     _userComments.value = response.data?.filter { 
                         it.user?.login == currentUser 
@@ -1096,4 +1096,163 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    // Fork 相关状态
+    private val _isForkLoading = MutableStateFlow(false)
+    val isForkLoading: StateFlow<Boolean> = _isForkLoading.asStateFlow()
+
+    private val _forkError = MutableStateFlow<String?>(null)
+    val forkError: StateFlow<String?> = _forkError.asStateFlow()
+
+    // Fork仓库方法
+    fun createFork(owner: String, repoName: String, description: String) {
+        viewModelScope.launch {
+            try {
+                _isForkLoading.value = true
+                _forkError.value = null
+
+                val token = getToken() ?: throw Exception("Token not found")
+                
+                // 创建请求体
+                val forkRequest = GitHubRepository(
+                    name = repoName,
+                    description = description,
+                    owner = GitHubRepository.Owner(name = owner)
+                )
+                
+                val response = RetrofitClient.httpBaseService.forkRepo(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repoName,
+                    body = forkRequest
+                )
+
+                if (response.code == 200) {
+                    // Fork成功后获取当前用户信息并导航到新fork的仓库
+                    val userResponse = RetrofitClient.httpBaseService.getMyUserInfo(token)
+                    if (userResponse.code == 200) {
+                        val username = userResponse.data?.login
+                        if (username != null) {
+                            // 导航到新fork的仓库
+                            NavigationManager.navigateToRepoDetail(username, repoName)
+                        }
+                    }
+                } else {
+                    throw Exception(response.msg ?: "Failed to fork repository")
+                }
+            } catch (e: Exception) {
+                _forkError.value = e.message ?: "Unknown error occurred"
+            } finally {
+                _isForkLoading.value = false
+            }
+        }
+    }
+
+    // Fork用户列表相关状态
+    private val _forkUsers = MutableStateFlow<List<SimpleUser>>(emptyList())
+    val forkUsers: StateFlow<List<SimpleUser>> = _forkUsers.asStateFlow()
+
+    private val _isForkUsersLoading = MutableStateFlow(false)
+    val isForkUsersLoading: StateFlow<Boolean> = _isForkUsersLoading.asStateFlow()
+
+    private var currentForkPage = 1
+    private var hasMoreForkUsers = true
+
+    // 加载Fork用户列表
+    fun loadForkUsers(owner: String, repo: String, isRefresh: Boolean = false) {
+        if (isRefresh) {
+            currentForkPage = 1
+            hasMoreForkUsers = true
+            _forkUsers.value = emptyList()
+        }
+
+        if (!hasMoreForkUsers || _isForkUsersLoading.value) return
+
+        viewModelScope.launch {
+            try {
+                _isForkUsersLoading.value = true
+                val token = getToken() ?: throw Exception("Token not found")
+                
+                val params = BaseQuerySetting(
+                    perPage = 10,
+                    page = currentForkPage
+                ).toQueryMap()
+
+                val response = RetrofitClient.httpBaseService.getRepoForkUserList(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    params = params
+                )
+
+                if (response.code == 200) {
+                    val newUsers = response.data ?: emptyList()
+                    if (newUsers.isEmpty()) {
+                        hasMoreForkUsers = false
+                    } else {
+                        _forkUsers.value = _forkUsers.value + newUsers
+                        currentForkPage++
+                    }
+                }
+            } catch (e: Exception) {
+                // Handle error
+            } finally {
+                _isForkUsersLoading.value = false
+            }
+        }
+    }
+
+    // Stars 相关状态
+    private val _starUsers = MutableStateFlow<List<SimpleUser>>(emptyList())
+    val starUsers: StateFlow<List<SimpleUser>> = _starUsers.asStateFlow()
+
+    private val _isStarUsersLoading = MutableStateFlow(false)
+    val isStarUsersLoading: StateFlow<Boolean> = _isStarUsersLoading.asStateFlow()
+
+    private var currentStarPage = 1
+    private var hasMoreStarUsers = true
+
+    fun loadStarUsers(owner: String, repoName: String, isRefresh: Boolean = false) {
+        if (_isStarUsersLoading.value) return
+        if (isRefresh) {
+            currentStarPage = 1
+            hasMoreStarUsers = true
+            _starUsers.value = emptyList()
+        }
+        if (!hasMoreStarUsers) return
+
+        viewModelScope.launch {
+            try {
+                _isStarUsersLoading.value = true
+                val token = getToken() ?: return@launch
+
+                val params = createPageQueryParams(
+                    page = currentStarPage,
+                    perPage = 10
+                )
+
+                val response = RetrofitClient.httpBaseService.getSubscriberList(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repoName,
+                    params = params
+                )
+
+                if (response.code == 200) {
+                    val newUsers = response.data ?: emptyList()
+                    _starUsers.value = if (isRefresh) {
+                        newUsers
+                    } else {
+                        _starUsers.value + newUsers
+                    }
+
+                    hasMoreStarUsers = newUsers.size == 10
+                    if (hasMoreStarUsers) currentStarPage++
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isStarUsersLoading.value = false
+            }
+        }
+    }
 }
