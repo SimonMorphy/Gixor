@@ -216,7 +216,7 @@ interface HttpBaseService {
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Path("number") number: Long
-    ): ResultData<Any>
+    ): ResultData<Unit>
 
     //获取指定仓库的issue
     @GET("/gith/issue/{owner}/{repo}")

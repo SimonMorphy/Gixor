@@ -38,8 +38,10 @@ import createPageQueryParams
 import createStateQueryParams
 import kotlinx.coroutines.coroutineScope
 import android.util.Log
+import com.cpy3f2.gixor_mobile.model.entity.IssueDTO
 import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.setting.NotificationQuerySetting
+import com.cpy3f2.gixor_mobile.model.entity.IssueComment
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -567,7 +569,7 @@ class MainViewModel : ViewModel() {
     private val _isPreloading = MutableStateFlow(false)
     val isPreloading: StateFlow<Boolean> = _isPreloading.asStateFlow()
 
-    // 预加载数据方法
+    // 加载数据方法
     suspend fun preloadData() {
         if (_isPreloading.value) return
 
@@ -795,5 +797,108 @@ class MainViewModel : ViewModel() {
     // 添加刷新方法
     fun refreshNotifications() {
         loadNotifications(isRefresh = true)
+    }
+
+    // Issue 创建相关状态
+    private val _isIssueCreating = MutableStateFlow(false)
+    val isIssueCreating: StateFlow<Boolean> = _isIssueCreating.asStateFlow()
+
+    private val _issueCreationError = MutableStateFlow<String?>(null)
+    val issueCreationError: StateFlow<String?> = _issueCreationError.asStateFlow()
+
+    fun createIssue(
+        owner: String,
+        repo: String,
+        issue: IssueDTO
+    ) {
+        viewModelScope.launch {
+            try {
+                _isIssueCreating.value = true
+                _issueCreationError.value = null
+
+                val token = getToken() ?: throw Exception("Token not found")
+                val response = RetrofitClient.httpBaseService.createIssue(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    body = issue
+                )
+
+                if (response.code == 200) {
+                    // 刷新 issues 列表
+                    loadRepoIssues(owner, repo)
+                    // 创建成功后清除错误状态
+                    _issueCreationError.value = null
+                } else {
+                    throw Exception(response.msg ?: "Failed to create issue")
+                }
+            } catch (e: Exception) {
+                _issueCreationError.value = e.message ?: "Unknown error occurred"
+            } finally {
+                _isIssueCreating.value = false
+            }
+        }
+    }
+
+    // 评论列表状态
+    private val _issueComments = MutableStateFlow<List<IssueComment>>(emptyList())
+    val issueComments: StateFlow<List<IssueComment>> = _issueComments.asStateFlow()
+
+    private val _isCommentsLoading = MutableStateFlow(false)
+    val isCommentsLoading: StateFlow<Boolean> = _isCommentsLoading.asStateFlow()
+
+    // 加载评论列表
+    fun loadIssueComments(owner: String, repo: String, issueNumber: Long) {
+        viewModelScope.launch {
+            try {
+                _isCommentsLoading.value = true
+                val token = getToken() ?: return@launch
+                val response = RetrofitClient.httpBaseService.getIssueComments(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    number = issueNumber,
+                    params = emptyMap()
+                )
+                if (response.code == 200) {
+                    _issueComments.value = response.data ?: emptyList()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isCommentsLoading.value = false
+            }
+        }
+    }
+
+    // 添加评论
+    fun addComment(
+        owner: String,
+        repo: String,
+        issueNumber: Long,
+        comment: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = getToken() ?: throw Exception("Token not found")
+                val response = RetrofitClient.httpBaseService.addComment(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    number = issueNumber,
+                    body = comment
+                )
+                if (response.code == 200) {
+                    loadIssueComments(owner, repo, issueNumber)
+                    onSuccess()
+                } else {
+                    throw Exception(response.msg ?: "Failed to add comment")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Unknown error occurred")
+            }
+        }
     }
 }

@@ -292,7 +292,7 @@ private fun NotificationsList(
                 repository = notification.repository?.fullName ?: "",
                 title = notification.subject?.title ?: "",
                 reason = notification.reason ?: "",
-                time = DateTimeConverters.formatRelativeTime(notification.updatedAt?.toString()),
+                time = DateTimeConverters.formatRelativeTime(notification.updatedAt),
                 isUnread = notification.unread,
                 notificationId = notification.id ?: ""
             )

@@ -337,7 +337,7 @@ fun SearchHistoryComponent(
 ) {
     val searchHistory by vm.searchHistoryItems.collectAsState()
     var isExpanded by remember { mutableStateOf(false) }
-    
+
     Column(
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
@@ -354,7 +354,7 @@ fun SearchHistoryComponent(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 // 修改清除按钮部分
                 Row(
                     modifier = Modifier
@@ -375,14 +375,14 @@ fun SearchHistoryComponent(
                     )
                 }
             }
-            
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(
-                        if (isExpanded) 
+                        if (isExpanded)
                             Modifier.wrapContentHeight()
-                        else 
+                        else
                             Modifier.height(72.dp)
                     )
                     .clip(RectangleShape)
@@ -400,7 +400,7 @@ fun SearchHistoryComponent(
                     }
                 }
             }
-            
+
             // 如果有超过两行的内容，显示展开/收起按钮
             // 假设每行平均显示3个项目
             if (searchHistory.size > 6) {
@@ -417,9 +417,9 @@ fun SearchHistoryComponent(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Icon(
-                            imageVector = if (isExpanded) 
-                                Icons.Default.KeyboardArrowUp 
-                            else 
+                            imageVector = if (isExpanded)
+                                Icons.Default.KeyboardArrowUp
+                            else
                                 Icons.Default.KeyboardArrowDown,
                             contentDescription = if (isExpanded) "收起" else "展开",
                             tint = MaterialTheme.colorScheme.primary

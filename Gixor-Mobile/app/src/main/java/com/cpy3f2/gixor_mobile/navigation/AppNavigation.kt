@@ -22,6 +22,7 @@ import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
 import com.cpy3f2.gixor_mobile.ui.screens.PullRequestDetailScreen
 import com.cpy3f2.gixor_mobile.ui.screens.SplashScreen
+import com.cpy3f2.gixor_mobile.ui.screens.CreateIssueScreen
 
 @Composable
 fun AppNavigation(
@@ -133,6 +134,22 @@ fun AppNavigation(
                 owner = owner,
                 repo = repo,
                 prNumber = prNumber,
+                onBackClick = { NavigationManager.navigateBack() }
+            )
+        }
+        composable(
+            route = AppDestinations.CreateIssue.route,
+            arguments = listOf(
+                navArgument("owner") { type = NavType.StringType },
+                navArgument("repo") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val owner = backStackEntry.arguments?.getString("owner") ?: ""
+            val repo = backStackEntry.arguments?.getString("repo") ?: ""
+            CreateIssueScreen(
+                viewModel = viewModel,
+                owner = owner,
+                repo = repo,
                 onBackClick = { NavigationManager.navigateBack() }
             )
         }

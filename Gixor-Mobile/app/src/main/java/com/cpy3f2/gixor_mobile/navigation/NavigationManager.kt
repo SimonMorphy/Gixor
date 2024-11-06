@@ -82,4 +82,8 @@ object NavigationManager {
     fun navigateToSplash() {
         _navController.value?.navigate(AppDestinations.Splash.route)
     }
+
+    fun navigateToCreateIssue(owner: String, repo: String) {
+        _navController.value?.navigate(AppDestinations.CreateIssue.createRoute(owner, repo))
+    }
 } 

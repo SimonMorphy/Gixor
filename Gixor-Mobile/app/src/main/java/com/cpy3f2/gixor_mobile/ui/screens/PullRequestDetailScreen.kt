@@ -125,7 +125,7 @@ fun PullRequestDetailScreen(
                 ) {
                     Text(
                         text = "${pullRequest?.user?.login} opened this pull request " +
-                                DateTimeConverters.formatRelativeTime(pullRequest?.createdAt),
+                                DateTimeConverters.formatRelativeTimeFromString(pullRequest?.createdAt),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )

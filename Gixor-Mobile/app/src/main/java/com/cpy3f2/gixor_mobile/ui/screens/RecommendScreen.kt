@@ -172,7 +172,7 @@ fun EventItem(event: Event) {
             
             // 时间信息
             Text(
-                text = DateTimeConverters.formatRelativeTime(event.createdAt),
+                text =  DateTimeConverters.formatRelativeTimeFromString(event.createdAt),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(top = 8.dp)

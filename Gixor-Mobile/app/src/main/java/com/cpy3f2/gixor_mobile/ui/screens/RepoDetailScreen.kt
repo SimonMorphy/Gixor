@@ -43,10 +43,13 @@ import androidx.compose.ui.unit.dp
 import com.cpy3f2.gixor_mobile.R
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import android.content.res.Configuration
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.outlined.Comment
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -366,23 +369,46 @@ fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // 筛选器
+        // 筛选器和新建按钮行
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            FilterChip(
-                selected = viewModel.selectedFilter == "open",
-                onClick = { viewModel.updateIssueFilter("open") },
-                label = { Text("Open") }
-            )
-            FilterChip(
-                selected = viewModel.selectedFilter == "closed",
-                onClick = { viewModel.updateIssueFilter("closed") },
-                label = { Text("Closed") }
-            )
+            // 筛选器
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = viewModel.selectedFilter == "open",
+                    onClick = { viewModel.updateIssueFilter("open") },
+                    label = { Text("Open") }
+                )
+                FilterChip(
+                    selected = viewModel.selectedFilter == "closed",
+                    onClick = { viewModel.updateIssueFilter("closed") },
+                    label = { Text("Closed") }
+                )
+            }
+            
+            // 新建 Issue 按钮
+            Button(
+                onClick = {
+                    NavigationManager.navigateToCreateIssue(owner, repoName)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "New Issue",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
         }
 
         // 加载状态显示
@@ -520,7 +546,7 @@ fun IssueItem(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Text(
-                    text = DateTimeConverters.formatRelativeTime(issue.createdAt),
+                    text =  DateTimeConverters.formatRelativeTimeFromString(issue.createdAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -814,7 +840,7 @@ fun PullRequestItem(
 
                 // 创建时间
                 Text(
-                    text = DateTimeConverters.formatRelativeTime(pr.createdAt),
+                    text = DateTimeConverters.formatRelativeTimeFromString(pr.createdAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )

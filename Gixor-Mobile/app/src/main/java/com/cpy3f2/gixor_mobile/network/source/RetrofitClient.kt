@@ -2,6 +2,7 @@ package com.cpy3f2.gixor_mobile.network.source
 
 import com.cpy3f2.gixor_mobile.MyApplication
 import com.cpy3f2.gixor_mobile.data.api.HttpBaseService
+import com.cpy3f2.gixor_mobile.model.converter.LocalDateTimeAdapter
 import com.cpy3f2.gixor_mobile.network.interceptor.AuthInterceptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -9,6 +10,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.converter.gson.GsonConverterFactory
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 /**
@@ -18,10 +20,11 @@ import java.util.concurrent.TimeUnit
 
 class RetrofitClient {
     companion object {
-        // 设置宽松解析
+        // 设置宽松解析，并添加 LocalDateTime 适配器
         private fun createGson(): Gson {
             return GsonBuilder()
                 .setLenient()
+                .registerTypeAdapter(LocalDateTime::class.java, LocalDateTimeAdapter())
                 .create()
         }
 

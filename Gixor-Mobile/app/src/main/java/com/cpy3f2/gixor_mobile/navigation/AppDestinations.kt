@@ -36,6 +36,11 @@ sealed class AppDestinations(val route: String) {
             return "pr_detail/$owner/$repo/$number"
         }
     }
+    object CreateIssue : AppDestinations("create_issue/{owner}/{repo}") {
+        fun createRoute(owner: String, repo: String): String {
+            return "create_issue/$owner/$repo"
+        }
+    }
     
     companion object {
         fun fromRoute(route: String): AppDestinations {
@@ -51,6 +56,7 @@ sealed class AppDestinations(val route: String) {
                 "user_profile" -> UserProfile
                 "issue_detail" -> IssueDetail
                 "pr_detail" -> PullRequestDetail
+                "create_issue" -> CreateIssue
                 else -> Main
             }
         }
