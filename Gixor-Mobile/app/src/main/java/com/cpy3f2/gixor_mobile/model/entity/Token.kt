@@ -2,8 +2,6 @@ package com.cpy3f2.gixor_mobile.model.entity
 
 import androidx.room.Entity
 import com.google.gson.annotations.SerializedName
-
-
 @Entity("token")
 data class Token(
     @SerializedName("tokenName")  // 或 @JsonProperty("tokenName")

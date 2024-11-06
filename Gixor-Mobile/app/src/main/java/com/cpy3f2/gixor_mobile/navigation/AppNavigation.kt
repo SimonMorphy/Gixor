@@ -28,7 +28,7 @@ import com.cpy3f2.gixor_mobile.ui.screens.CreateIssueScreen
 fun AppNavigation(
     viewModel: MainViewModel,
     sharedPreferences: SharedPreferences,
-    userModel: UserProfileViewModel
+    userModel: UserProfileViewModel,
 ) {
     val navController = rememberNavController()
     

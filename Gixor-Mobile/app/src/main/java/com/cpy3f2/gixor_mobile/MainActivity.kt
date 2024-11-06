@@ -19,8 +19,9 @@ import com.cpy3f2.gixor_mobile.navigation.AppNavigation
 import com.cpy3f2.gixor_mobile.ui.theme.GixorMobileTheme
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

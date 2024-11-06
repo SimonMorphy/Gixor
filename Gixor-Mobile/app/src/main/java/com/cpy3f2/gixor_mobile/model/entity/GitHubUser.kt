@@ -10,7 +10,7 @@ data class GitHubUser(
     val login: String = "",
     
     @SerializedName("name")
-    val name: String? = null,
+    val name: String? = "",
     
     @SerializedName("avatar_url")
     val avatarUrl: String = "",
@@ -19,28 +19,28 @@ data class GitHubUser(
     val htmlUrl: String = "",
     
     @SerializedName("company")
-    val company: String? = null,
+    val company: String? = "",
     
     @SerializedName("blog")
-    val blog: String? = null,
+    val blog: String? = "",
     
     @SerializedName("location")
-    val location: String? = null,
+    val location: String? = "",
     
     @SerializedName("email")
-    val email: String? = null,
+    val email: String? = "",
     
     @SerializedName("bio")
-    val bio: String? = null,
+    val bio: String? = "",
     
     @SerializedName("public_repos")
-    val publicRepos: Int = 0,
+    val publicRepos: Int? = 0,
     
     @SerializedName("followers")
-    val followers: Int = 0,
+    val followers: Int? = 0,
     
     @SerializedName("following")
-    val following: Int = 0,
+    val following: Int? = 0,
     
     @SerializedName("followedByCurrentUser")
     val followedByCurrentUser: Boolean? = null,
@@ -49,29 +49,29 @@ data class GitHubUser(
     val isCurrentUser: Boolean? = null,
     
     @SerializedName("totalStars")
-    val totalStars: Int? = null,
+    val totalStars: Int? = 0,
     
     @SerializedName("totalCommits")
-    val totalCommits: Int? = null,
+    val totalCommits: Int? = 0,
     
     @SerializedName("totalPRs")
-    val totalPRs: Int? = null,
+    val totalPRs: Int? = 0,
     
     @SerializedName("totalIssues")
-    val totalIssues: Int? = null,
+    val totalIssues: Int? = 0,
     
     @SerializedName("contributedTo")
-    val contributedTo: Int? = null,
+    val contributedTo: Int? = 0,
     
     @SerializedName("grade")
-    val grade: String? = null,
+    val grade: String? = "",
     
     @SerializedName("score")
-    val score: BigDecimal? = null,
+    val score: BigDecimal? = BigDecimal(0),
     
     @SerializedName("created_at")
-    val createdAt: String? = null,
+    val createdAt: String? = "",
     
     @SerializedName("updated_at")
-    val updatedAt: String? = null
+    val updatedAt: String? = ""
 )

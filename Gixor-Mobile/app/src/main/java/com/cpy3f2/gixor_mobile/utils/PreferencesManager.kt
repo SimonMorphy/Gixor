@@ -2,10 +2,17 @@ package com.cpy3f2.gixor_mobile.utils
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PreferencesManager(context: Context) {
+@Singleton
+class PreferencesManager @Inject constructor(
+    @ApplicationContext context: Context
+) {
     private val sharedPreferences = context.getSharedPreferences("gixor_prefs", Context.MODE_PRIVATE)
     private val gson = Gson()
+
 
     fun saveToken(jsonResponse: String) {
         try {

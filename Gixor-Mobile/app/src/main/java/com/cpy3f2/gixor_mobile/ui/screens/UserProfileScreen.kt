@@ -285,7 +285,7 @@ private fun StatsBar(
 }
 
 @Composable
-private fun RepositorySection(
+fun RepositorySection(
     reposState: List<GitHubRepository>,
     username: String,
     viewModel: UserProfileViewModel
