@@ -120,6 +120,13 @@ fun IssueDetailScreen(
                     var showErrorDialog by remember { mutableStateOf(false) }
                     var errorMessage by remember { mutableStateOf("") }
 
+                    // 检查当前用户是否有编辑权限
+                    val currentUser = viewModel.gitHubUser.value?.data?.login
+                    val canEdit = currentUser != null && (
+                        currentUser == issue?.user?.login || // issue创建者
+                        currentUser == owner // 仓库所有者
+                    )
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -164,35 +171,38 @@ fun IssueDetailScreen(
                             )
                         }
                         
-                        IconButton(
-                            onClick = {
-                                if (isEditing) {
-                                    if (editedTitle.isNotBlank()) {
-                                        viewModel.updateIssue(
-                                            owner = owner,
-                                            repo = repo,
-                                            issueNumber = issueNumber,
-                                            title = editedTitle,
-                                            onSuccess = {
-                                                isEditing = false
-                                            },
-                                            onError = { error ->
-                                                errorMessage = error
-                                                showErrorDialog = true
-                                            }
-                                        )
+                        // 只有当用户有编辑权限时才显示编辑按钮
+                        if (canEdit) {
+                            IconButton(
+                                onClick = {
+                                    if (isEditing) {
+                                        if (editedTitle.isNotBlank()) {
+                                            viewModel.updateIssue(
+                                                owner = owner,
+                                                repo = repo,
+                                                issueNumber = issueNumber,
+                                                title = editedTitle,
+                                                onSuccess = {
+                                                    isEditing = false
+                                                },
+                                                onError = { error ->
+                                                    errorMessage = error
+                                                    showErrorDialog = true
+                                                }
+                                            )
+                                        }
+                                    } else {
+                                        editedTitle = issue?.title ?: ""
+                                        isEditing = true
                                     }
-                                } else {
-                                    editedTitle = issue?.title ?: ""
-                                    isEditing = true
                                 }
+                            ) {
+                                Icon(
+                                    imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                                    contentDescription = if (isEditing) "Save" else "Edit Issue",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
                             }
-                        ) {
-                            Icon(
-                                imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
-                                contentDescription = if (isEditing) "Save" else "Edit Issue",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
                         }
                     }
 

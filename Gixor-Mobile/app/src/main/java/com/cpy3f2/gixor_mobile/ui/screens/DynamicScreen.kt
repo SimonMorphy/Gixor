@@ -51,9 +51,39 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
+import androidx.compose.material3.Button
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import com.cpy3f2.gixor_mobile.utils.PreferencesManager
 
 @Composable
 fun DynamicScreen(vm: MainViewModel) {
+    val context = LocalContext.current
+    val preferencesManager = remember { PreferencesManager(context) }
+    val hasToken = preferencesManager.hasToken()
+
+    if (!hasToken) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Please login to view activities",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { NavigationManager.navigateToLogin() }
+            ) {
+                Text("Login")
+            }
+        }
+        return
+    }
+
     val followingList by vm.followingList.collectAsState()
     val isFollowingLoading by vm.isFollowingLoading.collectAsState()
     val receivedEvents by vm.receivedEvents.collectAsState()

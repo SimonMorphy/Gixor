@@ -260,7 +260,7 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _uiState.value = UiState.Loading
-                val response = getToken()?.let { RetrofitClient.httpBaseService.getTrendyRepoList(it) }
+                val response = RetrofitClient.httpBaseService.getTrendyRepoList()
                 if (response != null) {
                     if (response.code == 200) {
                         _trendyRepos.value = response.data!!
@@ -640,8 +640,7 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _isEventsLoading.value = true
-                val token = getToken() ?: return@launch
-                val response = RetrofitClient.httpBaseService.getPublicEvent(token, createPageQueryParams())
+                val response = RetrofitClient.httpBaseService.getPublicEvent(createPageQueryParams())
                 if (response.code == 200) {
                     _publicEvents.value = response.data ?: emptyList()
                 }

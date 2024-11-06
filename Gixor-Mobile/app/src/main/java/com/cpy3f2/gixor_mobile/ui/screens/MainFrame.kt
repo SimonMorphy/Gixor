@@ -45,7 +45,7 @@ fun MainFrame(navController: NavController) {
             when (currentSelectedItem) {
                 0 -> FrontScreen(navController)
                 1 -> RankScreen(navController)
-//                2 -> MineScreen()
+                2 -> MineScreen()
             }
         }
 }

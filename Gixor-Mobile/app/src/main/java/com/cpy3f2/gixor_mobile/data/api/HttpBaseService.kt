@@ -114,7 +114,6 @@ interface HttpBaseService {
     //获得热点项目
     @GET("/sys/repo/trendy")
     suspend fun getTrendyRepoList(
-        @Header("gixor-login") tokenValue: String,
     ): ResultData<List<TrendyRepository>>
 
     //获取指定仓库的详情
@@ -428,7 +427,6 @@ interface HttpBaseService {
     //获取公共动态
     @GET("/gith/event/public")
     suspend fun getPublicEvent(
-        @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
     ): ResultData<List<Event>>
 
