@@ -93,6 +93,8 @@ fun MessageScreen(viewModel: MainViewModel) {
 
 @Composable
 private fun NotificationsTopBar(viewModel: MainViewModel) {
+    val isMarkingAllAsRead by viewModel.isMarkingAllAsRead.collectAsState()
+
     Surface(
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 1.dp
@@ -114,15 +116,22 @@ private fun NotificationsTopBar(viewModel: MainViewModel) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                IconButton(onClick = { 
-                    // 标记所有通知为已读并刷新
-                    viewModel.refreshNotifications()
-                    viewModel.loadNotifications(isRefresh = true)
-                }) {
-                    Icon(
-                        imageVector = Icons.Rounded.DoneAll,
-                        contentDescription = "Mark all as read"
-                    )
+                // 一键已读按钮
+                IconButton(
+                    onClick = { viewModel.markAllNotificationsAsRead() },
+                    enabled = !isMarkingAllAsRead
+                ) {
+                    if (isMarkingAllAsRead) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.DoneAll,
+                            contentDescription = "Mark all as read"
+                        )
+                    }
                 }
 
                 IconButton(onClick = { /* 设置 */ }) {

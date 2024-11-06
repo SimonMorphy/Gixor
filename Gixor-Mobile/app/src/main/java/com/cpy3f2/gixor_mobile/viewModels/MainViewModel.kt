@@ -901,4 +901,30 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
+    private val _isMarkingAllAsRead = MutableStateFlow(false)
+    val isMarkingAllAsRead: StateFlow<Boolean> = _isMarkingAllAsRead
+
+    fun markAllNotificationsAsRead() {
+
+        viewModelScope.launch {
+            _isMarkingAllAsRead.value = true
+            try {
+                // 调用一键已读接口
+                val response = RetrofitClient.httpBaseService.getUnreadNotificationList(
+                    tokenValue = preferencesManager.getToken() ?: "",
+                    params = mapOf()
+                )
+                
+                if (response.code == 200) {
+                    // 刷新通知列表
+                    loadNotifications(isRefresh = true)
+                }
+            } catch (e: Exception) {
+                _notificationError.value = e.message ?: "标记已读失败"
+            } finally {
+                _isMarkingAllAsRead.value = false
+            }
+        }
+    }
 }

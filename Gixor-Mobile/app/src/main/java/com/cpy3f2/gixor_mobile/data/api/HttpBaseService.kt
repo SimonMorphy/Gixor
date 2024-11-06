@@ -291,7 +291,7 @@ interface HttpBaseService {
         @Path("comment_id") commentId: Long
     ): ResultData<Unit>
 
-    //获取当个评论
+    //获取单个评论
     @GET("/gith/issue/{owner}/{repo}/comments/{comment_id}")
     suspend fun getComment(
         @Header("gixor-login") tokenValue: String,
@@ -463,7 +463,7 @@ interface HttpBaseService {
     ): ResultData<List<Notification>>
 
     //一键已读所有通知列表
-    @GET("/gith/notification/unread")
+    @PUT("/gith/noti")
     suspend fun getUnreadNotificationList(
         @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
