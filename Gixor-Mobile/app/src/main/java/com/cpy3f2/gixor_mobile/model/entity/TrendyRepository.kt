@@ -12,7 +12,7 @@ data class TrendyRepository(
     val name: String,
     val author: String,
     val avatar: String,
-    val url: String,
+    val url: String?,
     val description: String?,
     val language: String?,
     val languageColor: String?,

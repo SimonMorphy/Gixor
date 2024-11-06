@@ -12,8 +12,10 @@ import com.cpy3f2.gixor_mobile.model.entity.IssueComment
 import com.cpy3f2.gixor_mobile.model.entity.IssueDTO
 import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
+import com.cpy3f2.gixor_mobile.model.entity.RepositorySearchVO
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
+import com.cpy3f2.gixor_mobile.model.entity.UserSearchVO
 import retrofit2.http.*
 
 interface HttpBaseService {
@@ -516,10 +518,10 @@ interface HttpBaseService {
     @GET("/gith/search/user")
     suspend fun searchUser(
         @Query("q") q: String,
-    ): ResultData<SimpleUser>
+    ): ResultData<UserSearchVO>
 
     @GET("/gith/search/repo")
     suspend fun searchRepo(
         @Query("q") q: String,
-    ): ResultData<GitHubRepository>
+    ): ResultData<RepositorySearchVO>
 }

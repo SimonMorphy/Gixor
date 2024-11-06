@@ -319,7 +319,7 @@ class MainViewModel : ViewModel() {
                 val token = getToken() ?: return@launch
                 val response = RetrofitClient.httpBaseService.getMyStarRepoList(createQueryParams(),token)
                 if (response.code == 200) {
-                    val starredRepoIds = response.data?.map { "${it.owner?.name}/${it.name}" }
+                    val starredRepoIds = response.data?.map { "${it.owner?.login}/${it.name}" }
                         ?.toSet()
                     if (starredRepoIds != null) {
                         _starredRepos.value = starredRepoIds
@@ -454,7 +454,7 @@ class MainViewModel : ViewModel() {
     private val _isIssuesLoading = MutableStateFlow(false)
     val isIssuesLoading: StateFlow<Boolean> = _isIssuesLoading.asStateFlow()
 
-    // ��加态跟踪
+    // ��态跟
     var selectedFilter by mutableStateOf("open")
         private set
 
@@ -584,7 +584,7 @@ class MainViewModel : ViewModel() {
                 coroutineScope {
                     launch { loadTrendyRepos() }
 
-                    // 如果用户已登录，加载用户相关数据
+                    // 如果用户已登录，加载用户相关据
                     if (hasToken()) {
                         launch {
                             getToken()?.let { token ->
@@ -1194,7 +1194,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // Stars 相关状态
+    // Stars 相关状
     private val _starUsers = MutableStateFlow<List<SimpleUser>>(emptyList())
     val starUsers: StateFlow<List<SimpleUser>> = _starUsers.asStateFlow()
 
@@ -1351,5 +1351,79 @@ class MainViewModel : ViewModel() {
                 onError(e.message ?: "Unknown error")
             }
         }
+    }
+
+    // 添加搜索结果状态
+    private val _searchUserResults = MutableStateFlow<List<SimpleUser>>(emptyList())
+    val searchUserResults: StateFlow<List<SimpleUser>> = _searchUserResults.asStateFlow()
+
+    private val _searchRepoResults = MutableStateFlow<List<GitHubRepository>>(emptyList())
+    val searchRepoResults: StateFlow<List<GitHubRepository>> = _searchRepoResults.asStateFlow()
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching.asStateFlow()
+
+    // 搜索方法
+    fun search(query: String) {
+        if (query.isBlank()) {
+            _searchUserResults.value = emptyList()
+            _searchRepoResults.value = emptyList()
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                _isSearching.value = true
+                
+                // 并行执行搜索
+                coroutineScope {
+                    launch {
+                        val userResponse = RetrofitClient.httpBaseService.searchUser(query)
+                        if (userResponse.code == 200) {
+                            // 添加空值检查
+                            _searchUserResults.value = userResponse.data?.items ?: emptyList()
+                        }
+                    }
+                    
+                    launch {
+                        val repoResponse = RetrofitClient.httpBaseService.searchRepo(query)
+                        if (repoResponse.code == 200) {
+                            // 添加空值检查
+                            _searchRepoResults.value = repoResponse.data?.repositories ?: emptyList()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // 发生错误时清空结果
+                _searchUserResults.value = emptyList()
+                _searchRepoResults.value = emptyList()
+            } finally {
+                _isSearching.value = false
+            }
+        }
+    }
+
+    // 添加搜索状态相关变量
+    private val _searchText = MutableStateFlow("")
+    val searchText: StateFlow<String> = _searchText.asStateFlow()
+
+    private val _selectedSearchTab = MutableStateFlow(0)
+    val selectedSearchTab: StateFlow<Int> = _selectedSearchTab.asStateFlow()
+
+    // 更新搜索文本
+    fun updateSearchText(text: String) {
+        _searchText.value = text
+        if (text.isNotBlank()) {
+            search(text)
+        } else {
+            _searchUserResults.value = emptyList()
+            _searchRepoResults.value = emptyList()
+        }
+    }
+
+    // 更新选中的标签页
+    fun updateSelectedSearchTab(tab: Int) {
+        _selectedSearchTab.value = tab
     }
 }

@@ -6,7 +6,7 @@ data class GitHubRepository(
     @SerializedName("id")
     val githubId: Long? = null,
     @SerializedName("name")
-    val name: String? = null,
+    val name: String = "",
     @SerializedName("full_name")
     val fullName: String = "",
     @SerializedName("description")
@@ -31,13 +31,18 @@ data class GitHubRepository(
     val updatedAt: String? = null,
     val pushedAt: String? = null,
     val size: Int? = null,
+    @SerializedName("default_branch")
     val defaultBranch: String? = null
 ) {
 
     data class Owner(
+        @SerializedName("id")
         val githubId: Long? = null,
-        val name: String? = null,
+        @SerializedName("login")
+        val login: String = "",
+        @SerializedName("avatar_url")
         val avatarUrl: String? = null,
+        @SerializedName("html_url")
         val htmlUrl: String? = null,
         val type: String? = null
     )
@@ -48,4 +53,5 @@ data class GitHubRepository(
         val key: String? = null,
         val url: String? = null
     )
+
 }
