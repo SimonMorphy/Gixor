@@ -11,14 +11,14 @@ import kotlin.math.abs
 
 class DateTimeConverters {
     @SuppressLint("NewApi")
-    private val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+    private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
     @SuppressLint("NewApi")
     @TypeConverter
     fun fromTimestamp(value: String?): LocalDateTime? {
         return value?.let {
             try {
-                LocalDateTime.parse(it, DateTimeFormatter.ISO_DATE_TIME)
+                LocalDateTime.parse(it, formatter)
             } catch (e: Exception) {
                 null
             }
@@ -35,12 +35,12 @@ class DateTimeConverters {
         @SuppressLint("NewApi")
         private val API_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
         @RequiresApi(Build.VERSION_CODES.O)
-        private val ISO_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+        private val ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
         @SuppressLint("NewApi")
         fun formatDateTime(dateTime: LocalDateTime?): String {
             if (dateTime == null) return "未知时间"
-            
+
             val now = LocalDateTime.now()
             val minutes = ChronoUnit.MINUTES.between(dateTime, now)
             val hours = ChronoUnit.HOURS.between(dateTime, now)

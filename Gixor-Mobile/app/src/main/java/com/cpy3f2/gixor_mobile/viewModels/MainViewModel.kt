@@ -964,13 +964,13 @@ class MainViewModel : ViewModel() {
             try {
                 _isUserCommentsLoading.value = true
                 val token = getToken() ?: return@launch
-                
+
                 // 创建查询参数，设置按创建时间排序
                 val params = mapOf(
                     "sort" to "created",
                     "direction" to "desc"  // 可选：按降序排列，最新的评论在前
                 )
-                
+
                 val response = RetrofitClient.httpBaseService.getIssueComments(
                     tokenValue = token,
                     owner = owner,
@@ -978,12 +978,12 @@ class MainViewModel : ViewModel() {
                     number = issueNumber,
                     params = params
                 )
-                
+
                 if (response.code == 200) {
                     // 过滤出前用户的评论
                     val currentUser = gitHubUser.value?.data?.login
-                    _userComments.value = response.data?.filter { 
-                        it.user?.login == currentUser 
+                    _userComments.value = response.data?.filter {
+                        it.user?.login == currentUser
                     } ?: emptyList()
                 }
             } catch (e: Exception) {
@@ -1007,10 +1007,10 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val token = getToken() ?: throw Exception("Token not found")
-                
+
                 // 使用 CommentDTO 包装评论内容
                 val commentDTO = CommentDTO(body = body)
-                
+
                 val response = RetrofitClient.httpBaseService.updateComment(
                     tokenValue = token,
                     owner = owner,
@@ -1018,7 +1018,7 @@ class MainViewModel : ViewModel() {
                     commentId = commentId,
                     commentDTO = commentDTO  // 使用 DTO 对象
                 )
-                
+
                 if (response.code == 200) {
                     loadIssueComments(owner, repo, issueNumber)
                     loadUserComments(owner, repo, issueNumber)
@@ -1050,7 +1050,7 @@ class MainViewModel : ViewModel() {
                     repo = repo,
                     commentId = commentId
                 )
-                
+
                 if (response.code == 200) {
                     // 删除成功后重新加载评论列表
                     loadIssueComments(owner, repo, issueNumber)
@@ -1077,14 +1077,14 @@ class MainViewModel : ViewModel() {
             try {
                 val token = getToken() ?: throw Exception("Token not found")
                 val issueDTO = IssueDTO(title = title)
-                
+
                 val response = RetrofitClient.httpBaseService.updateIssue(
                     tokenValue = token,
                     owner = owner,
                     repo = repo,
                     body = issueDTO
                 )
-                
+
                 if (response.code == 200) {
                     loadIssueDetail(owner, repo, issueNumber)
                     onSuccess()
@@ -1112,7 +1112,7 @@ class MainViewModel : ViewModel() {
                 _forkError.value = null
 
                 val token = getToken() ?: throw Exception("Token not found")
-                
+
                 // 使用 ForkDTO 创建请求
                 val response = RetrofitClient.httpBaseService.forkRepo(
                     tokenValue = token,
@@ -1124,9 +1124,9 @@ class MainViewModel : ViewModel() {
                 if (response.code == 200) {
                     // Fork成功后导航到新fork的仓库
                     NavigationManager.navigateToRepoDetail(
-                        forkDTO.organization.ifEmpty { 
+                        forkDTO.organization.ifEmpty {
                             gitHubUser.value?.data?.login ?: ""
-                        }, 
+                        },
                         repoName
                     )
                 } else {
@@ -1164,7 +1164,7 @@ class MainViewModel : ViewModel() {
             try {
                 _isForkUsersLoading.value = true
                 val token = getToken() ?: throw Exception("Token not found")
-                
+
                 val params = BaseQuerySetting(
                     perPage = 10,
                     page = currentForkPage
@@ -1279,7 +1279,7 @@ class MainViewModel : ViewModel() {
                 } else {
                     RetrofitClient.httpBaseService.subscribeRepo(token, owner, repo)
                 }
-                
+
                 if (response.code == 200) {
                     if (isCurrentlySubscribed) {
                         _isSubscribed.value = _isSubscribed.value - "$owner/$repo"
@@ -1309,7 +1309,7 @@ class MainViewModel : ViewModel() {
                     repo = repo,
                     number = issueNumber
                 )
-                
+
                 if (response.code == 200) {
                     // 只更新 locked 状态，保持其他状态不变
                     _currentIssue.value = _currentIssue.value?.copy(locked = true)
@@ -1339,7 +1339,7 @@ class MainViewModel : ViewModel() {
                     repo = repo,
                     number = issueNumber
                 )
-                
+
                 if (response.code == 200) {
                     // 只更新 locked 状态，保持其他状态不变
                     _currentIssue.value = _currentIssue.value?.copy(locked = false)

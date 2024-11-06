@@ -509,4 +509,17 @@ interface HttpBaseService {
         @Path("repo") repo: String,
         @Body body: ForkDTO
     ): ResultData<Unit>
+
+    /**
+     * 搜索 相关
+     */
+    @GET("/gith/search/user")
+    suspend fun searchUser(
+        @Query("q") q: String,
+    ): ResultData<SimpleUser>
+
+    @GET("/gith/search/repo")
+    suspend fun searchRepo(
+        @Query("q") q: String,
+    ): ResultData<GitHubRepository>
 }

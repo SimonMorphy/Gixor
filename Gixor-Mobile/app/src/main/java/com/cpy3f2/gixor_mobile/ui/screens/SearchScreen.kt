@@ -278,7 +278,7 @@ private fun PersonHotList(viewModel: MainViewModel) {
                         },
                         modifier = Modifier.padding(end = 16.dp)
                     )
-                    
+
                     AsyncImage(
                         model = user.avatarUrl,
                         contentDescription = null,
@@ -286,9 +286,9 @@ private fun PersonHotList(viewModel: MainViewModel) {
                             .size(40.dp)
                             .clip(CircleShape)
                     )
-                    
+
                     Spacer(modifier = Modifier.width(16.dp))
-                    
+
                     Text(
                         text = user.username,
                         style = MaterialTheme.typography.titleMedium
@@ -337,7 +337,7 @@ private fun ProjectHotList(viewModel: MainViewModel) {
                         },
                         modifier = Modifier.padding(end = 16.dp)
                     )
-                    
+
                     Column {
                         Text(
                             text = repo.author,
@@ -348,7 +348,7 @@ private fun ProjectHotList(viewModel: MainViewModel) {
                             text = repo.name,
                             style = MaterialTheme.typography.titleMedium
                         )
-                        
+
                         // 添加描述，如果有的话
                         if (!repo.description.isNullOrEmpty()) {
                             Spacer(modifier = Modifier.height(4.dp))
