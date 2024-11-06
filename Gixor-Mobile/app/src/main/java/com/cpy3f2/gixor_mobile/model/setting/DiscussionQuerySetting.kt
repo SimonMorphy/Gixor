@@ -21,7 +21,9 @@ data class DiscussionQuerySetting(
     
     override val perPage: Int? = null,
     override val page: Int? = null,
-    override val sort: String? = null
+    override val sort: String? = null,
+    @SerializedName("after")
+    val after: String? = null
 ) : BaseQuerySetting(perPage, page, sort, direction) {
 
     /**
@@ -71,6 +73,7 @@ data class DiscussionQuerySetting(
         private var perPage: Int? = null
         private var page: Int? = null
         private var sort: String? = null
+        private var after: String? = null
 
         fun first(first: Int) = apply { this.first = first }
         fun category(category: String) = apply { this.category = category }
@@ -79,6 +82,7 @@ data class DiscussionQuerySetting(
         fun perPage(perPage: Int) = apply { this.perPage = perPage }
         fun page(page: Int) = apply { this.page = page }
         fun sort(sort: String) = apply { this.sort = sort }
+        fun after(after: String) = apply { this.after = after }
 
         fun build() = DiscussionQuerySetting(
             first = first,
@@ -87,7 +91,8 @@ data class DiscussionQuerySetting(
             direction = direction,
             perPage = perPage,
             page = page,
-            sort = sort
+            sort = sort,
+            after = after
         )
     }
 

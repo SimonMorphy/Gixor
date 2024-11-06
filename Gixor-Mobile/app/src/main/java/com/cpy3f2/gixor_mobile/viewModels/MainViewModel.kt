@@ -39,12 +39,14 @@ import createStateQueryParams
 import kotlinx.coroutines.coroutineScope
 import android.util.Log
 import com.cpy3f2.Gixor.Domain.DTO.ForkDTO
+import com.cpy3f2.gixor_mobile.model.entity.Discussion
 import com.cpy3f2.gixor_mobile.model.entity.IssueDTO
 import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.setting.NotificationQuerySetting
 import com.cpy3f2.gixor_mobile.model.entity.IssueComment
 import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
 import com.cpy3f2.gixor_mobile.model.setting.BaseQuerySetting
+import com.cpy3f2.gixor_mobile.model.setting.DiscussionQuerySetting
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -95,16 +97,6 @@ class MainViewModel : ViewModel() {
         categoryIndex = index
     }
 
-
-    /**
-     *获取关注数据
-     */
-    //TODO 获取网络请求中的数据
-
-    /**
-     * 获取关注对象的动态
-     * //TODO 获取网络请求中的数据
-     */
 
     //从本地获取搜索数据
 
@@ -454,7 +446,7 @@ class MainViewModel : ViewModel() {
     private val _isIssuesLoading = MutableStateFlow(false)
     val isIssuesLoading: StateFlow<Boolean> = _isIssuesLoading.asStateFlow()
 
-    // ��态跟
+    // 态跟
     var selectedFilter by mutableStateOf("open")
         private set
 
@@ -1263,7 +1255,7 @@ class MainViewModel : ViewModel() {
                     _isSubscribed.value = _isSubscribed.value + "$owner/$repo"
                 }
             } catch (e: Exception) {
-                // 如果返回404或其他错误，说明未订阅
+                // 如果返回404或其他错误，说��未订阅
                 _isSubscribed.value = _isSubscribed.value - "$owner/$repo"
             }
         }
@@ -1425,5 +1417,73 @@ class MainViewModel : ViewModel() {
     // 更新选中的标签页
     fun updateSelectedSearchTab(tab: Int) {
         _selectedSearchTab.value = tab
+    }
+
+    // 讨论列表状态
+    private val _repoDiscussions = MutableStateFlow<List<Discussion>>(emptyList())
+    val repoDiscussions: StateFlow<List<Discussion>> = _repoDiscussions.asStateFlow()
+
+    private val _isDiscussionsLoading = MutableStateFlow(false)
+    val isDiscussionsLoading: StateFlow<Boolean> = _isDiscussionsLoading.asStateFlow()
+
+    // 添加分页相关状态
+    private var _hasMoreDiscussions = MutableStateFlow(true)
+    val hasMoreDiscussions: StateFlow<Boolean> = _hasMoreDiscussions.asStateFlow()
+
+    private var currentDiscussionCursor: String = null.toString()
+
+    // 修改讨论列表加载方法
+    fun loadRepoDiscussions(owner: String, repo: String, isRefresh: Boolean = false) {
+        if (_isDiscussionsLoading.value) return
+        if (isRefresh) {
+            currentDiscussionCursor = null.toString()
+            _repoDiscussions.value = emptyList()
+            _hasMoreDiscussions.value = true
+        }
+        if (!_hasMoreDiscussions.value) return
+
+        viewModelScope.launch {
+            try {
+                _isDiscussionsLoading.value = true
+                val token = getToken() ?: return@launch
+                
+                val querySettings = DiscussionQuerySetting.builder()
+                    .first(10)  // 每页加载10条
+                    .after(currentDiscussionCursor)
+                    .build()
+                
+                val response = RetrofitClient.httpBaseService.getRepoDiscussionList(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    params = querySettings
+                )
+
+                if (response.code == 200) {
+                    val discussionVO = response.data
+                    if (discussionVO != null) {
+                        // 更新讨论列表
+                        _repoDiscussions.value = if (isRefresh) {
+                            discussionVO.nodes
+                        } else {
+                            _repoDiscussions.value + discussionVO.nodes
+                        }
+
+                        // 更新分页状态
+                        _hasMoreDiscussions.value = discussionVO.pageInfo.hasNextPage
+                        currentDiscussionCursor = discussionVO.pageInfo.endCursor
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isDiscussionsLoading.value = false
+            }
+        }
+    }
+
+    // 添加刷新方法
+    fun refreshDiscussions(owner: String, repo: String) {
+        loadRepoDiscussions(owner, repo, isRefresh = true)
     }
 }

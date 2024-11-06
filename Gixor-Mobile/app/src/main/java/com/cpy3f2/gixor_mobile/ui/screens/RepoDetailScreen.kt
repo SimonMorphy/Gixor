@@ -69,6 +69,7 @@ import coil3.compose.AsyncImage
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
+import com.cpy3f2.gixor_mobile.model.entity.Discussion
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -205,6 +206,7 @@ fun RepoDetailScreen(
                 RepoTab.PullRequests -> RepoPullRequestsTab(owner, repoName, viewModel)
                 RepoTab.Watchers -> RepoWatchTab(owner, repoName, viewModel)
                 RepoTab.Forks -> RepoForkUsersTab(owner, repoName, viewModel)
+                RepoTab.Discussions -> RepoDiscussionsTab(owner, repoName, viewModel)
 //                RepoTab.Stars -> RepoStarsTab(owner, repoName, viewModel)
                 else -> {
                     // 其他标签页显示开发中提示
@@ -1100,6 +1102,158 @@ fun UserListItem(user: SimpleUser) {
                 text = user.login ?: "",
                 style = MaterialTheme.typography.titleMedium
             )
+        }
+    }
+}
+
+@Composable
+fun RepoDiscussionsTab(owner: String, repoName: String, viewModel: MainViewModel) {
+    val discussions by viewModel.repoDiscussions.collectAsState()
+    val isLoading by viewModel.isDiscussionsLoading.collectAsState()
+
+    LaunchedEffect(owner, repoName) {
+        viewModel.loadRepoDiscussions(owner, repoName)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // 新建讨论按钮
+        Button(
+            onClick = { /* TODO: Navigate to create discussion */ },
+            modifier = Modifier.align(Alignment.End),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("New Discussion")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else if (discussions.isEmpty()) {
+            // 空状态展示
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Comment,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    Text(
+                        text = "No discussions yet",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "Start a new discussion to get the conversation going",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(discussions) { discussion ->
+                    DiscussionItem(discussion = discussion)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DiscussionItem(discussion: Discussion) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { /* TODO: Navigate to discussion detail */ }
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            // 标题
+            Text(
+                text = discussion.title,
+                style = MaterialTheme.typography.titleMedium
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // 分类标签
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Text(
+                    text = discussion.categoryName,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // 作者和时间信息
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Started by ${discussion.authorName}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                
+                Text(
+                    text = " • ",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                
+                Text(
+                    text = DateTimeConverters.formatDateTime(discussion.createdAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                // 评论数
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Comment,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    Text(
+                        text = "${discussion.comments.size}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
         }
     }
 }

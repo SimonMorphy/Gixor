@@ -2,6 +2,7 @@ package com.cpy3f2.gixor_mobile.data.api
 
 import CommentDTO
 import com.cpy3f2.Gixor.Domain.DTO.ForkDTO
+import com.cpy3f2.gixor_mobile.model.entity.DiscussionVO
 import com.cpy3f2.gixor_mobile.model.entity.Event
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
@@ -16,6 +17,7 @@ import com.cpy3f2.gixor_mobile.model.entity.RepositorySearchVO
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
 import com.cpy3f2.gixor_mobile.model.entity.UserSearchVO
+import com.cpy3f2.gixor_mobile.model.setting.DiscussionQuerySetting
 import retrofit2.http.*
 
 interface HttpBaseService {
@@ -26,13 +28,14 @@ interface HttpBaseService {
     /**
      * 获取用户信息接口
      */
-    // GitHub登录用户信息接口
+    //TODO (最后会被获取用户可统计数据代替)
+    // GitHub登录用户信息接口、
     @GET("/sys/user")
     suspend fun getMyUserInfo(
         @Header("gixor-login") tokenValue: String
     ): ResultData<GitHubUser>
 
-    //GitHub指定用户信息接口
+    //GitHub指定用户信息接口、
     @GET("/sys/user/{username}")
     suspend fun getGitHubUserInfo(
         @Header("gixor-login") tokenValue: String,
@@ -98,14 +101,15 @@ interface HttpBaseService {
         @Header("gixor-login") tokenValue: String
     ): ResultData<List<GitHubRepository>>
 
-    //查看本人的仓库
+
+    //查看本人的仓库  (调用查看某人的仓库)
     @GET("/gith/repo")
     suspend fun getMyRepoList(
         @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
     ): ResultData<List<GitHubRepository>>
 
-    //查看某人收藏的仓库
+    //查看某人收藏的仓库 (未使用)
     @GET("/gith/repo/starred/{username}")
     suspend fun getUserStarRepoList(
         @Header("gixor-login") tokenValue: String,
@@ -135,9 +139,18 @@ interface HttpBaseService {
         @QueryMap params: Map<String, String>
     ): ResultData<GitHubRepository>
 
+    //获取readme文件
+    @GET("/gith/repo/{owner}/{repo}/readme")
+    suspend fun getReadme(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @QueryMap params: Map<String, String>
+    ): ResultData<String>
+
 
     /**
-     *Milestone相关
+     *Milestone相关（不做）
      */
     //获取指定仓库的Milestone列表
     @GET("/gith/issue/{owner}/{repo}/milestones")
@@ -245,14 +258,14 @@ interface HttpBaseService {
         @Path("number") number: Long
     ): ResultData<Issue>
 
-    //获取当前用户的issue
+    //获取当前用户的issue（不做）
     @GET("/gith/issue")
     suspend fun getMyIssueList(
         @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
     ): ResultData<List<Issue>>
 
-    //获取指派给当前用户的issue
+    //获取指派给当前用户的issue（不做）
     @GET("/gith/issue/assigned")
     suspend fun getMyAssignIssueList(
         @Header("gixor-login") tokenValue: String,
@@ -330,7 +343,7 @@ interface HttpBaseService {
         @Path("repo") repo: String
     ): ResultData<Unit>
 
-    //获取当前用户的关注仓库列表
+    //获取当前用户的关注仓库列表 （未使用）
     @GET("/gith/sub/watching")
     suspend fun getMySubscribedList(
         @Header("gixor-login") tokenValue: String
@@ -376,7 +389,7 @@ interface HttpBaseService {
         @QueryMap params: Map<String, String>
     ): ResultData<List<SimpleUser>>
 
-    //获取当前用户的粉丝列表
+    //获取当前用户的粉丝列表 （使用的是下面一个的接口）
     @GET("/gith/follow/followers")
     suspend fun getMyFollowers(
         @Header("gixor-login") tokenValue: String
@@ -455,7 +468,7 @@ interface HttpBaseService {
         @Path("username") username: String,
     ): ResultData<List<Event>>
 
-    //获取与某组织相关的动态
+    //获取与某组织相关的动态（不做）
     @GET("/gith/event/orgs/{org}")
     suspend fun getOrgEvent(
         @Header("gixor-login") tokenValue: String,
@@ -483,13 +496,13 @@ interface HttpBaseService {
      * discussion相关
      */
     //获取指定仓库的讨论列表
-//    @GET("/gith/disc/{owner}/{repo}")
-//    suspend fun getRepoDiscussionList(
-//        @Header("gixor-login") tokenValue: String,
-//        @Path("owner") owner: String,
-//        @Path("repo") repo: String,
-//        @QueryMap params: Map<String, String>
-//    ): ResultData<List<Discussion>>
+    @GET("/gith/disc/{owner}/{repo}")
+    suspend fun getRepoDiscussionList(
+        @Header("gixor-login") tokenValue: String,
+        @Path("owner") owner: String,
+        @Path("repo") repo: String,
+        @QueryMap params: DiscussionQuerySetting
+    ): ResultData<DiscussionVO>
 
     /**
      * fork 相关
