@@ -29,4 +29,5 @@ public class GitHubErrorCodes {
 
     public static final String NOTIFICATION_GET = "github.error.notification.get";
     public static final String NOTIFICATION_MARK = "github.error.notification.mark";
+    public static final String USER_NOT_FOUND = "github.error.user.not.found";
 }

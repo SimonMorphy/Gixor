@@ -9,8 +9,11 @@ import org.springframework.data.elasticsearch.client.elc.ReactiveElasticsearchCo
 import org.springframework.data.elasticsearch.client.elc.ReactiveElasticsearchClient;
 import org.springframework.data.elasticsearch.core.ReactiveElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.convert.ElasticsearchConverter;
+import org.springframework.data.elasticsearch.core.convert.ElasticsearchCustomConversions;
 import org.springframework.data.elasticsearch.support.HttpHeaders;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author : simon
@@ -55,6 +58,13 @@ public class ElasticSearchConfig extends ReactiveElasticsearchConfiguration {
         }
 
         return builder.build();
+    }
+    @Override
+    @Bean
+    public ElasticsearchCustomConversions elasticsearchCustomConversions() {
+        return new ElasticsearchCustomConversions(
+                List.of(new StringToFloatConverter(),new StringToLongConverter())
+        );
     }
 
     @Bean

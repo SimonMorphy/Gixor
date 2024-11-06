@@ -36,8 +36,11 @@ public class GitHubRepository {
     private Integer stargazersCount;
     @JsonProperty("forks_count")
     private Integer forksCount;
+    @JsonProperty("watchers_count")
+    private Integer watchersCount;
     private String visibility;
     private Boolean fork;
+    private Boolean hasDiscussions;
     @JsonProperty("html_url")
     private String htmlUrl;
     private List<String> topics;

@@ -3,8 +3,6 @@ package com.cpy3f2.Gixor.Service;
 import com.cpy3f2.Gixor.Config.GitHubApi;
 import com.cpy3f2.Gixor.Domain.Event;
 import com.cpy3f2.Gixor.Domain.Query.EventQuerySetting;
-import com.cpy3f2.Gixor.Domain.ResponseResult;
-import com.cpy3f2.Gixor.Exception.constant.GitHubErrorCodes;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -22,12 +20,14 @@ public class EventService {
     
     @Resource
     private WebClient githubClient;
+    @Resource
+    private WebClient gitHubClientWithoutToken;
 
     /**
      * 获取公开事件列表
      */
     public Flux<Event> listPublicEvents(EventQuerySetting settings) {
-        return githubClient.get()
+        return gitHubClientWithoutToken.get()
                 .uri(uriBuilder -> GitHubApi.addQueryParams(
                         uriBuilder.path("/events"),
                         settings)

@@ -31,12 +31,30 @@ public class RankTask {
     private CacheService cacheService;
 
     @Scheduled(cron = "0 0 */1 * * ?")
-    @GetMapping("/inList")
+//    @GetMapping("/inList")
     public void rank() {
-        gitHubUserService.getRanking(0, 100)
+        gitHubUserService.getRanking(0, 1000)
                 .collectList()
                 .subscribe(list->cacheService
                         .setCacheList(Constants.RANK_KEY,list)
+                        .subscribe());
+    }
+    @Scheduled(cron = "0 0 0 * * ?")
+//    @GetMapping("/inNations")
+    public void nations(){
+        gitHubUserService.getAllNations()
+                .collectList()
+                .subscribe(list->cacheService
+                        .setCacheList(Constants.NATION_KEY,list)
+                        .subscribe());
+    }
+    @Scheduled(cron = "0 0 0 * * ?")
+    @GetMapping("/inDomains")
+    public void domains(){
+        gitHubUserService.getAllDomains()
+                .collectList()
+                .subscribe(list->cacheService
+                        .setCacheList(Constants.DOMAIN_KEY,list)
                         .subscribe());
     }
 }

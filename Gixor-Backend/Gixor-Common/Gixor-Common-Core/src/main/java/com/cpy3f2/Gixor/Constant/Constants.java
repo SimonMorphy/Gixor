@@ -55,4 +55,6 @@ public class Constants {
     public static final String TRENDY_REPO_KEY = "trendy-repos";
     public static final String TRENDY_USER_KEY = "trendy-developers";
     public static final String ERROR = "errors";
+    public static final String NATION_KEY = "nations";
+    public static final String DOMAIN_KEY = "domains";
 }

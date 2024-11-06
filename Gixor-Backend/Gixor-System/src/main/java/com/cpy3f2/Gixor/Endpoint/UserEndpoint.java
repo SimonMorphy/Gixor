@@ -14,10 +14,7 @@ import jakarta.annotation.Resource;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -75,19 +72,47 @@ public class UserEndpoint {
     }
 
     @PostMapping ("/details/{id}")
-    public Mono<ResponseResult> test(@PathVariable String id){
+    public Mono<ResponseResult> getDetails(@PathVariable String id){
         return gitUserService.getUserDetail(id)
                 .map(ResponseResult::success);
     }
     @GetMapping("/rank")
-    public Mono<ResponseResult> list(int page,int pageSize){
+    public Mono<ResponseResult> list(@RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "10") int pageSize){
         return cacheService.getCacheList(Constants.RANK_KEY, GitHubUser.class,page,pageSize)
                 .collectList()
                 .map(ResponseResult::success);
     }
+    @GetMapping("/rank/nation/{nation}")
+    public Mono<ResponseResult> rankNation(@PathVariable String nation,
+                                    @RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "10") int pageSize){
+        return gitUserService.getRankingByNation(nation,page,pageSize)
+                .collectList()
+                .map(ResponseResult::success);
+    }
+    @GetMapping("/rank/domain/{domain}")
+    public Mono<ResponseResult> rankDomain(@PathVariable String domain,
+                                    @RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "10") int pageSize){
+        return gitUserService.getRankingByDomain(domain,page,pageSize)
+                .collectList()
+                .map(ResponseResult::success);
+    }
+    @GetMapping("/nations")
+    public Mono<ResponseResult> getNations(){
+        return cacheService.getCacheList(Constants.NATION_KEY, String.class)
+                .collectList()
+                .map(ResponseResult::success);
+    }
+    @GetMapping("/domains")
+    public Mono<ResponseResult> getDomains(){
+        return cacheService.getCacheList(Constants.DOMAIN_KEY, String.class)
+                .collectList()
+                .map(ResponseResult::success);
+    }
     @GetMapping("/{username}")
-    public Mono<ResponseResult> getInfo(@PathVariable String username)
-    {
+    public Mono<ResponseResult> getInfo(@PathVariable String username) {
         return gitUserService.getInfo(username)
                 .map(ResponseResult::success);
     }

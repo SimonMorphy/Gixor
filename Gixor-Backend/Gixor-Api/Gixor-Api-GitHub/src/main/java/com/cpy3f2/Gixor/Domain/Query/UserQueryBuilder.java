@@ -33,6 +33,9 @@ public class UserQueryBuilder {
               }
               totalCount
             }
+            watching {
+              totalCount
+            }
             repositoriesContributedTo(contributionTypes: [COMMIT, ISSUE, PULL_REQUEST, REPOSITORY]) {
               totalCount
             }
