@@ -42,6 +42,7 @@ import com.cpy3f2.gixor_mobile.model.entity.IssueDTO
 import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.setting.NotificationQuerySetting
 import com.cpy3f2.gixor_mobile.model.entity.IssueComment
+import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -404,7 +405,7 @@ class MainViewModel : ViewModel() {
             try {
                 _isRepoDetailsLoading.value = true
                 _repoDetailsError.value = null
-                
+
                 val token = getToken() ?: throw Exception("Token not found")
                 val response = RetrofitClient.httpBaseService.getRepoDetail(
                     tokenValue = token,
@@ -412,7 +413,7 @@ class MainViewModel : ViewModel() {
                     repo = repo,
                     params = createPageQueryParams()
                 )
-                
+
                 if (response.code == 200) {
                     _repoDetails.value = response.data
                     // 如果用户已登录，检查 star 状态
@@ -915,7 +916,7 @@ class MainViewModel : ViewModel() {
                     tokenValue = preferencesManager.getToken() ?: "",
                     params = mapOf()
                 )
-                
+
                 if (response.code == 200) {
                     // 刷新通知列表
                     loadNotifications(isRefresh = true)
@@ -927,4 +928,24 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
+    private val _trendyUsers = MutableStateFlow<List<TrendyUser>>(emptyList())
+    val trendyUsers: StateFlow<List<TrendyUser>> = _trendyUsers.asStateFlow()
+
+
+    fun loadTrendyUsers() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.httpBaseService.getHotUserList(
+                    tokenValue = preferencesManager.getToken() ?: ""
+                )
+                if (response.code == 200) {
+                    _trendyUsers.value = response.data ?: emptyList()
+                }
+            } catch (e: Exception) {
+                // 处理错误
+            }
+        }
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.cpy3f2.gixor_mobile.ui.screens
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -56,7 +58,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.key
 import androidx.compose.material3.IconButton
 
 import androidx.compose.foundation.text.KeyboardActions
@@ -67,9 +68,13 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.text.style.TextOverflow
+import coil3.compose.AsyncImage
+import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -229,105 +234,139 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
             modifier = Modifier.fillMaxSize()
         ) { page ->
             when (page) {
-                0 -> PersonHotList()
-                1 -> ProjectHotList()
+                0 -> PersonHotList(vm)
+                1 -> ProjectHotList(vm)
             }
         }
     }
 }
 
 @Composable
-private fun PersonHotList() {
+private fun PersonHotList(viewModel: MainViewModel) {
+    val trendyUsers by viewModel.trendyUsers.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadTrendyUsers()
+    }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        items(trendyUsers.size) { index ->
+            val user = trendyUsers[index]
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { NavigationManager.navigateToUserProfile(user.username) }
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${index + 1}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = when (index) {
+                            0 -> Color(0xFFFFD700) // 金
+                            1 -> Color(0xFFC0C0C0) // 银
+                            2 -> Color(0xFFCD7F32) // 铜
+                            else -> MaterialTheme.colorScheme.onSurface
+                        },
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
+                    
+                    AsyncImage(
+                        model = user.avatarUrl,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(16.dp))
+                    
+                    Text(
+                        text = user.username,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProjectHotList(viewModel: MainViewModel) {
+    val trendyRepos by viewModel.trendyRepos.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadTrendyRepos()
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
-        items(15) { index ->
-            key(index) {  // 使用 key 优化重组
-                HotListItem(
-                    rank = index + 1,
-                    title = "热门用户 ${index + 1}",
-                    subtitle = "活跃度: ${1000 - index * 50}",
-                    score = "${1000 - index * 50}"
-                )
+        items(trendyRepos.size) { index ->
+            val repo = trendyRepos[index]
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { NavigationManager.navigateToRepoDetail(repo.author, repo.name) }
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(8.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = "${index + 1}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = when (index) {
+                            0 -> Color(0xFFFFD700) // 金
+                            1 -> Color(0xFFC0C0C0) // 银
+                            2 -> Color(0xFFCD7F32) // 铜
+                            else -> MaterialTheme.colorScheme.onSurface
+                        },
+                        modifier = Modifier.padding(end = 16.dp)
+                    )
+                    
+                    Column {
+                        Text(
+                            text = repo.author,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = repo.name,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        
+                        // 添加描述，如果有的话
+                        if (!repo.description.isNullOrEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = repo.description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
 
-@Composable
-private fun ProjectHotList() {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-    ) {
-        items(15) { index ->
-            key(index) {
-                HotListItem(
-                    rank = index + 1,
-                    title = "热门项目 ${index + 1}",
-                    subtitle = "热度: ${1000 - index * 50}",
-                    score = "${1000 - index * 50}"
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun HotListItem(
-    rank: Int,
-    title: String,
-    subtitle: String,
-    score: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { }
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // 排名
-        Text(
-            text = rank.toString(),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = when (rank) {
-                1 -> Color(0xFFFF6B6B)
-                2 -> Color(0xFF6C757D)
-                3 -> Color(0xFFCD7F32)
-                else -> Color.Gray
-            },
-            modifier = Modifier.width(40.dp)
-        )
-
-        // 内容
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
-            )
-        }
-
-        // 分数
-        Text(
-            text = score,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

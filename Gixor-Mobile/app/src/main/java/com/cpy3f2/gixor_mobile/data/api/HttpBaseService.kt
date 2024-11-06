@@ -11,6 +11,7 @@ import com.cpy3f2.gixor_mobile.model.entity.IssueDTO
 import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
+import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
 import retrofit2.http.*
 
 interface HttpBaseService {
@@ -45,7 +46,7 @@ interface HttpBaseService {
     @GET("/sys/user/trendy")
     suspend fun getHotUserList(
         @Header("gixor-login") tokenValue: String,
-    ): ResultData<List<SimpleUser>>
+    ): ResultData<List<TrendyUser>>
 
 
 
