@@ -9,6 +9,7 @@ import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.cpy3f2.gixor_mobile.model.setting.BaseQuerySetting
 import com.cpy3f2.gixor_mobile.network.source.RetrofitClient
+import com.cpy3f2.gixor_mobile.utils.EventBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -136,6 +137,8 @@ class UserProfileViewModel : ViewModel() {
                     }
                     // 更新初始状态为当前状态
                     initialFollowingState = true
+                    EventBus.emitFollowEvent()
+
                 } else {
                     _error.value = "关注失败: ${response.msg}"
                 }

@@ -1,6 +1,8 @@
 package com.cpy3f2.gixor_mobile.viewModels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewModelScope
 import com.cpy3f2.gixor_mobile.MyApplication
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
@@ -8,12 +10,16 @@ import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.cpy3f2.gixor_mobile.model.setting.BaseQuerySetting
 import com.cpy3f2.gixor_mobile.network.source.RetrofitClient
+import com.cpy3f2.gixor_mobile.utils.EventBus
 import com.cpy3f2.gixor_mobile.utils.PreferencesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -65,6 +71,14 @@ class MineViewModel @Inject constructor(
 
     init {
         loadUserProfile()
+        viewModelScope.launch {
+            EventBus.onFollowEvent().collect { event ->
+                withContext(Dispatchers.IO) {
+                    delay(1500) // 如果需要延迟，可以在 IO 线程中进行
+                    loadUserProfile()
+                }
+            }
+        }
     }
     private fun getToken(): String? = MyApplication.preferencesManager.getToken()
     fun switchTab(tab: String, username: String) {

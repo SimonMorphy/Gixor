@@ -5,33 +5,33 @@ import ChatScreen
 import ForkRepoScreen
 import RepoDetailScreen
 import android.content.SharedPreferences
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import android.net.Uri
-import androidx.navigation.NavType
+import com.cpy3f2.gixor_mobile.ui.screens.CreateIssueScreen
 import com.cpy3f2.gixor_mobile.ui.screens.IssueDetailScreen
 import com.cpy3f2.gixor_mobile.ui.screens.LoginScreen
 import com.cpy3f2.gixor_mobile.ui.screens.MainFrame
 import com.cpy3f2.gixor_mobile.ui.screens.MessageScreen
+import com.cpy3f2.gixor_mobile.ui.screens.PullRequestDetailScreen
 import com.cpy3f2.gixor_mobile.ui.screens.SearchScreen
+import com.cpy3f2.gixor_mobile.ui.screens.SplashScreen
 import com.cpy3f2.gixor_mobile.ui.screens.UserProfileScreen
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
-import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
-import com.cpy3f2.gixor_mobile.ui.screens.PullRequestDetailScreen
-import com.cpy3f2.gixor_mobile.ui.screens.SplashScreen
-import com.cpy3f2.gixor_mobile.ui.screens.CreateIssueScreen
 import com.cpy3f2.gixor_mobile.viewModels.MineViewModel
+import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
 
 @Composable
 fun AppNavigation(
     viewModel: MainViewModel,
-    mineViewModel: MineViewModel,
     sharedPreferences: SharedPreferences,
     userModel: UserProfileViewModel,
+    mineModel: MineViewModel
 ) {
     val navController = rememberNavController()
     
@@ -167,9 +167,9 @@ fun AppNavigation(
             val repo = backStackEntry.arguments?.getString("repo") ?: ""
             ForkRepoScreen(
                 viewModel = viewModel,
-                mineViewModel = mineViewModel,
                 owner = owner,
-                repoName = repo
+                repoName = repo,
+                mineViewModel = mineModel
             )
         }
     }

@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
         // 创建 ViewModel
         val viewModel: MainViewModel by viewModels()
         val userModel: UserProfileViewModel by viewModels()
-        val mineViewModel: MineViewModel by viewModels()
+        val mineModel: MineViewModel by viewModels()
 
         setContent {
             GixorMobileTheme{
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                         viewModel = viewModel,
                         sharedPreferences = getSharedPreferences("token", MODE_PRIVATE),
                         userModel = userModel,
-                        mineViewModel = mineViewModel
+                        mineModel = mineModel
                     )
                 }
             }

@@ -1,58 +1,83 @@
+package com.cpy3f2.gixor_mobile.viewModels
+
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
+import com.cpy3f2.gixor_mobile.model.entity.RankUiState
+import com.cpy3f2.gixor_mobile.model.entity.RankUser
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class RankViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(RankUiState())
     val uiState: StateFlow<RankUiState> = _uiState.asStateFlow()
 
     init {
-        // 监听筛选条件变化并触发搜索
-        viewModelScope.launch {
-            combine(
-                uiState.map { it.selectedDomain },
-                uiState.map { it.selectedCountry },
-                uiState.map { it.selectedLanguage }
-            ) { domain, country, language ->
-                Triple(domain, country, language)
-            }
-            .debounce(300L) // 防抖，避免频繁请求
-            .collect { (domain, country, language) ->
-                fetchRankings(domain, country, language)
-            }
+        val mockUsers = (1..20).map { id ->
+            RankUser(
+                id = id,
+                name = "User $id",
+                score = (1000 - id * 10 + (Math.random() * 20 - 10)).toInt(),
+                domains = listOf("Android", "Web", "AI", "iOS").shuffled().take((1..3).random()),
+                nationality = listOf(
+                    "USA",
+                    "China",
+                    "Japan",
+                    "Korea",
+                    "India",
+                    "Germany",
+                    "France"
+                ).random()
+            )
         }
+        _uiState.value = RankUiState(
+            users = mockUsers,
+            filteredUsers = mockUsers.sortedByDescending { it.score },
+            domains = listOf("All", "Android", "Web", "AI", "iOS"),
+            nationalities = listOf(
+                "All",
+                "USA",
+                "China",
+                "Japan",
+                "Korea",
+                "India",
+                "Germany",
+                "France"
+            )
+        )
     }
 
     fun updateDomain(domain: String) {
-        _uiState.update { it.copy(selectedDomain = domain) }
+        _uiState.update { currentState ->
+            currentState.copy(
+                selectedDomain = domain,
+                filteredUsers = filterAndSortUsers(domain, currentState.selectedNationality),
+                currentPage = 1
+            )
+        }
     }
 
-    fun updateCountry(country: String) {
-        _uiState.update { it.copy(selectedCountry = country) }
+    fun updateNationality(nationality: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                selectedNationality = nationality,
+                filteredUsers = filterAndSortUsers(currentState.selectedDomain, nationality),
+                currentPage = 1
+            )
+        }
     }
 
-    fun updateLanguage(language: String) {
-        _uiState.update { it.copy(selectedLanguage = language) }
+    private fun filterAndSortUsers(domain: String, nationality: String): List<RankUser> {
+        return _uiState.value.users.filter { user ->
+            (domain == "All" || user.domains.contains(domain)) &&
+                    (nationality == "All" || user.nationality == nationality)
+        }.sortedByDescending { it.score }
     }
 
-    private suspend fun fetchRankings(domain: String?, country: String?, language: String?) {
-        // 实现获取排行榜数据的逻辑
+    fun updatePage(page: Int) {
+        _uiState.update { currentState ->
+            currentState.copy(currentPage = page)
+        }
     }
 }
-
-data class RankUiState(
-    val selectedDomain: String? = null,
-    val selectedCountry: String? = null,
-    val selectedLanguage: String? = null,
-    val rankings: List<GitHubUser> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
-) 
