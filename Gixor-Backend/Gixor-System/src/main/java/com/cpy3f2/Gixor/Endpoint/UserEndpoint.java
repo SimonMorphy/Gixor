@@ -73,6 +73,12 @@ public class UserEndpoint {
                 .collectList()
                 .map(ResponseResult::success);
     }
+
+    @PostMapping ("/details/{id}")
+    public Mono<ResponseResult> test(@PathVariable String id){
+        return gitUserService.getUserDetail(id)
+                .map(ResponseResult::success);
+    }
     @GetMapping("/rank")
     public Mono<ResponseResult> list(int page,int pageSize){
         return cacheService.getCacheList(Constants.RANK_KEY, GitHubUser.class,page,pageSize)

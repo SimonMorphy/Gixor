@@ -32,10 +32,8 @@ public class Discussion {
     @JsonProperty("author")
     private String authorName;
 
-
     @JsonProperty("category")
     private String categoryName;
-
 
     private List<Comment> comments;
 
