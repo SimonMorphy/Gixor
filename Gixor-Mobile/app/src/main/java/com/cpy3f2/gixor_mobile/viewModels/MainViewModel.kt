@@ -1,5 +1,6 @@
 package com.cpy3f2.gixor_mobile.viewModels
 
+import CommentDTO
 import android.annotation.SuppressLint
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -944,6 +945,87 @@ class MainViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 // 处理错误
+            }
+        }
+    }
+
+    // 添加用户评论列表状态
+    private val _userComments = MutableStateFlow<List<IssueComment>>(emptyList())
+    val userComments: StateFlow<List<IssueComment>> = _userComments.asStateFlow()
+
+    private val _isUserCommentsLoading = MutableStateFlow(false)
+    val isUserCommentsLoading: StateFlow<Boolean> = _isUserCommentsLoading.asStateFlow()
+
+    // 获取当前用户的评论列表
+    fun loadUserComments(owner: String, repo: String, issueNumber: Long) {
+        viewModelScope.launch {
+            try {
+                _isUserCommentsLoading.value = true
+                val token = getToken() ?: return@launch
+                
+                // 创建查询参数，设置按创建时间排序
+                val params = mapOf(
+                    "sort" to "created",
+                    "direction" to "desc"  // 可选：按降序排列，最新的评论在前
+                )
+                
+                val response = RetrofitClient.httpBaseService.getIssueComments(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    number = issueNumber,
+                    params = params
+                )
+                
+                if (response.code == 200) {
+                    // 过滤出当前用户的评论
+                    val currentUser = gitHubUser.value?.data?.login
+                    _userComments.value = response.data?.filter { 
+                        it.user?.login == currentUser 
+                    } ?: emptyList()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isUserCommentsLoading.value = false
+            }
+        }
+    }
+
+    // 更新评论
+    fun updateComment(
+        owner: String,
+        repo: String,
+        commentId: Long,
+        body: String,
+        issueNumber: Long,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = getToken() ?: throw Exception("Token not found")
+                
+                // 使用 CommentDTO 包装评论内容
+                val commentDTO = CommentDTO(body = body)
+                
+                val response = RetrofitClient.httpBaseService.updateComment(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    commentId = commentId,
+                    commentDTO = commentDTO  // 使用 DTO 对象
+                )
+                
+                if (response.code == 200) {
+                    loadIssueComments(owner, repo, issueNumber)
+                    loadUserComments(owner, repo, issueNumber)
+                    onSuccess()
+                } else {
+                    throw Exception(response.msg ?: "Failed to update comment")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Unknown error occurred")
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.cpy3f2.gixor_mobile.data.api
 
+import CommentDTO
 import com.cpy3f2.gixor_mobile.model.entity.Event
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
@@ -279,7 +280,7 @@ interface HttpBaseService {
         @Path("owner") owner: String,
         @Path("repo") repo: String,
         @Path("comment_id") commentId: Long,
-        @Body body: String
+        @Body commentDTO: CommentDTO
     ): ResultData<Unit>
 
     //删除评论

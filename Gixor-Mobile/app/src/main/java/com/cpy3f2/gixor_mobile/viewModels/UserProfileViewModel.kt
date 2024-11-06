@@ -9,7 +9,6 @@ import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.cpy3f2.gixor_mobile.model.setting.BaseQuerySetting
 import com.cpy3f2.gixor_mobile.network.source.RetrofitClient
-import createQueryParams
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,7 +41,7 @@ class UserProfileViewModel : ViewModel() {
     val following: StateFlow<List<SimpleUser>> = _following.asStateFlow()
 
     // 当前显示的内容类型
-    private val _currentTab = MutableStateFlow<String>("repositories")
+    private val _currentTab = MutableStateFlow("repositories")
     val currentTab: StateFlow<String> = _currentTab.asStateFlow()
 
     // 分页状态
@@ -67,7 +66,7 @@ class UserProfileViewModel : ViewModel() {
     private var userReposPage = 1
     private var hasMoreUserRepos = true
 
-    fun getToken(): String? = preferencesManager.getToken()
+    private fun getToken(): String? = preferencesManager.getToken()
 
     fun loadUserProfile(username: String) {
         viewModelScope.launch {
@@ -93,22 +92,6 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
-    private fun loadUserRepositories(username: String) {
-        viewModelScope.launch {
-            try {
-                val response = getToken()?.let { RetrofitClient.httpBaseService.getUserRepoList(it,username, createQueryParams()) }
-                if (response != null) {
-                    if (response.code == 200) {
-                        _repositories.value = response.data!!
-                    } else {
-                        _error.value = "Failed to load repositories"
-                    }
-                }
-            } catch (e: Exception) {
-                _error.value = e.message ?: "Unknown error"
-            }
-        }
-    }
 
     // 检查是否已关注
     private fun checkFollowingStatus(username: String) {
