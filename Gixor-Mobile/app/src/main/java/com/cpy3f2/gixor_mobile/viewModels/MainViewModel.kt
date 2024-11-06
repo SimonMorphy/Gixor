@@ -38,6 +38,7 @@ import createPageQueryParams
 import createStateQueryParams
 import kotlinx.coroutines.coroutineScope
 import android.util.Log
+import com.cpy3f2.Gixor.Domain.DTO.ForkDTO
 import com.cpy3f2.gixor_mobile.model.entity.IssueDTO
 import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.setting.NotificationQuerySetting
@@ -114,7 +115,7 @@ class MainViewModel : ViewModel() {
     val searchHistoryItems: StateFlow<List<SearchHistoryItem>> = _searchHistoryItems.asStateFlow()
 
     init {
-        // 初始化加载搜索历史
+        // 初化加载搜索历史
         viewModelScope.launch {
             loadSearchHistory()
         }
@@ -346,7 +347,7 @@ class MainViewModel : ViewModel() {
                         true
                     } else false
                 } else {
-                    // 添加收藏
+                    // 添加收
                     val response = RetrofitClient.httpBaseService.starRepo(owner, name, token)
                     if (response.code == 200) {
                         _starredRepos.value = _starredRepos.value + repoId
@@ -386,7 +387,7 @@ class MainViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    // 如果需要检查单个仓库的收藏状态，可以使用这个扩展方法
+    // 如果需要检查单个仓库的收藏状态，以使用这个扩展方法
     fun isRepoStarred(owner: String, name: String): Boolean {
         return "$owner/$name" in _starredRepos.value
     }
@@ -417,7 +418,7 @@ class MainViewModel : ViewModel() {
 
                 if (response.code == 200) {
                     _repoDetails.value = response.data
-                    // 如果用户已登录，检查 star 状态
+                    // 如果用户已登录，检查 star 态
                     if (hasToken()) {
                         checkStarStatusForRepo(owner, repo)
                     }
@@ -453,7 +454,7 @@ class MainViewModel : ViewModel() {
     private val _isIssuesLoading = MutableStateFlow(false)
     val isIssuesLoading: StateFlow<Boolean> = _isIssuesLoading.asStateFlow()
 
-    // 添加状态跟踪
+    // ��加态跟踪
     var selectedFilter by mutableStateOf("open")
         private set
 
@@ -1104,7 +1105,7 @@ class MainViewModel : ViewModel() {
     val forkError: StateFlow<String?> = _forkError.asStateFlow()
 
     // Fork仓库方法
-    fun createFork(owner: String, repoName: String, description: String) {
+    fun createFork(owner: String, repoName: String, forkDTO: ForkDTO) {
         viewModelScope.launch {
             try {
                 _isForkLoading.value = true
@@ -1112,30 +1113,22 @@ class MainViewModel : ViewModel() {
 
                 val token = getToken() ?: throw Exception("Token not found")
                 
-                // 创建请求体
-                val forkRequest = GitHubRepository(
-                    name = repoName,
-                    description = description,
-                    owner = GitHubRepository.Owner(name = owner)
-                )
-                
+                // 使用 ForkDTO 创建请求
                 val response = RetrofitClient.httpBaseService.forkRepo(
                     tokenValue = token,
                     owner = owner,
                     repo = repoName,
-                    body = forkRequest
+                    body = forkDTO
                 )
 
                 if (response.code == 200) {
-                    // Fork成功后获取当前用户信息并导航到新fork的仓库
-                    val userResponse = RetrofitClient.httpBaseService.getMyUserInfo(token)
-                    if (userResponse.code == 200) {
-                        val username = userResponse.data?.login
-                        if (username != null) {
-                            // 导航到新fork的仓库
-                            NavigationManager.navigateToRepoDetail(username, repoName)
-                        }
-                    }
+                    // Fork成功后导航到新fork的仓库
+                    NavigationManager.navigateToRepoDetail(
+                        forkDTO.organization.ifEmpty { 
+                            gitHubUser.value?.data?.login ?: ""
+                        }, 
+                        repoName
+                    )
                 } else {
                     throw Exception(response.msg ?: "Failed to fork repository")
                 }
@@ -1252,6 +1245,110 @@ class MainViewModel : ViewModel() {
                 e.printStackTrace()
             } finally {
                 _isStarUsersLoading.value = false
+            }
+        }
+    }
+
+    // 添加订阅状态
+    private val _isSubscribed = MutableStateFlow<Set<String>>(emptySet())
+    val isSubscribed: StateFlow<Set<String>> = _isSubscribed.asStateFlow()
+
+    // 检查仓库是否被订阅
+    fun checkRepoSubscription(owner: String, repo: String) {
+        viewModelScope.launch {
+            try {
+                val token = getToken() ?: return@launch
+                val response = RetrofitClient.httpBaseService.isSubscribed(token, owner, repo)
+                if (response.code == 200) {
+                    _isSubscribed.value = _isSubscribed.value + "$owner/$repo"
+                }
+            } catch (e: Exception) {
+                // 如果返回404或其他错误，说明未订阅
+                _isSubscribed.value = _isSubscribed.value - "$owner/$repo"
+            }
+        }
+    }
+
+    // 切换订阅状态
+    fun toggleSubscribeRepo(owner: String, repo: String, isCurrentlySubscribed: Boolean) {
+        viewModelScope.launch {
+            try {
+                val token = getToken() ?: return@launch
+                val response = if (isCurrentlySubscribed) {
+                    RetrofitClient.httpBaseService.unsubscribeRepo(token, owner, repo)
+                } else {
+                    RetrofitClient.httpBaseService.subscribeRepo(token, owner, repo)
+                }
+                
+                if (response.code == 200) {
+                    if (isCurrentlySubscribed) {
+                        _isSubscribed.value = _isSubscribed.value - "$owner/$repo"
+                    } else {
+                        _isSubscribed.value = _isSubscribed.value + "$owner/$repo"
+                    }
+                }
+            } catch (e: Exception) {
+                // 处理错误
+            }
+        }
+    }
+
+    fun lockIssue(
+        owner: String,
+        repo: String,
+        issueNumber: Long,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = preferencesManager.getToken() ?: throw Exception("Token not found")
+                val response = RetrofitClient.httpBaseService.lockIssue(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    number = issueNumber
+                )
+                
+                if (response.code == 200) {
+                    // 只更新 locked 状态，保持其他状态不变
+                    _currentIssue.value = _currentIssue.value?.copy(locked = true)
+                    onSuccess()
+                } else {
+                    onError(response.msg ?: "Failed to lock issue")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun unlockIssue(
+        owner: String,
+        repo: String,
+        issueNumber: Long,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = preferencesManager.getToken() ?: throw Exception("Token not found")
+                val response = RetrofitClient.httpBaseService.unlockIssue(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    number = issueNumber
+                )
+                
+                if (response.code == 200) {
+                    // 只更新 locked 状态，保持其他状态不变
+                    _currentIssue.value = _currentIssue.value?.copy(locked = false)
+                    onSuccess()
+                } else {
+                    onError(response.msg ?: "Failed to unlock issue")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Unknown error")
             }
         }
     }

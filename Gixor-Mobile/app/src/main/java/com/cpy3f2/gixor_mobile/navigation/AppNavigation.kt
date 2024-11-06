@@ -24,10 +24,12 @@ import com.cpy3f2.gixor_mobile.viewModels.UserProfileViewModel
 import com.cpy3f2.gixor_mobile.ui.screens.PullRequestDetailScreen
 import com.cpy3f2.gixor_mobile.ui.screens.SplashScreen
 import com.cpy3f2.gixor_mobile.ui.screens.CreateIssueScreen
+import com.cpy3f2.gixor_mobile.viewModels.MineViewModel
 
 @Composable
 fun AppNavigation(
     viewModel: MainViewModel,
+    mineViewModel: MineViewModel,
     sharedPreferences: SharedPreferences,
     userModel: UserProfileViewModel,
 ) {
@@ -165,6 +167,7 @@ fun AppNavigation(
             val repo = backStackEntry.arguments?.getString("repo") ?: ""
             ForkRepoScreen(
                 viewModel = viewModel,
+                mineViewModel = mineViewModel,
                 owner = owner,
                 repoName = repo
             )

@@ -7,9 +7,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -54,6 +57,12 @@ fun IssueDetailScreen(
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
 
+    var showMenu by remember { mutableStateOf(false) }
+    var showLockSuccessDialog by remember { mutableStateOf(false) }
+    var lockSuccessMessage by remember { mutableStateOf("") }
+
+    var showUnlockConfirmDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(owner, repo, issueNumber) {
         viewModel.loadIssueDetail(owner, repo, issueNumber)
         viewModel.loadIssueComments(owner, repo, issueNumber)
@@ -82,21 +91,81 @@ fun IssueDetailScreen(
                     }
                 },
                 actions = {
-                    Button(
-                        onClick = {
-                            NavigationManager.navigateToCreateIssue(owner, repo)
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        Text(
-                            text = "New Issue",
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelLarge
-                        )
+                    // 检查当前用户是否是仓库所有者
+                    val currentUser = viewModel.gitHubUser.value?.data?.login
+                    val isRepoOwner = currentUser == owner
+
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options"
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            // New Issue option (always visible)
+                            DropdownMenuItem(
+                                text = { Text("新建 Issue") },
+                                onClick = {
+                                    showMenu = false
+                                    NavigationManager.navigateToCreateIssue(owner, repo)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Add, contentDescription = null)
+                                }
+                            )
+
+                            // Lock/Unlock options (only visible for repo owner)
+                            if (isRepoOwner) {
+                                if (issue?.locked == false) {
+                                    DropdownMenuItem(
+                                        text = { Text("锁定 Issue") },
+                                        onClick = {
+                                            showMenu = false
+                                            viewModel.lockIssue(
+                                                owner = owner,
+                                                repo = repo,
+                                                issueNumber = issueNumber,
+                                                onSuccess = {
+                                                    lockSuccessMessage = "Issue 已成功锁定"
+                                                    showLockSuccessDialog = true
+                                                },
+                                                onError = { error ->
+                                                    errorMessage = error
+                                                    showErrorDialog = true
+                                                }
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Lock,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                    )
+                                } else if (issue?.locked == true) {
+                                    DropdownMenuItem(
+                                        text = { Text("解锁 Issue") },
+                                        onClick = {
+                                            showMenu = false
+                                            showUnlockConfirmDialog = true
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.LockOpen,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             )
@@ -171,7 +240,7 @@ fun IssueDetailScreen(
                             )
                         }
                         
-                        // 只有当用户有编辑权限时才显示编辑按钮
+                        // 只有当用户有编辑权限时才示编辑按钮
                         if (canEdit) {
                             IconButton(
                                 onClick = {
@@ -210,11 +279,11 @@ fun IssueDetailScreen(
                     if (showErrorDialog) {
                         AlertDialog(
                             onDismissRequest = { showErrorDialog = false },
-                            title = { Text("Error") },
+                            title = { Text("错误") },
                             text = { Text(errorMessage) },
                             confirmButton = {
                                 TextButton(onClick = { showErrorDialog = false }) {
-                                    Text("OK")
+                                    Text("确定")
                                 }
                             }
                         )
@@ -348,33 +417,37 @@ fun IssueDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(120.dp),
-                        label = { Text("Add a comment") },
-                        placeholder = { Text("Write your comment here...") }
+                        label = { Text("添加comment") },
+                        placeholder = { Text("请在此写下你的comment...") }
                     )
 
-                    Button(
-                        onClick = {
-                            viewModel.addComment(
-                                owner = owner,
-                                repo = repo,
-                                issueNumber = issueNumber,
-                                comment = commentText,
-                                onSuccess = {
-                                    commentText = ""
-                                    showSuccessDialog = true
-                                },
-                                onError = { error ->
-                                    errorMessage = error
-                                    showErrorDialog = true
-                                }
-                            )
-                        },
+                    Row(
                         modifier = Modifier
                             .align(Alignment.End)
                             .padding(top = 8.dp),
-                        enabled = commentText.isNotBlank()
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Comment")
+                        Button(
+                            onClick = {
+                                viewModel.addComment(
+                                    owner = owner,
+                                    repo = repo,
+                                    issueNumber = issueNumber,
+                                    comment = commentText,
+                                    onSuccess = {
+                                        commentText = ""
+                                        showSuccessDialog = true
+                                    },
+                                    onError = { error ->
+                                        errorMessage = error
+                                        showErrorDialog = true
+                                    }
+                                )
+                            },
+                            enabled = commentText.isNotBlank()
+                        ) {
+                            Text("Comment")
+                        }
                     }
                 }
             }
@@ -385,8 +458,8 @@ fun IssueDetailScreen(
     if (showSuccessDialog) {
         AlertDialog(
             onDismissRequest = { showSuccessDialog = false },
-            title = { Text("Success") },
-            text = { Text("Comment added successfully") },
+            title = { Text("成功") },
+            text = { Text("comment新增成功") },
             confirmButton = {
                 TextButton(onClick = { showSuccessDialog = false }) {
                     Text("OK")
@@ -399,11 +472,75 @@ fun IssueDetailScreen(
     if (showErrorDialog) {
         AlertDialog(
             onDismissRequest = { showErrorDialog = false },
-            title = { Text("Error") },
+            title = { Text("错误") },
             text = { Text(errorMessage) },
             confirmButton = {
                 TextButton(onClick = { showErrorDialog = false }) {
                     Text("OK")
+                }
+            }
+        )
+    }
+
+    // Unlock Confirmation Dialog
+    if (showUnlockConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showUnlockConfirmDialog = false },
+            title = { Text("确认解锁") },
+            text = { Text("你确认想要解锁这个issue吗") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showUnlockConfirmDialog = false
+                        viewModel.unlockIssue(
+                            owner = owner,
+                            repo = repo,
+                            issueNumber = issueNumber,
+                            onSuccess = {
+                                lockSuccessMessage = "issue已成功解锁"
+                                showLockSuccessDialog = true
+                            },
+                            onError = { error ->
+                                errorMessage = error
+                                showErrorDialog = true
+                            }
+                        )
+                    }
+                ) {
+                    Text("确认")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUnlockConfirmDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
+    // Success Dialog
+    if (showLockSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showLockSuccessDialog = false },
+            title = { Text("操作成功") },
+            text = { Text(lockSuccessMessage) },
+            confirmButton = {
+                TextButton(onClick = { showLockSuccessDialog = false }) {
+                    Text("确定")
+                }
+            }
+        )
+    }
+
+    // Error Dialog
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            title = { Text("错误") },
+            text = { Text(errorMessage) },
+            confirmButton = {
+                TextButton(onClick = { showErrorDialog = false }) {
+                    Text("确定")
                 }
             }
         )

@@ -1,6 +1,7 @@
 package com.cpy3f2.gixor_mobile.data.api
 
 import CommentDTO
+import com.cpy3f2.Gixor.Domain.DTO.ForkDTO
 import com.cpy3f2.gixor_mobile.model.entity.Event
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.ResultData
@@ -34,6 +35,13 @@ interface HttpBaseService {
     suspend fun getGitHubUserInfo(
         @Header("gixor-login") tokenValue: String,
         @Path("username") username: String
+    ): ResultData<GitHubUser>
+
+    //获取用户可统计数据
+    @POST("/sys/user/detail/{username}")
+    suspend fun getUserInfo(
+        @Header("gixor-login") tokenValue: String,
+        @Path("username") username: String,
     ): ResultData<GitHubUser>
 
     //获取用户排行榜
@@ -320,11 +328,11 @@ interface HttpBaseService {
         @Path("repo") repo: String
     ): ResultData<Unit>
 
-    //获取当前用户的关注列表
+    //获取当前用户的关注仓库列表
     @GET("/gith/sub/watching")
     suspend fun getMySubscribedList(
         @Header("gixor-login") tokenValue: String
-    ): ResultData<List<SimpleUser>>
+    ): ResultData<List<GitHubRepository>>
 
     //获取指定用户关注的仓库列表
     @GET("/gith/sub/watching/{username}")
@@ -499,6 +507,6 @@ interface HttpBaseService {
         @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
-        @Body body: GitHubRepository
+        @Body body: ForkDTO
     ): ResultData<Unit>
 }

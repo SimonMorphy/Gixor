@@ -34,6 +34,7 @@ import androidx.compose.material.icons.outlined.Code
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import androidx.compose.material.icons.outlined.Visibility
 
 @Composable
 fun UserProfileScreen(
@@ -48,6 +49,7 @@ fun UserProfileScreen(
     val currentTab by viewModel.currentTab.collectAsState()
     val followers by viewModel.followers.collectAsState()
     val following by viewModel.following.collectAsState()
+    val watching by viewModel.watching.collectAsState()
 
     LaunchedEffect(username) {
         viewModel.loadUserProfile(username)
@@ -111,6 +113,11 @@ fun UserProfileScreen(
                                 viewModel = viewModel,
                                 username = username,
                                 isFollowersList = false
+                            )
+                            "watching" -> WatchingSection(
+                                watching = watching,
+                                username = username,
+                                viewModel = viewModel
                             )
                         }
                     }
@@ -237,7 +244,7 @@ private fun ProfileHeader(
         if (!user.blog.isNullOrEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = user.blog!!,
+                text = user.blog,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { /* TODO: 打开网站链接 */ }
@@ -279,6 +286,12 @@ private fun StatsBar(
                 value = user.publicRepos.toString(),
                 label = "repositories",
                 onClick = { viewModel.switchTab("repositories", username) }
+            )
+            StatItem(
+                icon = Icons.Outlined.Visibility,
+                value = "watching",
+                label = "watching",
+                onClick = { viewModel.switchTab("watching", username) }
             )
         }
     }
@@ -631,4 +644,96 @@ private fun getLanguageColor(language: String): Color {
     // 你可以使用一个映射表来存储语言和颜色的对应关系
     // 或者使用一个算法来生成颜色
     return Color.Black
+}
+
+@Composable
+private fun WatchingSection(
+    watching: List<GitHubRepository>,
+    username: String,
+    viewModel: UserProfileViewModel
+) {
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrolledToEnd() }
+            .collect { isEnd ->
+                if (isEnd && !isLoadingMore) {
+                    viewModel.loadWatching(username, isRefresh = false)
+                }
+            }
+    }
+
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isLoadingMore),
+        onRefresh = {
+            viewModel.loadWatching(username, isRefresh = true)
+        }
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                items(watching.size) { index ->
+                    RepositoryCard(
+                        name = watching[index].name ?: "",
+                        description = watching[index].description,
+                        language = watching[index].language,
+                        stars = watching[index].stargazersCount ?: 0,
+                        onClick = {
+                            watching[index].name?.let { repoName ->
+                                NavigationManager.navigateToRepoDetail(watching[index].fullName.split("/")[0], repoName)
+                            }
+                        }
+                    )
+                    if (index < watching.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+
+                if (isLoadingMore) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 空状态显示
+            if (watching.isEmpty() && !isLoadingMore) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Visibility,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "暂无关注的仓库",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
 } 

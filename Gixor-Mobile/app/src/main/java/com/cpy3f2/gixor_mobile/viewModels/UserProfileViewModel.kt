@@ -66,6 +66,14 @@ class UserProfileViewModel : ViewModel() {
     private var userReposPage = 1
     private var hasMoreUserRepos = true
 
+    // 添加新的状态
+    private val _watching = MutableStateFlow<List<GitHubRepository>>(emptyList())
+    val watching: StateFlow<List<GitHubRepository>> = _watching.asStateFlow()
+
+    // 添加分页状态
+    private var watchingPage = 1
+    private var hasMoreWatching = true
+
     private fun getToken(): String? = preferencesManager.getToken()
 
     fun loadUserProfile(username: String) {
@@ -76,6 +84,9 @@ class UserProfileViewModel : ViewModel() {
                 _currentTab.value = "repositories"
                 
                 val token = getToken() ?: return@launch
+
+                //TODO 后面注释掉第二行
+//                val response = RetrofitClient.httpBaseService.getUserInfo(token, username)
                 val response = RetrofitClient.httpBaseService.getGitHubUserInfo(token, username)
                 if (response.code == 200) {
                     _userState.value = response.data!!
@@ -313,6 +324,43 @@ class UserProfileViewModel : ViewModel() {
             "repositories" -> loadUserRepos(username, isRefresh = true)
             "followers" -> loadFollowers(username, isRefresh = true)
             "following" -> loadFollowing(username, isRefresh = true)
+            "watching" -> loadWatching(username, isRefresh = true)
+        }
+    }
+
+    // 加载用户关注的仓库列表
+    fun loadWatching(username: String, isRefresh: Boolean = false) {
+        if (_isLoadingMore.value) return
+        if (isRefresh) {
+            watchingPage = 1
+            hasMoreWatching = true
+            _watching.value = emptyList()
+        }
+        if (!hasMoreWatching) return
+
+        viewModelScope.launch {
+            try {
+                _isLoadingMore.value = true
+                val token = getToken() ?: return@launch
+                
+                val response = RetrofitClient.httpBaseService.getUserSubscribedList(token, username)
+                
+                if (response.code == 200) {
+                    val newWatching = response.data ?: emptyList()
+                    _watching.value = if (isRefresh) {
+                        newWatching
+                    } else {
+                        _watching.value + newWatching
+                    }
+                    
+                    hasMoreWatching = newWatching.size >= 10
+                    if (hasMoreWatching) watchingPage++
+                }
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Unknown error"
+            } finally {
+                _isLoadingMore.value = false
+            }
         }
     }
 } 

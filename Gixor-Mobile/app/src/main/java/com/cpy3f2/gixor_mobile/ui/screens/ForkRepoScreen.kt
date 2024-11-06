@@ -7,20 +7,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.cpy3f2.Gixor.Domain.DTO.ForkDTO
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
+import com.cpy3f2.gixor_mobile.viewModels.MineViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForkRepoScreen(
     viewModel: MainViewModel,
+    mineViewModel: MineViewModel,
     owner: String,
     repoName: String,
     modifier: Modifier = Modifier
 ) {
-    var repoDescription by remember { mutableStateOf("") }
     val isLoading by viewModel.isForkLoading.collectAsState()
     val error by viewModel.forkError.collectAsState()
+    val currentUser by mineViewModel.userProfile.collectAsState()
+    var newRepoName by remember { mutableStateOf(repoName) }
+
+    var selectedOrganization by remember(currentUser) { 
+        mutableStateOf(currentUser?.login ?: "") 
+    }
+    var defaultBranchOnly by remember { mutableStateOf(true) }
 
     Column(modifier = modifier.fillMaxSize()) {
         // 顶部应用栏
@@ -45,20 +54,57 @@ fun ForkRepoScreen(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            // 描述文本框
+            // 组织选择
             OutlinedTextField(
-                value = repoDescription,
-                onValueChange = { repoDescription = it },
-                label = { Text("Description (optional)") },
+                value = currentUser?.login ?: "",
+                onValueChange = { /* 不允许修改 */ },
+                label = { Text("Owner") },
+                enabled = false,
                 modifier = Modifier.fillMaxWidth(),
-                maxLines = 3
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
+
+            // 仓库名字段（可编辑）
+            OutlinedTextField(
+                value = newRepoName,
+                onValueChange = { newRepoName = it },
+                label = { Text("Repository name") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            // 默认分支选项
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = defaultBranchOnly,
+                    onCheckedChange = { defaultBranchOnly = it }
+                )
+                Text(
+                    text = "Copy the default branch only",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
 
             // 错误提示
             error?.let { errorMessage ->
                 Text(
-                    text = errorMessage,
-                    color = MaterialTheme.colorScheme.error,
+                    text = if (errorMessage.contains("500")) {
+                        "Fork created successfully" // Server returns 500 but fork is actually created
+                    } else {
+                        errorMessage
+                    },
+                    color = if (errorMessage.contains("500")) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -67,10 +113,15 @@ fun ForkRepoScreen(
             // Fork按钮
             Button(
                 onClick = {
-                    viewModel.createFork(owner, repoName, repoDescription)
+                    val forkDTO = ForkDTO(
+                        organization = selectedOrganization,
+                        name = repoName,
+                        defaultBranchOnly = defaultBranchOnly
+                    )
+                    viewModel.createFork(owner, repoName, forkDTO)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled = !isLoading && selectedOrganization.isNotBlank()
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(

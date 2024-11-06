@@ -8,7 +8,7 @@ data class GitHubRepository(
     @SerializedName("name")
     val name: String? = null,
     @SerializedName("full_name")
-    val fullName: String? = null,
+    val fullName: String = "",
     @SerializedName("description")
     val description: String? = null,
     @SerializedName("language")
@@ -19,6 +19,8 @@ data class GitHubRepository(
     val forksCount: Int? = null,
     @SerializedName("open_issues")
     val openIssues: Int? = null,
+    @SerializedName("watchers_count")
+    val watchersCount:Int? = null,
     val owner: Owner? = null,
     val license: License? = null,
     val visibility: String? = null,

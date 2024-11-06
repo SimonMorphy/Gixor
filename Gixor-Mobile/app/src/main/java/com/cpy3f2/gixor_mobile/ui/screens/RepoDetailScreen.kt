@@ -83,9 +83,11 @@ fun RepoDetailScreen(
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
     val repoDetails by viewModel.repoDetails.collectAsState()
     val context = LocalContext.current
+    val isSubscribed by viewModel.isSubscribed.collectAsState()
 
     LaunchedEffect(owner, repoName) {
         viewModel.loadRepoDetails(owner, repoName)
+        viewModel.checkRepoSubscription(owner, repoName)
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -112,6 +114,31 @@ fun RepoDetailScreen(
                 }
             },
             actions = {
+                // Watch 按钮
+                IconButton(
+                    onClick = {
+                        if (isLoggedIn) {
+                            viewModel.toggleSubscribeRepo(
+                                owner,
+                                repoName,
+                                isSubscribed.contains("$owner/$repoName")
+                            )
+                        } else {
+                            viewModel.navigateToLogin()
+                        }
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            id = if (isSubscribed.contains("$owner/$repoName")) {
+                                R.mipmap.eyef
+                            } else {
+                                R.mipmap.eye
+                            }
+                        ),
+                        contentDescription = "Watch repository"
+                    )
+                }
                 // Fork 按钮
                 IconButton(
                     onClick = {
@@ -176,8 +203,9 @@ fun RepoDetailScreen(
                 )
                 RepoTab.Issues -> RepoIssuesTab(owner, repoName, viewModel)
                 RepoTab.PullRequests -> RepoPullRequestsTab(owner, repoName, viewModel)
-                RepoTab.Stars -> RepoStarsTab(owner, repoName, viewModel)
+                RepoTab.Watchers -> RepoWatchTab(owner, repoName, viewModel)
                 RepoTab.Forks -> RepoForkUsersTab(owner, repoName, viewModel)
+//                RepoTab.Stars -> RepoStarsTab(owner, repoName, viewModel)
                 else -> {
                     // 其他标签页显示开发中提示
                     Column(
@@ -209,8 +237,9 @@ enum class RepoTab(val title: String) {
     Issues("Issues"),
     PullRequests("Pull Requests"),
     Discussions("Discussions"),
-    Stars("Stars"),
+    Watchers("Watchers"),
     Forks("Forks"),
+//    Stars("Stars")
 }
 
 // 示例 Tab 内容
@@ -275,13 +304,19 @@ fun RepoCodeTab(
                                 icon = Icons.Outlined.Star,
                                 count = repoDetails?.stargazersCount ?: 0,
                                 label = "stars",
-                                onClick = { onNavigateToTab(RepoTab.Stars) }
+//                                onClick = { onNavigateToTab(RepoTab.Stars) }
                             )
                             StatItem(
                                 icon = Icons.Outlined.AccountTree,
                                 count = repoDetails?.forksCount ?: 0,
                                 label = "forks",
                                 onClick = { onNavigateToTab(RepoTab.Forks) }
+                            )
+                            StatItem(
+                                icon = Icons.Outlined.RemoveRedEye,
+                                count = repoDetails?.watchersCount ?: 0,
+                                label = "watchers",
+                                onClick = { onNavigateToTab(RepoTab.Watchers) }
                             )
                             StatItem(
                                 icon = Icons.Outlined.BugReport,
@@ -991,7 +1026,7 @@ fun ForkUserItem(user: SimpleUser) {
 }
 
 @Composable
-fun RepoStarsTab(owner: String, repoName: String, viewModel: MainViewModel) {
+fun RepoWatchTab(owner: String, repoName: String, viewModel: MainViewModel) {
     val starUsers by viewModel.starUsers.collectAsState()
     val isLoading by viewModel.isStarUsersLoading.collectAsState()
     val listState = rememberLazyListState()
