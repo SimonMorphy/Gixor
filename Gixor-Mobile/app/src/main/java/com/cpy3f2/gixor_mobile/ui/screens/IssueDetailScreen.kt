@@ -4,8 +4,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.cpy3f2.gixor_mobile.model.converter.DateTimeConverters
@@ -110,11 +115,100 @@ fun IssueDetailScreen(
             ) {
                 // Issue 标题
                 item {
-                    Text(
-                        text = issue?.title ?: "",
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
+                    var isEditing by remember { mutableStateOf(false) }
+                    var editedTitle by remember { mutableStateOf(issue?.title ?: "") }
+                    var showErrorDialog by remember { mutableStateOf(false) }
+                    var errorMessage by remember { mutableStateOf("") }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (isEditing) {
+                            OutlinedTextField(
+                                value = editedTitle,
+                                onValueChange = { editedTitle = it },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp),
+                                label = { Text("Issue Title") },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
+                                        if (editedTitle.isNotBlank()) {
+                                            viewModel.updateIssue(
+                                                owner = owner,
+                                                repo = repo,
+                                                issueNumber = issueNumber,
+                                                title = editedTitle,
+                                                onSuccess = {
+                                                    isEditing = false
+                                                },
+                                                onError = { error ->
+                                                    errorMessage = error
+                                                    showErrorDialog = true
+                                                }
+                                            )
+                                        }
+                                    }
+                                )
+                            )
+                        } else {
+                            Text(
+                                text = issue?.title ?: "",
+                                style = MaterialTheme.typography.headlineSmall,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        
+                        IconButton(
+                            onClick = {
+                                if (isEditing) {
+                                    if (editedTitle.isNotBlank()) {
+                                        viewModel.updateIssue(
+                                            owner = owner,
+                                            repo = repo,
+                                            issueNumber = issueNumber,
+                                            title = editedTitle,
+                                            onSuccess = {
+                                                isEditing = false
+                                            },
+                                            onError = { error ->
+                                                errorMessage = error
+                                                showErrorDialog = true
+                                            }
+                                        )
+                                    }
+                                } else {
+                                    editedTitle = issue?.title ?: ""
+                                    isEditing = true
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                                contentDescription = if (isEditing) "Save" else "Edit Issue",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    // Error Dialog
+                    if (showErrorDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showErrorDialog = false },
+                            title = { Text("Error") },
+                            text = { Text(errorMessage) },
+                            confirmButton = {
+                                TextButton(onClick = { showErrorDialog = false }) {
+                                    Text("OK")
+                                }
+                            }
+                        )
+                    }
                 }
 
                 // Issue 状态

@@ -1065,4 +1065,36 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    fun updateIssue(
+        owner: String,
+        repo: String,
+        issueNumber: Long,
+        title: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val token = getToken() ?: throw Exception("Token not found")
+                val issueDTO = IssueDTO(title = title)
+                
+                val response = RetrofitClient.httpBaseService.updateIssue(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo,
+                    body = issueDTO
+                )
+                
+                if (response.code == 200) {
+                    loadIssueDetail(owner, repo, issueNumber)
+                    onSuccess()
+                } else {
+                    throw Exception(response.msg ?: "Failed to update issue")
+                }
+            } catch (e: Exception) {
+                onError(e.message ?: "Unknown error occurred")
+            }
+        }
+    }
+
 }
