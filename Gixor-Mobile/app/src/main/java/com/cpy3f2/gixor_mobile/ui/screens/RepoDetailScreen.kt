@@ -1099,7 +1099,7 @@ fun UserListItem(user: SimpleUser) {
             Spacer(modifier = Modifier.width(16.dp))
             
             Text(
-                text = user.login ?: "",
+                text = user.login,
                 style = MaterialTheme.typography.titleMedium
             )
         }
@@ -1110,9 +1110,21 @@ fun UserListItem(user: SimpleUser) {
 fun RepoDiscussionsTab(owner: String, repoName: String, viewModel: MainViewModel) {
     val discussions by viewModel.repoDiscussions.collectAsState()
     val isLoading by viewModel.isDiscussionsLoading.collectAsState()
+    val hasMore by viewModel.hasMoreDiscussions.collectAsState()
+    val listState = rememberLazyListState()
 
     LaunchedEffect(owner, repoName) {
-        viewModel.loadRepoDiscussions(owner, repoName)
+        viewModel.loadRepoDiscussions(owner, repoName, true)
+    }
+
+    // 检测是否需要加载更多
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastIndex ->
+                if (lastIndex != null && lastIndex >= discussions.size - 3 && hasMore) {
+                    viewModel.loadRepoDiscussions(owner, repoName, false)
+                }
+            }
     }
 
     Column(
@@ -1120,20 +1132,7 @@ fun RepoDiscussionsTab(owner: String, repoName: String, viewModel: MainViewModel
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // 新建讨论按钮
-        Button(
-            onClick = { /* TODO: Navigate to create discussion */ },
-            modifier = Modifier.align(Alignment.End),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text("New Discussion")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (isLoading) {
+        if (isLoading && discussions.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -1161,7 +1160,7 @@ fun RepoDiscussionsTab(owner: String, repoName: String, viewModel: MainViewModel
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = "Start a new discussion to get the conversation going",
+                        text = "There are no discussions in this repository",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -1169,10 +1168,25 @@ fun RepoDiscussionsTab(owner: String, repoName: String, viewModel: MainViewModel
             }
         } else {
             LazyColumn(
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(discussions) { discussion ->
                     DiscussionItem(discussion = discussion)
+                }
+
+                // 加载更多时显示进度条
+                if (isLoading) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
                 }
             }
         }

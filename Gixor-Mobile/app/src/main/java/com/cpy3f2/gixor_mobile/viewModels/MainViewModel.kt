@@ -1255,7 +1255,7 @@ class MainViewModel : ViewModel() {
                     _isSubscribed.value = _isSubscribed.value + "$owner/$repo"
                 }
             } catch (e: Exception) {
-                // 如果返回404或其他错误，说��未订阅
+                // 如果返回404或其他错误，说未订阅
                 _isSubscribed.value = _isSubscribed.value - "$owner/$repo"
             }
         }
@@ -1427,10 +1427,9 @@ class MainViewModel : ViewModel() {
     val isDiscussionsLoading: StateFlow<Boolean> = _isDiscussionsLoading.asStateFlow()
 
     // 添加分页相关状态
-    private var _hasMoreDiscussions = MutableStateFlow(true)
+    private var currentDiscussionCursor: String? = null
+    private val _hasMoreDiscussions = MutableStateFlow(true)
     val hasMoreDiscussions: StateFlow<Boolean> = _hasMoreDiscussions.asStateFlow()
-
-    private var currentDiscussionCursor: String?= null
 
     // 修改讨论列表加载方法
     fun loadRepoDiscussions(owner: String, repo: String, isRefresh: Boolean = false) {
