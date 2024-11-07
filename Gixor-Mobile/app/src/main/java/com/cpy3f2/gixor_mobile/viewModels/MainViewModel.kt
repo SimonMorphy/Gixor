@@ -173,15 +173,7 @@ class MainViewModel : ViewModel() {
         NavigationManager.navigateToSearch()
     }
 
-    // 检查登录状态
-    fun checkLoginStatus() {
-        val sharedPreferences = MyApplication.getApplicationContext()
-            .getSharedPreferences("token", Context.MODE_PRIVATE)
-        val token = sharedPreferences.getString("token", null)
-        if (token == null) {
-            navigateToLogin()
-        }
-    }
+
 
 
 
@@ -1302,7 +1294,7 @@ class MainViewModel : ViewModel() {
                 )
 
                 if (response.code == 200) {
-                    // 只更新 locked 状态，保持其他状态不变
+                    // 只更新 locked 状态，��持其他状态不变
                     _currentIssue.value = _currentIssue.value?.copy(locked = true)
                     onSuccess()
                 } else {
@@ -1484,5 +1476,23 @@ class MainViewModel : ViewModel() {
     // 添加刷新方法
     fun refreshDiscussions(owner: String, repo: String) {
         loadRepoDiscussions(owner, repo, isRefresh = true)
+    }
+
+    // 添加登录对话框状态
+    private val _showLoginDialog = MutableStateFlow(false)
+    val showLoginDialog: StateFlow<Boolean> = _showLoginDialog.asStateFlow()
+
+    // 添加显示和隐藏对话框的方法
+    fun showLoginDialog() {
+        _showLoginDialog.value = true
+    }
+
+    fun hideLoginDialog() {
+        _showLoginDialog.value = false
+    }
+
+    // 检查登录状态并返回结果
+    fun checkLoginStatus(): Boolean {
+        return hasToken()
     }
 }

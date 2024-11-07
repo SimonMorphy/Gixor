@@ -51,6 +51,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -104,7 +105,10 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
             Spacer(modifier = Modifier.height(24.dp)) // 增加间距
             Button(
                 onClick = { NavigationManager.navigateToLogin() },
-                colors = ButtonDefaults.buttonColors(contentColor = MaterialTheme.colorScheme.onPrimary), // 设置按钮文字颜色
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFE53935),  // 红色背景
+                    contentColor = Color.White  // 白色文字
+                ),
                 shape = RoundedCornerShape(8.dp) // 圆角按钮
             ) {
                 Text("Login")

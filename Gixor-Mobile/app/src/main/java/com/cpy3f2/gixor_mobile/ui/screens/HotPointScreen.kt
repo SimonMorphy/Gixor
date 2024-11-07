@@ -14,8 +14,11 @@ import androidx.compose.ui.unit.dp
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.Alignment
 
 /**
@@ -30,6 +33,7 @@ fun HotPointScreen(
     val starredRepos by viewModel.starredRepos.collectAsState()
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
+    val showLoginDialog by viewModel.showLoginDialog.collectAsState()
 
     // 当进入页面时加载数据
     LaunchedEffect(Unit) {
@@ -37,6 +41,28 @@ fun HotPointScreen(
         if (isLoggedIn) {
             viewModel.loadStarredRepos()
         }
+    }
+
+    // 添加登录对话框
+    if (showLoginDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideLoginDialog() },
+            title = { Text("需要登录") },
+            text = { Text("请先登录后再查看用户详情") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.hideLoginDialog()
+                    viewModel.navigateToLogin()
+                }) {
+                    Text("去登录")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideLoginDialog() }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 
     Box(
@@ -62,11 +88,19 @@ fun HotPointScreen(
                         RecommendedRepoItem(
                             repo = repo,
                             onRepoClick = {
-                                NavigationManager.navigateToRepoDetail(repo.author, repo.name)
+                                if (viewModel.checkLoginStatus()) {
+                                    NavigationManager.navigateToRepoDetail(repo.author, repo.name)
+                                } else {
+                                    viewModel.showLoginDialog()
+                                }
                             },
                             onAuthorClick = {
                                 repo.author?.let { username ->
-                                    NavigationManager.navigateToUserProfile(username)
+                                    if (viewModel.checkLoginStatus()) {
+                                        NavigationManager.navigateToUserProfile(username)
+                                    } else {
+                                        viewModel.showLoginDialog()
+                                    }
                                 }
                             },
                             onLanguageClick = {

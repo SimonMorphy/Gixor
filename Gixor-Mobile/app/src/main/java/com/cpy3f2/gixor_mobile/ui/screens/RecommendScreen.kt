@@ -26,6 +26,33 @@ fun RecommendScreen(vm: MainViewModel) {
     val events by vm.publicEvents.collectAsState()
     val isLoading by vm.isEventsLoading.collectAsState()
 
+    // 添加登录对话框状态监听
+    val showLoginDialog by vm.showLoginDialog.collectAsState()
+
+    // 添加登录对话框
+    if (showLoginDialog) {
+        AlertDialog(
+            onDismissRequest = { vm.hideLoginDialog() },
+            title = { Text("需要登陆") },
+            text = { Text("请登录查看详情") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        vm.hideLoginDialog()
+                        NavigationManager.navigateToLogin()
+                    }
+                ) {
+                    Text("确认")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { vm.hideLoginDialog() }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+
     LaunchedEffect(Unit) {
         vm.loadPublicEvents()
     }
@@ -82,7 +109,7 @@ fun RecommendScreen(vm: MainViewModel) {
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
                 items(items = events) { event ->
-                    EventItem(event = event)
+                    EventItem(event = event, vm = vm)
                 }
             }
         }
@@ -90,7 +117,7 @@ fun RecommendScreen(vm: MainViewModel) {
 }
 
 @Composable
-fun EventItem(event: Event) {
+fun EventItem(event: Event, vm: MainViewModel) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -113,8 +140,12 @@ fun EventItem(event: Event) {
                         .size(40.dp)
                         .clip(CircleShape)
                         .clickable {
-                            event.actor.login?.let { username ->
-                                NavigationManager.navigateToUserProfile(username)
+                            if (vm.checkLoginStatus()) {
+                                event.actor.login?.let { username ->
+                                    NavigationManager.navigateToUserProfile(username)
+                                }
+                            } else {
+                                vm.showLoginDialog()
                             }
                         },
                     contentScale = ContentScale.Crop
@@ -128,8 +159,12 @@ fun EventItem(event: Event) {
                         text = event.actor.login ?: "",
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.clickable {
-                            event.actor.login?.let { username ->
-                                NavigationManager.navigateToUserProfile(username)
+                            if (vm.checkLoginStatus()) {
+                                event.actor.login?.let { username ->
+                                    NavigationManager.navigateToUserProfile(username)
+                                }
+                            } else {
+                                vm.showLoginDialog()
                             }
                         }
                     )
@@ -149,9 +184,12 @@ fun EventItem(event: Event) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { 
-                        // 可以添加点击跳转到仓库详情
-                        val (owner, repo) = event.repo.name.split("/")
-                        NavigationManager.navigateToRepoDetail(owner, repo)
+                        if (vm.checkLoginStatus()) {
+                            val (owner, repo) = event.repo.name.split("/")
+                            NavigationManager.navigateToRepoDetail(owner, repo)
+                        } else {
+                            vm.showLoginDialog()
+                        }
                     },
                 verticalAlignment = Alignment.CenterVertically
             ) {

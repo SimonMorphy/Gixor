@@ -301,9 +301,31 @@ fun SearchScreen(navController: NavController, vm: MainViewModel = viewModel()) 
 @Composable
 private fun PersonHotList(viewModel: MainViewModel) {
     val trendyUsers by viewModel.trendyUsers.collectAsState()
+    val showLoginDialog by viewModel.showLoginDialog.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadTrendyUsers()
+    }
+
+    if (showLoginDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideLoginDialog() },
+            title = { Text("提示") },
+            text = { Text("请先登录后再查看用户详情") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    viewModel.hideLoginDialog()
+                    NavigationManager.navigateToLogin() 
+                }) {
+                    Text("去登录")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideLoginDialog() }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 
     LazyColumn(
@@ -315,7 +337,13 @@ private fun PersonHotList(viewModel: MainViewModel) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { NavigationManager.navigateToUserProfile(user.username) }
+                    .clickable { 
+                        if (viewModel.checkLoginStatus()) {
+                            NavigationManager.navigateToUserProfile(user.username)
+                        } else {
+                            viewModel.showLoginDialog()
+                        }
+                    }
                     .padding(vertical = 8.dp),
                 shape = RoundedCornerShape(8.dp),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
@@ -359,9 +387,31 @@ private fun PersonHotList(viewModel: MainViewModel) {
 @Composable
 private fun ProjectHotList(viewModel: MainViewModel) {
     val trendyRepos by viewModel.trendyRepos.collectAsState()
+    val showLoginDialog by viewModel.showLoginDialog.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadTrendyRepos()
+    }
+
+    if (showLoginDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideLoginDialog() },
+            title = { Text("提示") },
+            text = { Text("请先登录后再查看仓库详情") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    viewModel.hideLoginDialog()
+                    NavigationManager.navigateToLogin() 
+                }) {
+                    Text("去登录")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideLoginDialog() }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 
     LazyColumn(
@@ -374,7 +424,13 @@ private fun ProjectHotList(viewModel: MainViewModel) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { NavigationManager.navigateToRepoDetail(repo.author, repo.name) }
+                    .clickable { 
+                        if (viewModel.checkLoginStatus()) {
+                            NavigationManager.navigateToRepoDetail(repo.author, repo.name)
+                        } else {
+                            viewModel.showLoginDialog()
+                        }
+                    }
                     .padding(vertical = 8.dp),
                 shape = RoundedCornerShape(8.dp),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
@@ -561,6 +617,29 @@ fun SearchResultsSection(
     val isSearching by vm.isSearching.collectAsState()
     val isLoggedIn by vm.isLoggedIn.collectAsState()
     val starredRepos by vm.starredRepos.collectAsState()
+    val showLoginDialog by vm.showLoginDialog.collectAsState()
+
+    // 添加登录对话框
+    if (showLoginDialog) {
+        AlertDialog(
+            onDismissRequest = { vm.hideLoginDialog() },
+            title = { Text("提示") },
+            text = { Text(if (selectedTab == 0) "请先登录后再查看用户详情" else "请先登录后再查看仓库详情") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    vm.hideLoginDialog()
+                    NavigationManager.navigateToLogin()
+                }) {
+                    Text("去登录")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { vm.hideLoginDialog() }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
 
     if (searchText.isNotBlank()) {
         when (selectedTab) {
@@ -597,8 +676,12 @@ fun SearchResultsSection(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { 
-                                        user.login?.let { username ->
-                                            NavigationManager.navigateToUserProfile(username)
+                                        if (vm.checkLoginStatus()) {
+                                            user.login?.let { username ->
+                                                NavigationManager.navigateToUserProfile(username)
+                                            }
+                                        } else {
+                                            vm.showLoginDialog()
                                         }
                                     }
                                     .padding(vertical = 8.dp),
@@ -660,13 +743,21 @@ fun SearchResultsSection(
                             GitHubRepoItem(
                                 repo = repo,
                                 onRepoClick = {
-                                    repo.owner?.login?.let { owner ->
-                                        NavigationManager.navigateToRepoDetail(owner, repo.name)
+                                    if (vm.checkLoginStatus()) {
+                                        repo.owner?.login?.let { owner ->
+                                            NavigationManager.navigateToRepoDetail(owner, repo.name)
+                                        }
+                                    } else {
+                                        vm.showLoginDialog()
                                     }
                                 },
                                 onAuthorClick = {
-                                    repo.owner?.login?.let { username ->
-                                        NavigationManager.navigateToUserProfile(username)
+                                    if (vm.checkLoginStatus()) {
+                                        repo.owner?.login?.let { username ->
+                                            NavigationManager.navigateToUserProfile(username)
+                                        }
+                                    } else {
+                                        vm.showLoginDialog()
                                     }
                                 },
                                 onLanguageClick = { /* 暂不实现 */ },

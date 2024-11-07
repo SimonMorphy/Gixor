@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -74,7 +75,12 @@ fun DynamicScreen(vm: MainViewModel) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { NavigationManager.navigateToLogin() }
+                onClick = { NavigationManager.navigateToLogin() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFE53935),  // 红色背景
+                    contentColor = Color.White  // 白色文字
+                ),
+                shape = RoundedCornerShape(8.dp) // 圆角按钮
             ) {
                 Text("Login")
             }
