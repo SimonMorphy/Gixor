@@ -118,10 +118,10 @@ fun SplashScreen(viewModel: MainViewModel) {
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(50.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.mipmap.logo),
+                        painter = painterResource(id = R.mipmap.logo2),
                         contentDescription = "App Logo",
                         modifier = Modifier.size(120.dp)
                     )
