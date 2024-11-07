@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Code
@@ -126,16 +127,16 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
     val following by viewModel.following.collectAsState()
     val isLoadingMore by viewModel.isLoadingMore.collectAsState()
     val listState = rememberLazyListState()
-
+    val userDetail by viewModel.userDetail.collectAsState()
     // 监听滚动到底部
     LaunchedEffect(listState) {
         snapshotFlow { listState.isScrolledToEnd() }
             .collect { isEnd ->
-                if (isEnd && !isLoadingMore && userProfile != null) {
+                if (isEnd && !isLoadingMore && userDetail != null) {
                     when (currentTab) {
-                        "repositories" -> viewModel.loadUserRepos(userProfile!!.login, false)
-                        "followers" -> viewModel.loadFollowers(userProfile!!.login, false)
-                        "following" -> viewModel.loadFollowing(userProfile!!.login, false)
+                        "repositories" -> viewModel.loadUserRepos(userDetail!!.login, false)
+                        "followers" -> viewModel.loadFollowers(userDetail!!.login, false)
+                        "following" -> viewModel.loadFollowing(userDetail!!.login, false)
                     }
                 }
             }
@@ -152,14 +153,14 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
                 color = MaterialTheme.colorScheme.surfaceTint
             )
         }
-    } else if (userProfile != null) {
+    } else if (userDetail != null) {
         SwipeRefresh(
             state = rememberSwipeRefreshState(isLoadingMore),
             onRefresh = {
                 when (currentTab) {
-                    "repositories" -> viewModel.loadUserRepos(userProfile!!.login, true)
-                    "followers" -> viewModel.loadFollowers(userProfile!!.login, true)
-                    "following" -> viewModel.loadFollowing(userProfile!!.login, true)
+                    "repositories" -> viewModel.loadUserRepos(userDetail!!.login, true)
+                    "followers" -> viewModel.loadFollowers(userDetail!!.login, true)
+                    "following" -> viewModel.loadFollowing(userDetail!!.login, true)
                 }
             }
         ) {
@@ -170,14 +171,14 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
                     .background(MaterialTheme.colorScheme.background)
             ) {
                 // 固定的头部内容
-                item { ProfileHeader(userProfile!!, viewModel) }
+                item { ProfileHeader(userDetail!!, viewModel) }
                 item { Description(userProfile!!.bio) }
-                item { UserStats(userProfile!!, viewModel, userProfile!!.login) }
+                item { UserStats(userDetail!!, viewModel, userDetail!!.login) }
 
                 // 根据当前tab显示不同的内容
                 when (currentTab) {
                     "index" -> {
-                        item { ScoreContainer(userProfile!!) }
+                        item { ScoreContainer(userDetail!!) }
                     }
                     "repositories" -> {
                         items(reposState.size) { index ->
@@ -188,7 +189,7 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
                                     language = reposState[index].language,
                                     stars = reposState[index].stargazersCount ?: 0,
                                     onClick = {
-                                        NavigationManager.navigateToRepoDetail(userProfile!!.login, it)
+                                        NavigationManager.navigateToRepoDetail(userDetail!!.login, it)
                                     }
                                 )
                                 if (index < reposState.size - 1) {
@@ -308,7 +309,7 @@ fun ProfileHeader(userProfile: GitHubUser,viewModel: MineViewModel) {
                 .padding(start = 16.dp)
         ) {
             Text(
-                text = userProfile.name ?: "N/A",
+                text = if (userProfile.name.isNullOrEmpty()) "N/A" else userProfile.name,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -317,6 +318,22 @@ fun ProfileHeader(userProfile: GitHubUser,viewModel: MineViewModel) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(vertical = 4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn, // 使用 Jetpack Compose 自带的图标
+                    contentDescription = "Location Icon",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+                Text(
+                    text = userProfile.location ?: "未知",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
         Box {
             IconButton(onClick = { expanded =!expanded }) {
@@ -461,18 +478,18 @@ fun ScoreContainer(userProfile: GitHubUser) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                ScoreItem("Score", (userProfile.score ?: 0).toString())
-                ScoreItem("Level", (userProfile.grade ?: 0).toString())
-                ScoreItem("Stars", (userProfile.totalStars ?: 0).toString())
+                ScoreItem("Score", (userProfile.score).toString())
+                ScoreItem("Level", (userProfile.grade))
+                ScoreItem("Stars", (userProfile.totalStars).toString())
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                ScoreItem("Issues", (userProfile.totalIssues ?: 0).toString())
-                ScoreItem("Commits", (userProfile.totalCommits ?: 0).toString())
-                ScoreItem("PRs", (userProfile.totalPRs ?: 0).toString())
+                ScoreItem("Issues", (userProfile.totalIssues).toString())
+                ScoreItem("Commits", (userProfile.totalCommits).toString())
+                ScoreItem("PRs", (userProfile.totalPRs).toString())
             }
         }
     }

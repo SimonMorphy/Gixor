@@ -231,10 +231,6 @@ private fun LeaderboardItem(user: GitHubUser, rank: Int) {
                     text = "Nation: ${user.nation}",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Text(
-                    text = "Score: ${user.score}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
                 // 显示用户的领域信息
                 Text(
                     text = "Domains: ${user.majorDomains?.joinToString(", ")}",
@@ -242,6 +238,13 @@ private fun LeaderboardItem(user: GitHubUser, rank: Int) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = String.format("%.2f", user.score),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Medium
+
+            )
         }
     }
 }

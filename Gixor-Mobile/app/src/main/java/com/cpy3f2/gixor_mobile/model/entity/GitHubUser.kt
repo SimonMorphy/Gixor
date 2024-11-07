@@ -74,7 +74,7 @@ data class GitHubUser(
     val contributedTo: Int = 0,
 
     @SerializedName("grade")
-    val grade: String = "",
+    val grade: String? = "N/A",
 
     @SerializedName("score")
     val score: Double = 0.0,
