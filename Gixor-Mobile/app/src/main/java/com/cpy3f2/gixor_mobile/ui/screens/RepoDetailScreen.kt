@@ -70,6 +70,10 @@ import com.cpy3f2.gixor_mobile.model.entity.PullRequest
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.cpy3f2.gixor_mobile.model.entity.Discussion
+import androidx.compose.ui.viewinterop.AndroidView
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.compose.foundation.layout.heightIn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,12 +86,9 @@ fun RepoDetailScreen(
     var selectedTab by remember { mutableStateOf(RepoTab.Code) }
     val isStarred by viewModel.starredRepos.collectAsState()
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
-    val repoDetails by viewModel.repoDetails.collectAsState()
-    val context = LocalContext.current
     val isSubscribed by viewModel.isSubscribed.collectAsState()
 
     LaunchedEffect(owner, repoName) {
-        viewModel.loadRepoDetails(owner, repoName)
         viewModel.checkRepoSubscription(owner, repoName)
     }
 
@@ -252,85 +253,175 @@ fun RepoCodeTab(
     viewModel: MainViewModel,
     onNavigateToTab: (RepoTab) -> Unit
 ) {
+    val readmeContent by viewModel.readmeContent.collectAsState()
     val repoDetails by viewModel.repoDetails.collectAsState()
-    val isLoading by viewModel.isRepoDetailsLoading.collectAsState()
 
     LaunchedEffect(owner, repoName) {
         viewModel.loadRepoDetails(owner, repoName)
+        viewModel.loadReadmeContent(owner, repoName)
+
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (isLoading) {
-            Column(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.surfaceTint
-                )
-                Text(
-                    text = "正在加载仓库信息...",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                // 仓库信息卡片
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        // 仓库描述
-                        if (!repoDetails?.description.isNullOrEmpty()) {
-                            Text(
-                                text = repoDetails?.description ?: "",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-
-                        // 统计信息
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            StatItem(
-                                icon = Icons.Outlined.Star,
-                                count = repoDetails?.stargazersCount ?: 0,
-                                label = "stars",
-//                                onClick = { onNavigateToTab(RepoTab.Stars) }
-                            )
-                            StatItem(
-                                icon = Icons.Outlined.AccountTree,
-                                count = repoDetails?.forksCount ?: 0,
-                                label = "forks",
-                                onClick = { onNavigateToTab(RepoTab.Forks) }
-                            )
-                            StatItem(
-                                icon = Icons.Outlined.RemoveRedEye,
-                                count = repoDetails?.watchersCount ?: 0,
-                                label = "watchers",
-                                onClick = { onNavigateToTab(RepoTab.Watchers) }
-                            )
-                            StatItem(
-                                icon = Icons.Outlined.BugReport,
-                                count = repoDetails?.openIssues ?: 0,
-                                label = "issues",
-                                onClick = { onNavigateToTab(RepoTab.Issues) }
-                            )
-                        }
-                    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // 仓库信息卡片
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // 仓库描述
+                if (!repoDetails?.description.isNullOrEmpty()) {
+                    Text(
+                        text = repoDetails?.description ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
+
+                // 统计信息
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatItem(
+                        icon = Icons.Outlined.Star,
+                        count = repoDetails?.stargazersCount ?: 0,
+                        label = "stars",
+//                                onClick = { onNavigateToTab(RepoTab.Stars) }
+                    )
+                    StatItem(
+                        icon = Icons.Outlined.AccountTree,
+                        count = repoDetails?.forksCount ?: 0,
+                        label = "forks",
+                        onClick = { onNavigateToTab(RepoTab.Forks) }
+                    )
+                    StatItem(
+                        icon = Icons.Outlined.RemoveRedEye,
+                        count = repoDetails?.watchersCount ?: 0,
+                        label = "watchers",
+                        onClick = { onNavigateToTab(RepoTab.Watchers) }
+                    )
+                    StatItem(
+                        icon = Icons.Outlined.BugReport,
+                        count = repoDetails?.openIssues ?: 0,
+                        label = "issues",
+                        onClick = { onNavigateToTab(RepoTab.Issues) }
+                    )
+                }
+            }
+        }
+
+        // README 显示部分
+        readmeContent?.let { content ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                AndroidView(
+                    factory = { context ->
+                        WebView(context).apply {
+                            settings.apply {
+                                javaScriptEnabled = true
+                                domStorageEnabled = true
+                                // 允许缩放
+                                builtInZoomControls = true
+                                displayZoomControls = false
+                                // 自适应屏幕
+                                loadWithOverviewMode = true
+                                useWideViewPort = true
+                            }
+                            webViewClient = WebViewClient()
+                            
+//                            // 设置背景色为透明
+//                            setBackgroundColor(Color.TRANSPARENT)
+                        }
+                    },
+                    update = { webView ->
+                        // 构建完整的 HTML 文档
+                        val htmlContent = """
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                <style>
+                                    body {
+                                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+                                        line-height: 1.6;
+                                        padding: 16px;
+                                        color: #24292e;
+                                        background-color: transparent;
+                                    }
+                                    img {
+                                        max-width: 100%;
+                                        height: auto;
+                                    }
+                                    pre {
+                                        background-color: #f6f8fa;
+                                        padding: 16px;
+                                        border-radius: 6px;
+                                        overflow-x: auto;
+                                    }
+                                    code {
+                                        font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+                                        font-size: 85%;
+                                    }
+                                    table {
+                                        border-collapse: collapse;
+                                        width: 100%;
+                                        margin-bottom: 16px;
+                                    }
+                                    th, td {
+                                        border: 1px solid #dfe2e5;
+                                        padding: 6px 13px;
+                                    }
+                                    th {
+                                        background-color: #f6f8fa;
+                                    }
+                                    a {
+                                        color: #0366d6;
+                                        text-decoration: none;
+                                    }
+                                    h1, h2 {
+                                        border-bottom: 1px solid #eaecef;
+                                        padding-bottom: .3em;
+                                    }
+                                    .markdown-body {
+                                        box-sizing: border-box;
+                                        min-width: 200px;
+                                        max-width: 980px;
+                                        margin: 0 auto;
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="markdown-body">
+                                    $content
+                                </div>
+                            </body>
+                            </html>
+                        """.trimIndent()
+
+                        webView.loadDataWithBaseURL(
+                            null,
+                            htmlContent,
+                            "text/html",
+                            "UTF-8",
+                            null
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 200.dp, max = 800.dp)
+                )
             }
         }
     }
@@ -771,7 +862,7 @@ fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewMode
                 }
             }
         } else if (pullRequests.isEmpty()) {
-            // 无数据状态
+            // 无数据���态
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

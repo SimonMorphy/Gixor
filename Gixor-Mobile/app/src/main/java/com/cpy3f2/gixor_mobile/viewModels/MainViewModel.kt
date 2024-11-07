@@ -1294,7 +1294,7 @@ class MainViewModel : ViewModel() {
                 )
 
                 if (response.code == 200) {
-                    // 只更新 locked 状态，��持其他状态不变
+                    // 只更新 locked 状态，持其他状态不变
                     _currentIssue.value = _currentIssue.value?.copy(locked = true)
                     onSuccess()
                 } else {
@@ -1494,5 +1494,41 @@ class MainViewModel : ViewModel() {
     // 检查登录状态并返回结果
     fun checkLoginStatus(): Boolean {
         return hasToken()
+    }
+
+    // 添加 README 内容状态
+    private val _readmeContent = MutableStateFlow<String?>(null)
+    val readmeContent: StateFlow<String?> = _readmeContent.asStateFlow()
+
+    private val _isReadmeLoading = MutableStateFlow(false)
+    val isReadmeLoading: StateFlow<Boolean> = _isReadmeLoading.asStateFlow()
+
+    private val _readmeError = MutableStateFlow<String?>(null)
+    val readmeError: StateFlow<String?> = _readmeError.asStateFlow()
+
+    fun loadReadmeContent(owner: String, repo: String) {
+        viewModelScope.launch {
+            try {
+                _isReadmeLoading.value = true
+                _readmeError.value = null
+                
+                val token = getToken() ?: throw Exception("Token not found")
+                val response = RetrofitClient.httpBaseService.getReadme(
+                    tokenValue = token,
+                    owner = owner,
+                    repo = repo
+                )
+                
+                // 直接读取响应体的文本内容
+                _readmeContent.value = response.string()
+                
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _readmeError.value = e.message ?: "Failed to load README"
+                _readmeContent.value = null
+            } finally {
+                _isReadmeLoading.value = false
+            }
+        }
     }
 }

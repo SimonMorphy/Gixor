@@ -17,6 +17,7 @@ import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
 import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
 import com.cpy3f2.gixor_mobile.model.entity.UserSearchVO
+import okhttp3.ResponseBody
 import retrofit2.http.*
 
 interface HttpBaseService {
@@ -176,12 +177,12 @@ interface HttpBaseService {
 
     //获取readme文件
     @GET("/gith/repo/{owner}/{repo}/readme")
+    @Headers("Accept: text/plain")
     suspend fun getReadme(
         @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
-        @Path("repo") repo: String,
-        @QueryMap params: Map<String, String>
-    ): ResultData<String>
+        @Path("repo") repo: String
+    ): ResponseBody
 
 
     /**
@@ -378,7 +379,7 @@ interface HttpBaseService {
         @Path("repo") repo: String
     ): ResultData<Unit>
 
-    //获取当前用户的关注仓库列表 （未使用）
+    //取当前用户的关注仓库列表 （未使用）
     @GET("/gith/sub/watching")
     suspend fun getMySubscribedList(
         @Header("gixor-login") tokenValue: String
@@ -551,7 +552,7 @@ interface HttpBaseService {
         @QueryMap params: Map<String, String>
     ): ResultData<List<SimpleUser>>
 
-    //fork 指定仓库
+    //fork 指定仓
     @POST("/gith/fork/{owner}/{repo}")
     suspend fun forkRepo(
         @Header("gixor-login") tokenValue: String,
