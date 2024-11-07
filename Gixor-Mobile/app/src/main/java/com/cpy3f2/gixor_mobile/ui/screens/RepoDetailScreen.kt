@@ -254,20 +254,20 @@ fun RepoCodeTab(
     onNavigateToTab: (RepoTab) -> Unit
 ) {
     val readmeContent by viewModel.readmeContent.collectAsState()
+    val isLoading by viewModel.isReadmeLoading.collectAsState()
+    val error by viewModel.readmeError.collectAsState()
     val repoDetails by viewModel.repoDetails.collectAsState()
 
     LaunchedEffect(owner, repoName) {
         viewModel.loadRepoDetails(owner, repoName)
         viewModel.loadReadmeContent(owner, repoName)
-
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-    ) {
-        // 仓库信息卡片
+    ) { // 仓库信息卡片
         Card(
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -317,111 +317,107 @@ fun RepoCodeTab(
                 }
             }
         }
-
-        // README 显示部分
-        readmeContent?.let { content ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                AndroidView(
-                    factory = { context ->
-                        WebView(context).apply {
-                            settings.apply {
-                                javaScriptEnabled = true
-                                domStorageEnabled = true
-                                // 允许缩放
-                                builtInZoomControls = true
-                                displayZoomControls = false
-                                // 自适应屏幕
-                                loadWithOverviewMode = true
-                                useWideViewPort = true
-                            }
-                            webViewClient = WebViewClient()
-                            
-//                            // 设置背景色为透明
-//                            setBackgroundColor(Color.TRANSPARENT)
-                        }
-                    },
-                    update = { webView ->
-                        // 构建完整的 HTML 文档
-                        val htmlContent = """
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                <style>
-                                    body {
-                                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-                                        line-height: 1.6;
-                                        padding: 16px;
-                                        color: #24292e;
-                                        background-color: transparent;
-                                    }
-                                    img {
-                                        max-width: 100%;
-                                        height: auto;
-                                    }
-                                    pre {
-                                        background-color: #f6f8fa;
-                                        padding: 16px;
-                                        border-radius: 6px;
-                                        overflow-x: auto;
-                                    }
-                                    code {
-                                        font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-                                        font-size: 85%;
-                                    }
-                                    table {
-                                        border-collapse: collapse;
-                                        width: 100%;
-                                        margin-bottom: 16px;
-                                    }
-                                    th, td {
-                                        border: 1px solid #dfe2e5;
-                                        padding: 6px 13px;
-                                    }
-                                    th {
-                                        background-color: #f6f8fa;
-                                    }
-                                    a {
-                                        color: #0366d6;
-                                        text-decoration: none;
-                                    }
-                                    h1, h2 {
-                                        border-bottom: 1px solid #eaecef;
-                                        padding-bottom: .3em;
-                                    }
-                                    .markdown-body {
-                                        box-sizing: border-box;
-                                        min-width: 200px;
-                                        max-width: 980px;
-                                        margin: 0 auto;
-                                    }
-                                </style>
-                            </head>
-                            <body>
-                                <div class="markdown-body">
-                                    $content
-                                </div>
-                            </body>
-                            </html>
-                        """.trimIndent()
-
-                        webView.loadDataWithBaseURL(
-                            null,
-                            htmlContent,
-                            "text/html",
-                            "UTF-8",
-                            null
-                        )
-                    },
+        when {
+            isLoading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(16.dp)
+                )
+            }
+            error != null -> {
+                Text(
+                    text = error ?: "Unknown error",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+            readmeContent != null -> {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 200.dp, max = 800.dp)
-                )
+                        .padding(top = 16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    AndroidView(
+                        factory = { context ->
+                            WebView(context).apply {
+                                settings.apply {
+                                    javaScriptEnabled = true
+                                    domStorageEnabled = true
+                                    builtInZoomControls = true
+                                    displayZoomControls = false
+                                    loadWithOverviewMode = true
+                                    useWideViewPort = true
+                                }
+                                webViewClient = WebViewClient()
+                            }
+                        },
+                        update = { webView ->
+                            val styledHtml = """
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+                                    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+                                    <style>
+                                        .markdown-body {
+                                            box-sizing: border-box;
+                                            min-width: 200px;
+                                            max-width: 980px;
+                                            margin: 0 auto;
+                                            padding: 45px;
+                                        }
+                                        @media (max-width: 767px) {
+                                            .markdown-body {
+                                                padding: 15px;
+                                            }
+                                        }
+                                        body {
+                                            background-color: transparent;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <div id="content" class="markdown-body"></div>
+                                    <script>
+                                        // 配置 marked 选项
+                                        marked.setOptions({
+                                            breaks: true,
+                                            gfm: true,
+                                            headerIds: true,
+                                            mangle: false
+                                        });
+                                        
+                                        // 渲染 Markdown 内容
+                                        document.getElementById('content').innerHTML = 
+                                            marked.parse(`${readmeContent?.replace("`", "\\`")}`);
+                                            
+                                        // 处理图片加载
+                                        document.querySelectorAll('img').forEach(img => {
+                                            if (!img.src.startsWith('http')) {
+                                                img.src = 'https://raw.githubusercontent.com/$owner/$repoName/master/' + img.src;
+                                            }
+                                        });
+                                    </script>
+                                </body>
+                                </html>
+                            """.trimIndent()
+
+                            webView.loadDataWithBaseURL(
+                                "https://github.com/$owner/$repoName",
+                                styledHtml,
+                                "text/html",
+                                "UTF-8",
+                                null
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 200.dp, max = 800.dp)
+                    )
+                }
             }
         }
     }
@@ -862,7 +858,7 @@ fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewMode
                 }
             }
         } else if (pullRequests.isEmpty()) {
-            // 无数据���态
+            // 无数据态
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -1341,7 +1337,7 @@ fun DiscussionItem(discussion: Discussion) {
                 )
 
                 Text(
-                    text = " • ",
+                    text = " �� ",
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
 
