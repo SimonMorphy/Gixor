@@ -139,10 +139,10 @@ fun DynamicScreen(vm: MainViewModel) {
                         isSelected = selectedUser?.login == user.login,
                         onClick = {
                             Log.d("DynamicScreen", "User clicked: ${user.login}")
-                            if (selectedUser?.login == user.login) {
-                                selectedUser = null
+                            selectedUser = if (selectedUser?.login == user.login) {
+                                null
                             } else {
-                                selectedUser = user
+                                user
                             }
                         }
                     )
@@ -190,7 +190,7 @@ fun DynamicScreen(vm: MainViewModel) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(currentEvents) { event ->
-                        Log.d("DynamicScreen", "Rendering event: ${event.type} by ${event.actor?.login}")
+                        Log.d("DynamicScreen", "Rendering event: ${event.type} by ${event.actor.login}")
                         EventCard(event = event)
                     }
                 }
@@ -240,18 +240,18 @@ fun EventCard(event: Event) {
                     }
                     
                     Text(
-                        text = event.actor.login ?: "Unknown",
+                        text = event.actor.login,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable { 
-                            event.actor?.login?.let { username ->
+                            event.actor.login.let { username ->
                                 NavigationManager.navigateToUserProfile(username)
                             }
                         }
                     )
                 }
                 Text(
-                    text = event.type ?: "Unknown",
+                    text = event.type ,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -260,14 +260,14 @@ fun EventCard(event: Event) {
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = event.repo.name ?: "Unknown repository",
+                text = event.repo.name,
                 style = MaterialTheme.typography.bodyMedium
             )
             
             Spacer(modifier = Modifier.height(4.dp))
             
             Text(
-                text = event.createdAt ?: "Unknown time",
+                text = event.createdAt,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -316,7 +316,7 @@ fun FollowingItem(
         Spacer(modifier = Modifier.height(4.dp))
         
         Text(
-            text = user.login ?: "",
+            text = user.login,
             style = MaterialTheme.typography.bodySmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
