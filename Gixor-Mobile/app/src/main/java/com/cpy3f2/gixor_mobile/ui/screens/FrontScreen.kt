@@ -17,6 +17,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -73,7 +74,7 @@ fun HorizontalPagerWithIndicator(vm: MainViewModel,navController: NavController)
                         text = {
                             Text(text = pages[index].name,
                                 fontSize = if (pagerState.currentPage == index) 17.sp else 14.sp,
-                                color = if (pagerState.currentPage == index) Color.Red else Color.Black
+                                color = if (pagerState.currentPage == index) Color.Red else MaterialTheme.colorScheme.onSurface
                             )
                         },
                         selected = pagerState.currentPage == index,

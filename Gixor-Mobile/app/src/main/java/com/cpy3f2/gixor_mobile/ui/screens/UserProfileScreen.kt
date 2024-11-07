@@ -81,7 +81,8 @@ fun UserProfileScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.surfaceTint
                 )
             } else if (error != null) {
                 Text(
@@ -213,8 +214,8 @@ private fun ProfileHeader(
                 }
             },
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (isFollowing) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary,
-                contentColor = if (isFollowing) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
+                containerColor = if (isFollowing) MaterialTheme.colorScheme.surface else Color(0xFFE53935),
+                contentColor = if (isFollowing) MaterialTheme.colorScheme.onSurface else Color.White
             ),
             border = if (isFollowing) {
                 BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
@@ -225,7 +226,7 @@ private fun ProfileHeader(
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(16.dp),
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.surfaceTint
                 )
             } else {
                 Icon(
@@ -369,7 +370,8 @@ fun RepositorySection(
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
+                                strokeWidth = 1.dp,
+                                color = MaterialTheme.colorScheme.surfaceTint
                             )
                         }
                     }
@@ -575,7 +577,8 @@ private fun UserList(
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
+                                strokeWidth = 1.dp,
+                                color = MaterialTheme.colorScheme.surfaceTint
                             )
                         }
                     }
@@ -615,7 +618,9 @@ private fun UserList(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.surfaceTint
+                    )
                 }
             }
         }
@@ -718,7 +723,8 @@ private fun WatchingSection(
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
+                                strokeWidth = 1.dp,
+                                color = MaterialTheme.colorScheme.surfaceTint
                             )
                         }
                     }
@@ -811,7 +817,8 @@ private fun StarredSection(
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
+                                strokeWidth = 1.dp,
+                                color = MaterialTheme.colorScheme.surfaceTint
                             )
                         }
                     }

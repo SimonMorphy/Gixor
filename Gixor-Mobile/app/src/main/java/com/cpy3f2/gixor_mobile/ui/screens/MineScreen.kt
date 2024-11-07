@@ -144,7 +144,9 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
                 .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.surfaceTint
+            )
         }
     } else if (userProfile != null) {
         SwipeRefresh(
@@ -220,7 +222,8 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
+                                strokeWidth = 1.dp,
+                                color = MaterialTheme.colorScheme.surfaceTint
                             )
                         }
                     }
@@ -656,7 +659,8 @@ fun RepositorySection(
                 ) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.dp
+                        strokeWidth = 1.dp,
+                        color = MaterialTheme.colorScheme.surfaceTint
                     )
                 }
             }
@@ -743,7 +747,8 @@ private fun UserList(
                         ) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.dp
+                                strokeWidth = 1.dp,
+                                color = MaterialTheme.colorScheme.surfaceTint
                             )
                         }
                     }
@@ -783,7 +788,9 @@ private fun UserList(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.surfaceTint
+                    )
                 }
             }
         }

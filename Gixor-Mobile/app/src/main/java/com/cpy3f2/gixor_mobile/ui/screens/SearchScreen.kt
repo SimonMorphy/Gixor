@@ -570,7 +570,9 @@ fun SearchResultsSection(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.surfaceTint
+                        )
                     }
                 } else if (searchUserResults.isEmpty()) {
                     // 添加空结果提示
@@ -631,7 +633,9 @@ fun SearchResultsSection(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.surfaceTint
+                        )
                     }
                 } else if (searchRepoResults.isEmpty()) {
                     Box(

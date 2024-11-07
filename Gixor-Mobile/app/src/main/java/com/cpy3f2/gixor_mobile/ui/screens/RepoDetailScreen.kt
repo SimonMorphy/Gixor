@@ -266,7 +266,9 @@ fun RepoCodeTab(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.surfaceTint
+                )
                 Text(
                     text = "正在加载仓库信息...",
                     style = MaterialTheme.typography.bodyMedium,
@@ -522,7 +524,7 @@ fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
                     Text(
                         text = "正在加载issues...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.surfaceTint.copy(alpha = 0.6f)
                     )
                 }
             }
@@ -758,7 +760,9 @@ fun RepoPullRequestsTab(owner: String, repoName: String, viewModel: MainViewMode
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.surfaceTint
+                    )
                     Text(
                         text = "Loading pull requests...",
                         style = MaterialTheme.typography.bodyMedium,
@@ -987,7 +991,9 @@ fun RepoForkUsersTab(owner: String, repoName: String, viewModel: MainViewModel) 
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.surfaceTint
+                        )
                     }
                 }
             }
@@ -1066,7 +1072,9 @@ fun RepoWatchTab(owner: String, repoName: String, viewModel: MainViewModel) {
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.surfaceTint
+                        )
                     }
                 }
             }
@@ -1137,7 +1145,9 @@ fun RepoDiscussionsTab(owner: String, repoName: String, viewModel: MainViewModel
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.surfaceTint
+                )
             }
         } else if (discussions.isEmpty()) {
             // 空状态展示
@@ -1184,7 +1194,9 @@ fun RepoDiscussionsTab(owner: String, repoName: String, viewModel: MainViewModel
                                 .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.surfaceTint
+                            )
                         }
                     }
                 }

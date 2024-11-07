@@ -128,7 +128,8 @@ fun DynamicScreen(vm: MainViewModel) {
             if (isFollowingLoading) {
                 item {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.surfaceTint
                     )
                 }
             } else {
@@ -161,7 +162,8 @@ fun DynamicScreen(vm: MainViewModel) {
             
             if (isLoading) {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.surfaceTint
                 )
             } else if (currentEvents.isEmpty()) {
                 Column(

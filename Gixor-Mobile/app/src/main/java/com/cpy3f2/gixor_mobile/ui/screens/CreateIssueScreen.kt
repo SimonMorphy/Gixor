@@ -97,7 +97,7 @@ fun CreateIssueScreen(
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.surfaceTint
                     )
                 } else {
                     Text("Submit new issue")

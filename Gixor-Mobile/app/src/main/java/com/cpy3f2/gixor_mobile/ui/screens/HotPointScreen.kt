@@ -15,6 +15,7 @@ import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 
 /**
@@ -44,7 +45,9 @@ fun HotPointScreen(
     ) {
         when (uiState) {
             is MainViewModel.UiState.Loading -> {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.surfaceTint
+                )
             }
 
             else -> {

@@ -735,9 +735,7 @@ class MainViewModel : ViewModel() {
                 val querySettings = NotificationQuerySetting(
                     perPage = 10,
                     page = currentPage,
-                    isUnread = true,  // 优先获取未读消息
-                    sort = "updated",  // 按更新时间排序
-                    direction = "desc"  // 降序排列
+                    all = false,  // 优先获取未读消息
                 )
 
                 // 获取未读消息
@@ -752,9 +750,7 @@ class MainViewModel : ViewModel() {
                         val readQuerySettings = NotificationQuerySetting(
                             perPage = remainingCount,
                             page = 1,
-                            isUnread = false,
-                            sort = "updated",
-                            direction = "desc"
+                            all = true,
                         )
 
                         val readResponse = RetrofitClient.httpBaseService.getNotificationList(token, readQuerySettings.toQueryMap())

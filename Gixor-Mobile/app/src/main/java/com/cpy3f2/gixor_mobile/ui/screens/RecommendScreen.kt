@@ -33,7 +33,8 @@ fun RecommendScreen(vm: MainViewModel) {
     Box(modifier = Modifier.fillMaxSize()) {
         if (isLoading) {
             CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
+                color = MaterialTheme.colorScheme.surfaceTint
             )
         } else if (events.isEmpty()) {
             // 添加空数据状态提示

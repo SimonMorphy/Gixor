@@ -395,7 +395,9 @@ fun IssueDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.surfaceTint
+                            )
                         }
                     }
                 }

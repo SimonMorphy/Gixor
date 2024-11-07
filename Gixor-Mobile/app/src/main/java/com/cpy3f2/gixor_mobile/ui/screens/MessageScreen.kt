@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
@@ -31,60 +32,100 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.cpy3f2.gixor_mobile.model.converter.DateTimeConverters
 import com.cpy3f2.gixor_mobile.model.entity.Notification
 
+enum class NotificationFilter {
+    ALL, UNREAD, MENTIONS
+}
+
 @Composable
 fun MessageScreen(viewModel: MainViewModel) {
-    val systemUiController = rememberSystemUiController()
-    val statusBarColor = MaterialTheme.colorScheme.surface
-    val isDarkIcons = !isSystemInDarkTheme()
-
     val notifications by viewModel.notifications.collectAsState()
     val isLoading by viewModel.isNotificationsLoading.collectAsState()
     val hasError by viewModel.notificationError.collectAsState()
     val listState = rememberLazyListState()
+    var selectedFilter by remember { mutableStateOf(NotificationFilter.ALL) }
 
-    // 监听滚动到底部
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.isScrolledToEnd() }
-            .collect { isEnd ->
-                if (isEnd) {
-                    viewModel.loadNotifications(isRefresh = false)
-                }
-            }
+    // 首次进入页面时加载数据
+    LaunchedEffect(Unit) {
+        viewModel.loadNotifications(isRefresh = true)
     }
 
-    DisposableEffect(systemUiController) {
-        systemUiController.setStatusBarColor(
-            color = statusBarColor,
-            darkIcons = isDarkIcons
-        )
-        onDispose {}
+    val filteredNotifications = when (selectedFilter) {
+        NotificationFilter.UNREAD -> notifications.filter { it.unread }
+        NotificationFilter.MENTIONS -> notifications.filter { it.reason == "mention" }
+        NotificationFilter.ALL -> notifications
     }
+
+    val swipeRefreshState = rememberSwipeRefreshState(isLoading)
 
     Scaffold(
         topBar = { NotificationsTopBar(viewModel) },
         modifier = Modifier.statusBarsPadding()
     ) { paddingValues ->
-        SwipeRefresh(
-            state = rememberSwipeRefreshState(isLoading),
-            onRefresh = { viewModel.loadNotifications(isRefresh = true) }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                when {
-                    hasError != null -> ErrorState(
-                        error = hasError!!,
-                        onRetry = { viewModel.loadNotifications(isRefresh = true) }
-                    )
-                    notifications.isEmpty() && !isLoading -> EmptyState()
-                    else -> NotificationsList(
-                        notifications = notifications,
-                        isLoading = isLoading,
-                        listState = listState,
-                        viewModel = viewModel
-                    )
+            // Tabs always visible at the top
+            NotificationFilters(
+                selectedFilter = selectedFilter,
+                onFilterSelected = { newFilter -> 
+                    selectedFilter = newFilter
+                    viewModel.loadNotifications(isRefresh = true)
+                }
+            )
+
+            // Content area below tabs
+            Box(modifier = Modifier.weight(1f)) {
+                SwipeRefresh(
+                    state = swipeRefreshState,
+                    onRefresh = { viewModel.loadNotifications(isRefresh = true) }
+                ) {
+                    when {
+                        hasError != null -> ErrorState(
+                            error = hasError!!,
+                            onRetry = { viewModel.loadNotifications(isRefresh = true) }
+                        )
+                        filteredNotifications.isEmpty() && !isLoading -> EmptyState()
+                        else -> LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(filteredNotifications.size) { index ->
+                                val notification = filteredNotifications[index]
+                                NotificationItem(
+                                    viewModel = viewModel,
+                                    repository = notification.repository?.fullName ?: "",
+                                    title = notification.subject?.title ?: "",
+                                    reason = notification.reason ?: "",
+                                    time = DateTimeConverters.formatRelativeTime(notification.updatedAt),
+                                    isUnread = notification.unread,
+                                    notificationId = notification.id ?: "",
+                                    notification = notification,
+                                    selectedFilter = selectedFilter
+                                )
+
+                                if (index < filteredNotifications.size - 1) {
+                                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                                }
+                            }
+
+                            if (isLoading) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(
+                                            color = MaterialTheme.colorScheme.surfaceTint
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -124,7 +165,8 @@ private fun NotificationsTopBar(viewModel: MainViewModel) {
                     if (isMarkingAllAsRead) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 1.dp,
+                            color = MaterialTheme.colorScheme.surfaceTint
                         )
                     } else {
                         Icon(
@@ -146,20 +188,22 @@ private fun NotificationsTopBar(viewModel: MainViewModel) {
 }
 
 @Composable
-private fun NotificationFilters() {
-    var selectedFilter by remember { mutableStateOf("All") }
-    val filters = listOf("All", "Unread", "Mentions")
+private fun NotificationFilters(
+    selectedFilter: NotificationFilter,
+    onFilterSelected: (NotificationFilter) -> Unit
+) {
+    val filters = NotificationFilter.values()
 
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp
     ) {
         ScrollableTabRow(
-            selectedTabIndex = filters.indexOf(selectedFilter),
+            selectedTabIndex = selectedFilter.ordinal,
             edgePadding = 16.dp,
             indicator = { tabPositions ->
                 TabRowDefaults.Indicator(
-                    modifier = Modifier.tabIndicatorOffset(tabPositions[filters.indexOf(selectedFilter)]),
+                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedFilter.ordinal]),
                     height = 2.dp,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -168,12 +212,17 @@ private fun NotificationFilters() {
             filters.forEach { filter ->
                 Tab(
                     selected = selectedFilter == filter,
-                    onClick = { selectedFilter = filter },
+                    onClick = { onFilterSelected(filter) },
                     text = {
                         Text(
-                            text = filter,
+                            text = when (filter) {
+                                NotificationFilter.ALL -> "All"
+                                NotificationFilter.UNREAD -> "Unread"
+                                NotificationFilter.MENTIONS -> "Mentions"
+                            },
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (selectedFilter == filter) FontWeight.Medium else FontWeight.Normal
+                            fontWeight = if (selectedFilter == filter) 
+                                FontWeight.Medium else FontWeight.Normal
                         )
                     }
                 )
@@ -190,7 +239,9 @@ private fun NotificationItem(
     reason: String,
     time: String,
     isUnread: Boolean,
-    notificationId: String
+    notificationId: String,
+    notification: Notification,
+    selectedFilter: NotificationFilter
 ) {
     Row(
         modifier = Modifier
@@ -200,11 +251,32 @@ private fun NotificationItem(
                 else MaterialTheme.colorScheme.surface
             )
             .clickable {
-                // 使用 NavigationManager 进行导航
-                NavigationManager.navigateToNotification(
-                    notificationId = notificationId,
-                    repository = repository
-                )
+                //todo 有机会做
+//                notification.subject?.let { subject ->
+//                    val urlParts = subject.url?.split("/")
+//                    val owner = urlParts?.getOrNull(4)
+//                    val repo = urlParts?.getOrNull(5)
+//                    val  number = urlParts?.getOrNull(7)?.toIntOrNull()
+//
+//                    when (subject.type) {
+//                        "Issue" -> NavigationManager.navigateToIssueDetail(
+//                            owner = owner ?: "",
+//                            repo = repo ?: "",
+//                            issueNumber = number ?: 0
+//                        )
+//                        "PullRequest" -> NavigationManager.navigateToPullRequestDetail(
+//                            owner = owner ?: "",
+//                            repo = repo ?: "",
+//                            pullRequestNumber = ZZ ?: 0
+//                        )
+//                        "Discussion" -> NavigationManager.navigateToDiscussion(
+//                            owner = owner ?: "",
+//                            repo = repo ?: "",
+//                            discussionNumber = subject.number ?: 0
+//                        )
+//                    }
+//                }
+//                viewModel.markNotificationAsRead(notificationId)
             }
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -266,61 +338,30 @@ private fun NotificationItem(
             }
         }
 
-        // 更多操作按钮
-        IconButton(
-            onClick = { /* 显示更多操作 */ }
+        Box(
+            contentAlignment = Alignment.TopEnd
         ) {
-            Icon(
-                imageVector = Icons.Rounded.MoreVert,
-                contentDescription = "More actions",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun NotificationsList(
-    notifications: List<Notification>,
-    isLoading: Boolean,
-    listState: LazyListState,
-    viewModel: MainViewModel
-) {
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        item {
-            NotificationFilters()
-        }
-
-        items(notifications.size) { index ->
-            val notification = notifications[index]
-            NotificationItem(
-                viewModel = viewModel,
-                repository = notification.repository?.fullName ?: "",
-                title = notification.subject?.title ?: "",
-                reason = notification.reason ?: "",
-                time = DateTimeConverters.formatRelativeTime(notification.updatedAt),
-                isUnread = notification.unread,
-                notificationId = notification.id ?: ""
-            )
-
-            if (index < notifications.size - 1) {
-                Divider(color = MaterialTheme.colorScheme.outlineVariant)
+            IconButton(
+                onClick = { /* 显示更多操作 */ }
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.MoreVert,
+                    contentDescription = "More actions",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-        }
-
-        if (isLoading) {
-            item {
+            
+            // Only show red dot for unread notifications in ALL filter
+            if (isUnread && selectedFilter == NotificationFilter.ALL) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                        .size(8.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.error,
+                            shape = CircleShape
+                        )
+                        .align(Alignment.TopEnd)
+                )
             }
         }
     }
@@ -376,7 +417,7 @@ private fun ErrorState(
                 color = MaterialTheme.colorScheme.error
             )
             Button(onClick = onRetry) {
-                Text("重试")
+                Text("重")
             }
         }
     }
@@ -407,7 +448,9 @@ fun NotificationItemPreview() {
             reason = "mention",
             time = "2小时前",
             isUnread = true,
-            notificationId = "notification_1"
+            notificationId = "notification_1",
+            notification = Notification(),
+            selectedFilter = NotificationFilter.ALL
         )
 
         Divider()
@@ -420,7 +463,9 @@ fun NotificationItemPreview() {
             reason = "review_requested",
             time = "昨天",
             isUnread = false,
-            notificationId = "notification_2"
+            notificationId = "notification_2",
+            notification = Notification(),
+            selectedFilter = NotificationFilter.ALL
         )
     }
 }

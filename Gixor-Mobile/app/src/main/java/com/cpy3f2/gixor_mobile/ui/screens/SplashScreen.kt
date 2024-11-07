@@ -84,7 +84,7 @@ fun SplashScreen(viewModel: MainViewModel) {
                 Text(
                     text = "${remainingSeconds}s",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 Text(
@@ -98,7 +98,7 @@ fun SplashScreen(viewModel: MainViewModel) {
                         }
                         .padding(8.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -107,19 +107,31 @@ fun SplashScreen(viewModel: MainViewModel) {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .size(48.dp)
+                        .size(48.dp),
+                    color = MaterialTheme.colorScheme.surfaceTint
                 )
             }
 
-            // Logo
+            // Logo 和 Slogan
             Box(
                 modifier = Modifier.align(Alignment.Center)
             ) {
-//                Image(
-//                    painter = painterResource(id = R.drawable.app_logo),
-//                    contentDescription = "App Logo",
-//                    modifier = Modifier.size(120.dp)
-//                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.mipmap.logo),
+                        contentDescription = "App Logo",
+                        modifier = Modifier.size(120.dp)
+                    )
+                    
+                    Text(
+                        text = "Where Geeks Inspire\nWhere Code Takes Higher",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
     }
