@@ -42,7 +42,7 @@ interface HttpBaseService {
     ): ResultData<GitHubUser>
 
     //获取用户可统计数据
-    @POST("/sys/user/detail/{username}")
+    @POST("/sys/user/details/{username}")
     suspend fun getUserInfo(
         @Header("gixor-login") tokenValue: String,
         @Path("username") username: String,
@@ -108,7 +108,7 @@ interface HttpBaseService {
         @QueryMap params: Map<String, String>
     ): ResultData<List<GitHubRepository>>
 
-    //查看某人收藏的仓库 (未使用)
+    //查看某人收藏的仓库
     @GET("/gith/repo/starred/{username}")
     suspend fun getUserStarRepoList(
         @Header("gixor-login") tokenValue: String,
@@ -388,7 +388,7 @@ interface HttpBaseService {
         @QueryMap params: Map<String, String>
     ): ResultData<List<SimpleUser>>
 
-    //获取当前用户的粉丝列表 （使用的是下面一个的接口）
+    //获取当前用户的粉丝列表 （未使用）
     @GET("/gith/follow/followers")
     suspend fun getMyFollowers(
         @Header("gixor-login") tokenValue: String

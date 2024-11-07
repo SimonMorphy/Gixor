@@ -96,7 +96,7 @@ fun DynamicScreen(vm: MainViewModel) {
     // 初始加载关注列表和所有动态
     LaunchedEffect(Unit) {
         vm.loadFollowingList()
-        vm.loadReceivedEvents("me")
+        vm.gitHubUser.value?.data?.name?.let { vm.loadReceivedEvents(it) }
     }
 
     // 调试日志
@@ -226,7 +226,7 @@ fun EventCard(event: Event) {
                     Box(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .clickable { 
+                            .clickable {
                                 event.actor?.login?.let { username ->
                                     NavigationManager.navigateToUserProfile(username)
                                 }

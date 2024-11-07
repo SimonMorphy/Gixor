@@ -12,7 +12,7 @@ import com.google.gson.annotations.SerializedName;
 
 data class ForkDTO(
     @SerializedName("organization")
-    val organization: String,
+    val organization: String ="",
     @SerializedName("repository")
     val name: String,
     @SerializedName("defaultBranchOnly")

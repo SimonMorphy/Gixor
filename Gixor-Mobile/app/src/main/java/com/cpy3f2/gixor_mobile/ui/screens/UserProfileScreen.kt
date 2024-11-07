@@ -298,13 +298,13 @@ private fun StatsBar(
             )
             StatItem(
                 icon = Icons.Outlined.Star,
-                value = "starred",
+                value = user.watchRepos.toString(),
                 label = "starred",
                 onClick = { viewModel.switchTab("starred", username) }
             )
             StatItem(
                 icon = Icons.Outlined.Visibility,
-                value = "watching",
+                value = user.totalStars.toString(),
                 label = "watching",
                 onClick = { viewModel.switchTab("watching", username) }
             )

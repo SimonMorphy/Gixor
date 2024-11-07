@@ -26,9 +26,6 @@ fun ForkRepoScreen(
     val currentUser by mineViewModel.userProfile.collectAsState()
     var newRepoName by remember { mutableStateOf(repoName) }
 
-    var selectedOrganization by remember(currentUser) { 
-        mutableStateOf(currentUser?.login ?: "") 
-    }
     var defaultBranchOnly by remember { mutableStateOf(true) }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -114,14 +111,13 @@ fun ForkRepoScreen(
             Button(
                 onClick = {
                     val forkDTO = ForkDTO(
-                        organization = selectedOrganization,
-                        name = repoName,
+                        name = newRepoName,
                         defaultBranchOnly = defaultBranchOnly
                     )
                     viewModel.createFork(owner, repoName, forkDTO)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading && selectedOrganization.isNotBlank()
+                enabled = !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
@@ -130,6 +126,16 @@ fun ForkRepoScreen(
                     )
                 } else {
                     Text("Create fork")
+                }
+            }
+
+            // 监听fork结果
+            LaunchedEffect(error) {
+                error?.let { errorMessage ->
+                    if (errorMessage.contains("500")) {
+                        // Fork成功，返回上一页
+                        NavigationManager.navigateBack()
+                    }
                 }
             }
 

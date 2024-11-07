@@ -563,6 +563,9 @@ class MainViewModel : ViewModel() {
     // 添加预加载状态
     private val _isPreloading = MutableStateFlow(false)
     val isPreloading: StateFlow<Boolean> = _isPreloading.asStateFlow()
+    // 添加用户信息状态
+    private val _currentUser = MutableStateFlow<GitHubUser?>(null)
+    val currentUser: StateFlow<GitHubUser?> = _currentUser.asStateFlow()
 
     // 加载数据方法
     suspend fun preloadData() {
@@ -1366,7 +1369,7 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _isSearching.value = true
-                
+
                 // 并行执行搜索
                 coroutineScope {
                     launch {
@@ -1376,7 +1379,7 @@ class MainViewModel : ViewModel() {
                             _searchUserResults.value = userResponse.data?.items ?: emptyList()
                         }
                     }
-                    
+
                     launch {
                         val repoResponse = RetrofitClient.httpBaseService.searchRepo(query)
                         if (repoResponse.code == 200) {

@@ -42,8 +42,8 @@ data class GitHubUser(
     @SerializedName("following")
     val following: Int? = 0,
     //TODO 当更换数据时，需要加上这个字段
-//    @SerializedName("watchRepos")
-//    val watchRepos: Int? = 0,
+    @SerializedName("watchRepos")
+    val watchRepos: Int? = 0,
     @SerializedName("followedByCurrentUser")
     val followedByCurrentUser: Boolean? = null,
     

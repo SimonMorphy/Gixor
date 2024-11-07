@@ -93,9 +93,8 @@ class UserProfileViewModel : ViewModel() {
                 
                 val token = getToken() ?: return@launch
 
-                //TODO 后面注释掉第二行
-//                val response = RetrofitClient.httpBaseService.getUserInfo(token, username)
-                val response = RetrofitClient.httpBaseService.getGitHubUserInfo(token, username)
+                val response = RetrofitClient.httpBaseService.getUserInfo(token, username)
+//                val response = RetrofitClient.httpBaseService.getGitHubUserInfo(token, username)
                 if (response.code == 200) {
                     _userState.value = response.data!!
                     checkFollowingStatus(username)

@@ -360,7 +360,7 @@ fun StatItem(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
-        
+
         // 图标和标签
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -489,7 +489,7 @@ fun RepoIssuesTab(owner: String, repoName: String, viewModel: MainViewModel) {
                     label = { Text("Closed") }
                 )
             }
-            
+
             // 新建 Issue 按钮
             Button(
                 onClick = {
@@ -1016,9 +1016,9 @@ fun ForkUserItem(user: SimpleUser) {
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Text(
                 text = user.login ?: "",
                 style = MaterialTheme.typography.titleMedium
@@ -1095,9 +1095,9 @@ fun UserListItem(user: SimpleUser) {
                     .clip(CircleShape),
                 contentScale = ContentScale.Crop
             )
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             Text(
                 text = user.login,
                 style = MaterialTheme.typography.titleMedium
@@ -1208,9 +1208,9 @@ fun DiscussionItem(discussion: Discussion) {
                 text = discussion.title,
                 style = MaterialTheme.typography.titleMedium
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // 分类标签
             Surface(
                 shape = MaterialTheme.shapes.small,
@@ -1223,9 +1223,9 @@ fun DiscussionItem(discussion: Discussion) {
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // 作者和时间信息
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1236,20 +1236,20 @@ fun DiscussionItem(discussion: Discussion) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
-                
+
                 Text(
                     text = " • ",
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
-                
+
                 Text(
                     text = DateTimeConverters.formatDateTime(discussion.createdAt),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
-                
+
                 Spacer(modifier = Modifier.weight(1f))
-                
+
                 // 评论数
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
