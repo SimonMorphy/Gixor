@@ -501,7 +501,7 @@ interface HttpBaseService {
         @Header("gixor-login") tokenValue: String,
         @Path("owner") owner: String,
         @Path("repo") repo: String,
-        @QueryMap params: DiscussionQuerySetting
+        @QueryMap params: Map<String, String>
     ): ResultData<DiscussionVO>
 
     /**

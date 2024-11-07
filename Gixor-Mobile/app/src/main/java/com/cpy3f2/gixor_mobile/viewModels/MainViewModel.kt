@@ -1430,13 +1430,13 @@ class MainViewModel : ViewModel() {
     private var _hasMoreDiscussions = MutableStateFlow(true)
     val hasMoreDiscussions: StateFlow<Boolean> = _hasMoreDiscussions.asStateFlow()
 
-    private var currentDiscussionCursor: String = null.toString()
+    private var currentDiscussionCursor: String?= null
 
     // 修改讨论列表加载方法
     fun loadRepoDiscussions(owner: String, repo: String, isRefresh: Boolean = false) {
         if (_isDiscussionsLoading.value) return
         if (isRefresh) {
-            currentDiscussionCursor = null.toString()
+            currentDiscussionCursor = null
             _repoDiscussions.value = emptyList()
             _hasMoreDiscussions.value = true
         }
@@ -1446,17 +1446,18 @@ class MainViewModel : ViewModel() {
             try {
                 _isDiscussionsLoading.value = true
                 val token = getToken() ?: return@launch
-                
                 val querySettings = DiscussionQuerySetting.builder()
                     .first(10)  // 每页加载10条
-                    .after(currentDiscussionCursor)
+                    .apply {
+                        // 如果有游标，则添加after参数
+                        currentDiscussionCursor?.let { after(it) }
+                    }
                     .build()
-                
                 val response = RetrofitClient.httpBaseService.getRepoDiscussionList(
                     tokenValue = token,
                     owner = owner,
                     repo = repo,
-                    params = querySettings
+                    params = querySettings.toQueryMap()
                 )
 
                 if (response.code == 200) {
