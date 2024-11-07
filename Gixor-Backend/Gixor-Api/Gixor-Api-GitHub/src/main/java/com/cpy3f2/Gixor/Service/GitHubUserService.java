@@ -442,4 +442,39 @@ public class GitHubUserService {
                 .map(SearchHit::getContent);
     }
 
+    /**
+     * 同时按国家和技术领域获取GitHub用户排行榜
+     * @param nation 国家/地区
+     * @param domain 技术领域
+     * @param page 页码
+     * @param size 每页大小
+     * @return Flux<StatisticUser> 用户列表（按score降序）
+     */
+    public Flux<StatisticUser> getRankingByNationAndDomain(String nation, String domain, int page, int size) {
+        return esOperations.search(NativeQuery.builder()
+                        .withQuery(q -> q
+                                .bool(b -> b
+                                        .must(m -> m
+                                                .term(t -> t
+                                                        .field("nation.keyword")
+                                                        .value(nation)
+                                                )
+                                        )
+                                        .must(m -> m
+                                                .term(t -> t
+                                                        .field("major_domains")
+                                                        .value(domain)
+                                                )
+                                        )
+                                )
+                        )
+                        .withSort(
+                                Sort.by(Sort.Direction.DESC, "score")
+                        )
+                        .withPageable(PageRequest.of(page, size))
+                        .build()
+                , StatisticUser.class)
+                .map(SearchHit::getContent);
+    }
+
 }

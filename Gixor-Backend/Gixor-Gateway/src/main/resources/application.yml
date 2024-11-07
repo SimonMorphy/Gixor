@@ -5,6 +5,8 @@ spring:
     name: gixor-gateway
   profiles:
     active: dev
+  main:
+    allow-bean-definition-overriding: true
   cloud:
     nacos:
       discovery:
@@ -13,18 +15,18 @@ spring:
       config:
         server-addr: 39.105.98.60:8848
         file-extension: yml
-#    sentinel:
-#      eager: true
-#      transport:
-#        dashboard: 39.105.98.60:8787
-#      datasource:
-#        ds1:
-#          nacos:
-#            server-addr: 39.105.98.60:8848
-#            dataId: sentinel-gixor-gateway
-#            groupId: DEFAULT_GROUP
-#            data-type: json
-#            rule-type: gw-flow
+    sentinel:
+      eager: true
+      transport:
+        dashboard: 39.105.98.60:8080
+      datasource:
+        ds:
+          nacos:
+            server-addr: 39.105.98.60:8848
+            dataId: sentinel-gixor-gateway
+            groupId: DEFAULT_GROUP
+            data-type: json
+            rule-type: gw-flow
   config:
     import: nacos:${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
 
