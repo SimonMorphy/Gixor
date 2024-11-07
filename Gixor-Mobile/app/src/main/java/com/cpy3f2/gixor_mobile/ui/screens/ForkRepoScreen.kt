@@ -1,3 +1,4 @@
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -5,12 +6,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.cpy3f2.Gixor.Domain.DTO.ForkDTO
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
 import com.cpy3f2.gixor_mobile.viewModels.MainViewModel
 import com.cpy3f2.gixor_mobile.viewModels.MineViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -125,17 +128,14 @@ fun ForkRepoScreen(
                         color = MaterialTheme.colorScheme.surfaceTint
                     )
                 } else {
-                    Text("Create fork")
+                    Text("Create fork", color = Color.White)
                 }
             }
-
             // 监听fork结果
-            LaunchedEffect(error) {
-                error?.let { errorMessage ->
-                    if (errorMessage.contains("500")) {
-                        // Fork成功，返回上一页
-                        NavigationManager.navigateBack()
-                    }
+            LaunchedEffect(isLoading, error) {
+                if (!isLoading && error?.contains("500") == true) {
+                    // Fork成功（服务器返回500但实际创建成功），返回上一页
+                    NavigationManager.navigateBack()
                 }
             }
 
@@ -149,4 +149,4 @@ fun ForkRepoScreen(
             )
         }
     }
-} 
+}

@@ -552,7 +552,7 @@ interface HttpBaseService {
         @QueryMap params: Map<String, String>
     ): ResultData<List<SimpleUser>>
 
-    //fork 指定仓
+    //fork 指定仓库
     @POST("/gith/fork/{owner}/{repo}")
     suspend fun forkRepo(
         @Header("gixor-login") tokenValue: String,

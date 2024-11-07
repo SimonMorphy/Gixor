@@ -22,7 +22,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import android.content.Context
 import com.cpy3f2.gixor_mobile.database.GixorDatabase
 import com.cpy3f2.gixor_mobile.model.entity.Event
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
@@ -47,6 +46,7 @@ import com.cpy3f2.gixor_mobile.model.entity.IssueComment
 import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
 import com.cpy3f2.gixor_mobile.model.setting.BaseQuerySetting
 import com.cpy3f2.gixor_mobile.model.setting.DiscussionQuerySetting
+import kotlinx.coroutines.delay
 
 class MainViewModel : ViewModel() {
     //热榜
@@ -1106,14 +1106,14 @@ class MainViewModel : ViewModel() {
 
                 if (response.code == 200) {
                     // Fork成功后导航到新fork的仓库
-                    NavigationManager.navigateToRepoDetail(
-                        forkDTO.organization.ifEmpty {
-                            gitHubUser.value?.data?.login ?: ""
-                        },
-                        repoName
-                    )
+                    gitHubUser.value?.data?.login?.let {
+                        NavigationManager.navigateToRepoDetail(
+                            it,
+                            repoName
+                        )
+                    }
                 } else {
-                    throw Exception(response.msg ?: "Failed to fork repository")
+                    throw Exception(response.msg)
                 }
             } catch (e: Exception) {
                 _forkError.value = e.message ?: "Unknown error occurred"
@@ -1511,7 +1511,7 @@ class MainViewModel : ViewModel() {
             try {
                 _isReadmeLoading.value = true
                 _readmeError.value = null
-                
+                delay(2000)
                 val token = getToken() ?: throw Exception("Token not found")
                 val response = RetrofitClient.httpBaseService.getReadme(
                     tokenValue = token,
