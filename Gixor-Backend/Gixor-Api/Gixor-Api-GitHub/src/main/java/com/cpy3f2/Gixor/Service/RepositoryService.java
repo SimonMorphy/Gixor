@@ -69,8 +69,13 @@ public class RepositoryService {
                 .get()
                 .uri("/repos/{owner}/{repo}/readme", owner, repo)
                 .retrieve()
-                .bodyToMono(String.class)
-                .map(html-> HtmlConvertor.convert(owner, repo, html));
+                .bodyToMono(Map.class)
+                .map(response -> {
+                    String content = (String) response.get("content");
+                    byte[] decodedBytes = Base64.getDecoder().decode(content.replaceAll("\\s", ""));
+                    String markdown = new String(decodedBytes);
+                    return HtmlConvertor.convert(owner, repo, markdown);
+                });
     }
     public Flux<GitHubRepository> listRepos(RepositoryQuerySetting querySetting){
         return githubClient

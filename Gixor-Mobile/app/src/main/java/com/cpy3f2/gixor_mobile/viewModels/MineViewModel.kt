@@ -87,7 +87,7 @@ class MineViewModel @Inject constructor(
 
             loadUserProfile()
             viewModelScope.launch {
-                EventBus.onFollowEvent().collect { event ->
+                EventBus.onFollowEvent().collect {
                     withContext(Dispatchers.IO) {
                         delay(1500) // 如果需要延迟，可以在 IO 线程中进行
                         loadUserProfile()
@@ -240,12 +240,15 @@ class MineViewModel @Inject constructor(
         }
     }
 
+    private val _userDetail = MutableStateFlow<GitHubUser?>(null)
+    val userDetail: StateFlow<GitHubUser?> = _userDetail.asStateFlow()
     fun loadUserProfile() {
         viewModelScope.launch {
             try {
                 val token = preferencesManager.getToken()
                 token?.let {
                     _userProfile.value = fetchData(it)
+                    _userDetail.value = fetchDetailData(it,userProfile.value?.login?:"")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -258,6 +261,19 @@ class MineViewModel @Inject constructor(
     private suspend fun fetchData(token: String): GitHubUser? {
         return try {
             RetrofitClient.httpBaseService.getMyUserInfo(token).data
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+
+    private suspend fun fetchDetailData(token: String,username: String): GitHubUser? {
+        return try {
+            userProfile.value?.let {
+                RetrofitClient.httpBaseService.getUserInfo(token,
+                   username).data
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             null

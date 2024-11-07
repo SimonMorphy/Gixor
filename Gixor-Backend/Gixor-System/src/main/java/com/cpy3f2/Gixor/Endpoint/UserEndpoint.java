@@ -99,6 +99,16 @@ public class UserEndpoint {
                 .collectList()
                 .map(ResponseResult::success);
     }
+    @GetMapping("/rank/{nation}/{domain}")
+    public Mono<ResponseResult> rankNationDomain(@PathVariable String nation,
+                                    @PathVariable String domain,
+                                    @RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "10") int pageSize){
+        return gitUserService.getRankingByNationAndDomain(nation,domain,page,pageSize)
+                .collectList()
+                .map(ResponseResult::success);
+    }
+
     @GetMapping("/nations")
     public Mono<ResponseResult> getNations(){
         return cacheService.getCacheList(Constants.NATION_KEY, String.class)

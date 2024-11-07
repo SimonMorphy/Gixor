@@ -15,7 +15,9 @@ data class SimpleUser(
     
     @SerializedName("login")
     val login: String,
-    
+    @SerializedName("location")
+    val location: String,
+
     @SerializedName("avatar_url")
     val avatarUrl: String? = null,
     
