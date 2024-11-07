@@ -75,6 +75,13 @@ class UserProfileViewModel : ViewModel() {
     private var watchingPage = 1
     private var hasMoreWatching = true
 
+    // 添加starred仓库相关状态
+    private val _starredRepos = MutableStateFlow<List<GitHubRepository>>(emptyList())
+    val starredRepos: StateFlow<List<GitHubRepository>> = _starredRepos.asStateFlow()
+
+    private var currentStarredPage = 1
+    private var hasMoreStarred = true
+
     private fun getToken(): String? = preferencesManager.getToken()
 
     fun loadUserProfile(username: String) {
@@ -328,6 +335,7 @@ class UserProfileViewModel : ViewModel() {
             "followers" -> loadFollowers(username, isRefresh = true)
             "following" -> loadFollowing(username, isRefresh = true)
             "watching" -> loadWatching(username, isRefresh = true)
+            "starred" -> loadStarredRepos(username, isRefresh = true)
         }
     }
 
@@ -361,6 +369,49 @@ class UserProfileViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 _error.value = e.message ?: "Unknown error"
+            } finally {
+                _isLoadingMore.value = false
+            }
+        }
+    }
+
+    fun loadStarredRepos(username: String, isRefresh: Boolean = false) {
+        if (_isLoadingMore.value) return
+        if (isRefresh) {
+            currentStarredPage = 1
+            hasMoreStarred = true
+            _starredRepos.value = emptyList()
+        }
+
+        if (!hasMoreStarred) return
+
+        viewModelScope.launch {
+            try {
+                _isLoadingMore.value = true
+                val token = preferencesManager.getToken() ?: return@launch
+
+                val params = mapOf(
+                    "page" to currentStarredPage.toString(),
+                    "per_page" to "10"
+                )
+
+                val response = RetrofitClient.httpBaseService.getUserStarRepoList(
+                    tokenValue = token,
+                    username = username,
+                    params = params
+                )
+
+                if (response.code == 200) {
+                    val newRepos = response.data ?: emptyList()
+                    if (newRepos.isEmpty()) {
+                        hasMoreStarred = false
+                    } else {
+                        _starredRepos.value = _starredRepos.value + newRepos
+                        currentStarredPage++
+                    }
+                }
+            } catch (e: Exception) {
+                _error.value = e.message ?: "加载失败"
             } finally {
                 _isLoadingMore.value = false
             }

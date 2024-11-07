@@ -35,6 +35,8 @@ import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 
 @Composable
 fun UserProfileScreen(
@@ -50,6 +52,7 @@ fun UserProfileScreen(
     val followers by viewModel.followers.collectAsState()
     val following by viewModel.following.collectAsState()
     val watching by viewModel.watching.collectAsState()
+    val starredRepos by viewModel.starredRepos.collectAsState()
 
     LaunchedEffect(username) {
         viewModel.loadUserProfile(username)
@@ -116,6 +119,11 @@ fun UserProfileScreen(
                             )
                             "watching" -> WatchingSection(
                                 watching = watching,
+                                username = username,
+                                viewModel = viewModel
+                            )
+                            "starred" -> StarredSection(
+                                starredRepos = starredRepos,
                                 username = username,
                                 viewModel = viewModel
                             )
@@ -266,8 +274,9 @@ private fun StatsBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             StatItem(
                 icon = Icons.Outlined.People,
@@ -286,6 +295,12 @@ private fun StatsBar(
                 value = user.publicRepos.toString(),
                 label = "repositories",
                 onClick = { viewModel.switchTab("repositories", username) }
+            )
+            StatItem(
+                icon = Icons.Outlined.Star,
+                value = "starred",
+                label = "starred",
+                onClick = { viewModel.switchTab("starred", username) }
             )
             StatItem(
                 icon = Icons.Outlined.Visibility,
@@ -728,6 +743,99 @@ private fun WatchingSection(
                         )
                         Text(
                             text = "暂无关注的仓库",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StarredSection(
+    starredRepos: List<GitHubRepository>,
+    username: String,
+    viewModel: UserProfileViewModel
+) {
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrolledToEnd() }
+            .collect { isEnd ->
+                if (isEnd && !isLoadingMore) {
+                    viewModel.loadStarredRepos(username, isRefresh = false)
+                }
+            }
+    }
+
+    SwipeRefresh(
+        state = rememberSwipeRefreshState(isLoadingMore),
+        onRefresh = {
+            viewModel.loadStarredRepos(username, isRefresh = true)
+        }
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                items(starredRepos.size) { index ->
+                    RepositoryCard(
+                        name = starredRepos[index].name,
+                        description = starredRepos[index].description,
+                        language = starredRepos[index].language,
+                        stars = starredRepos[index].stargazersCount ?: 0,
+                        onClick = {
+                            NavigationManager.navigateToRepoDetail(
+                                starredRepos[index].owner?.login ?: "",
+                                starredRepos[index].name
+                            )
+                        }
+                    )
+                    if (index < starredRepos.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+
+                if (isLoadingMore) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 空状态显示
+            if (starredRepos.isEmpty() && !isLoadingMore) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "暂无收藏的仓库",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

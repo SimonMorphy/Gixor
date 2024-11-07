@@ -17,7 +17,6 @@ import com.cpy3f2.gixor_mobile.model.entity.RepositorySearchVO
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
 import com.cpy3f2.gixor_mobile.model.entity.UserSearchVO
-import com.cpy3f2.gixor_mobile.model.setting.DiscussionQuerySetting
 import retrofit2.http.*
 
 interface HttpBaseService {
