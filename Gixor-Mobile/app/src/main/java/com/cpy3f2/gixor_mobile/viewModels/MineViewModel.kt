@@ -1,8 +1,6 @@
 package com.cpy3f2.gixor_mobile.viewModels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewModelScope
 import com.cpy3f2.gixor_mobile.MyApplication
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
@@ -26,11 +24,16 @@ import javax.inject.Inject
 class MineViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager // 直接注入 PreferencesManager
 ) : ViewModel() {
+    private val _isUserLoggedIn = MutableStateFlow(true)
+    val isUserLoggedIn: StateFlow<Boolean> get() = _isUserLoggedIn
+
+
     private val _userProfile = MutableStateFlow<GitHubUser?>(null)
     val userProfile: StateFlow<GitHubUser?> = _userProfile
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
+
     // 添加新的状态
     private val _followers = MutableStateFlow<List<SimpleUser>>(emptyList())
     val followers: StateFlow<List<SimpleUser>> = _followers
@@ -52,6 +55,7 @@ class MineViewModel @Inject constructor(
     private var followingPage = 1
     private var hasMoreFollowers = true
     private var hasMoreFollowing = true
+
     // 加载状态
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
@@ -68,19 +72,35 @@ class MineViewModel @Inject constructor(
     private var userReposPage = 1
     private var hasMoreUserRepos = true
 
-
-    init {
-        loadUserProfile()
+    fun logout() {
         viewModelScope.launch {
-            EventBus.onFollowEvent().collect { event ->
-                withContext(Dispatchers.IO) {
-                    delay(1500) // 如果需要延迟，可以在 IO 线程中进行
-                    loadUserProfile()
-                }
-            }
+            // 清除 token
+            preferencesManager.clearToken()
+            // 设置未登录状态
+            _isUserLoggedIn.value = false
+            // 可以在这里添加导航到主页面等操作
+            // NavigationManager.navigateToMain()
         }
     }
+
+    init {
+
+            loadUserProfile()
+            viewModelScope.launch {
+                EventBus.onFollowEvent().collect { event ->
+                    withContext(Dispatchers.IO) {
+                        delay(1500) // 如果需要延迟，可以在 IO 线程中进行
+                        loadUserProfile()
+                    }
+                }
+
+        }
+
+    }
+
+
     private fun getToken(): String? = MyApplication.preferencesManager.getToken()
+
     fun switchTab(tab: String, username: String) {
         if (_currentTab.value == tab) return
 
@@ -89,9 +109,10 @@ class MineViewModel @Inject constructor(
             "repositories" -> loadUserRepos(username, isRefresh = true)
             "followers" -> loadFollowers(username, isRefresh = true)
             "following" -> loadFollowing(username, isRefresh = true)
-            "index"-> loadUserProfile()
+            "index" -> loadUserProfile()
         }
     }
+
     fun loadFollowers(username: String, isRefresh: Boolean = false) {
         if (_isLoadingMore.value) return
         if (isRefresh) {
@@ -107,13 +128,12 @@ class MineViewModel @Inject constructor(
                 val token = getToken() ?: return@launch
 
                 val querySettings = BaseQuerySetting(
-                    perPage = 10,
-                    page = followersPage,
-                    sort = "created",
-                    direction = "desc"
+                    perPage = 10, page = followersPage, sort = "created", direction = "desc"
                 )
 
-                val response = RetrofitClient.httpBaseService.getUserFollowers(token, username, querySettings.toQueryMap())
+                val response = RetrofitClient.httpBaseService.getUserFollowers(
+                    token, username, querySettings.toQueryMap()
+                )
 
                 if (response.code == 200) {
                     val newFollowers = response.data ?: emptyList()
@@ -151,12 +171,12 @@ class MineViewModel @Inject constructor(
                 val token = getToken() ?: return@launch
 
                 val querySettings = BaseQuerySetting(
-                    perPage = 10,
-                    page = followingPage,
-                    direction = "desc"
+                    perPage = 10, page = followingPage, direction = "desc"
                 )
 
-                val response = RetrofitClient.httpBaseService.getUserFollowing(token, username, querySettings.toQueryMap())
+                val response = RetrofitClient.httpBaseService.getUserFollowing(
+                    token, username, querySettings.toQueryMap()
+                )
 
                 if (response.code == 200) {
                     val newFollowing = response.data ?: emptyList()
@@ -194,16 +214,11 @@ class MineViewModel @Inject constructor(
                 val token = getToken() ?: return@launch
 
                 val querySettings = BaseQuerySetting(
-                    perPage = 5,
-                    page = reposPage,
-                    sort = "created",
-                    direction = "desc"
+                    perPage = 5, page = reposPage, sort = "created", direction = "desc"
                 )
 
                 val response = RetrofitClient.httpBaseService.getUserRepoList(
-                    token,
-                    username,
-                    querySettings.toQueryMap()
+                    token, username, querySettings.toQueryMap()
                 )
 
                 if (response.code == 200) {
@@ -225,7 +240,7 @@ class MineViewModel @Inject constructor(
         }
     }
 
-    private fun loadUserProfile() {
+    fun loadUserProfile() {
         viewModelScope.launch {
             try {
                 val token = preferencesManager.getToken()

@@ -5,8 +5,6 @@ import com.cpy3f2.Gixor.Domain.DTO.ForkDTO
 import com.cpy3f2.gixor_mobile.model.entity.DiscussionVO
 import com.cpy3f2.gixor_mobile.model.entity.Event
 import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
-import com.cpy3f2.gixor_mobile.model.entity.ResultData
-import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.Issue
 import com.cpy3f2.gixor_mobile.model.entity.IssueComment
@@ -14,7 +12,9 @@ import com.cpy3f2.gixor_mobile.model.entity.IssueDTO
 import com.cpy3f2.gixor_mobile.model.entity.Notification
 import com.cpy3f2.gixor_mobile.model.entity.PullRequest
 import com.cpy3f2.gixor_mobile.model.entity.RepositorySearchVO
+import com.cpy3f2.gixor_mobile.model.entity.ResultData
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
+import com.cpy3f2.gixor_mobile.model.entity.TrendyRepository
 import com.cpy3f2.gixor_mobile.model.entity.TrendyUser
 import com.cpy3f2.gixor_mobile.model.entity.UserSearchVO
 import retrofit2.http.*
@@ -23,6 +23,43 @@ interface HttpBaseService {
     companion object {
         const val BASE_URL = "http://1024.viwipiediema.com:10102"
     }
+
+    /**
+     * 排行榜接口
+     */
+
+    @GET("/sys/user/rank")
+    suspend fun getRankList(
+        @Header("gixor-login") tokenValue: String,
+        @Query("page") page: Int,
+        @Query("pageSize") pageSize: Int
+    ): ResultData<List<GitHubUser>>
+
+
+    @GET("/sys/user/nations")
+    suspend fun getNationList(@Header("gixor-login") tokenValue: String): ResultData<List<String>>
+
+    @GET("/sys/user/rank/nation/{nationName}")
+    suspend fun getNationRankList(
+        @Header("gixor-login") tokenValue: String,
+        @Path("nationName") nationName: String,
+        @Query("page") page: Int,
+        @Query("pageSize") pageSize: Int
+    ): ResultData<List<GitHubUser>>
+
+
+    //    /sys/user/rank/domain/:domainName?page=0&pageSize=10
+    @GET("/sys/user/rank/domain/{domainName}")
+    suspend fun getDomainRankList(
+        @Header("gixor-login") tokenValue: String,
+        @Path("domainName") domainName: String,
+        @Query("page") page: Int,
+        @Query("pageSize") pageSize: Int
+    ): ResultData<List<GitHubUser>>
+
+    //    /sys/user/domains
+    @GET("/sys/user/domains")
+    suspend fun getDomainList(@Header("gixor-login") tokenValue: String): ResultData<List<String>>
 
     /**
      * 获取用户信息接口
@@ -60,7 +97,6 @@ interface HttpBaseService {
     suspend fun getHotUserList(
         @Header("gixor-login") tokenValue: String,
     ): ResultData<List<TrendyUser>>
-
 
 
     /***
@@ -489,7 +525,7 @@ interface HttpBaseService {
     suspend fun getUnreadNotificationList(
         @Header("gixor-login") tokenValue: String,
         @QueryMap params: Map<String, String>
-    ):ResultData<List<Notification>>
+    ): ResultData<List<Notification>>
 
     /**
      * discussion相关
@@ -536,4 +572,12 @@ interface HttpBaseService {
     suspend fun searchRepo(
         @Query("q") q: String,
     ): ResultData<RepositorySearchVO>
+    @GET("/sys/user/rank/{nation}/{domain}")
+    suspend fun getRankByDomainAndNation(
+        @Header("gixor-login") token: String,
+        @Path("nation") nation: String,
+        @Path("domain") domain: String,
+        @Query("page") page: Int,
+        @Query("pageSize") pageSize: Int
+    ): ResultData<List<GitHubUser>>
 }

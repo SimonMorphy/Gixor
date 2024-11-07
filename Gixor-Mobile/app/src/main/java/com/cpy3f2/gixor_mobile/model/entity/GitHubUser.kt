@@ -1,79 +1,105 @@
 package com.cpy3f2.gixor_mobile.model.entity
-import java.math.BigDecimal
+
 import com.google.gson.annotations.SerializedName
 
 data class GitHubUser(
     @SerializedName("id")
     val githubId: String = "",
-    
+
     @SerializedName("login")
     val login: String = "",
-    
+
     @SerializedName("name")
-    val name: String? = "",
-    
-    @SerializedName("avatar_url")
-    val avatarUrl: String = "",
-    
-    @SerializedName("html_url")
-    val htmlUrl: String = "",
-    
+    val name: String? = null,
+
     @SerializedName("company")
-    val company: String? = "",
-    
+    val company: String? = null,
+
     @SerializedName("blog")
-    val blog: String? = "",
-    
+    val blog: String? = null,
+
     @SerializedName("location")
-    val location: String? = "",
-    
+    val location: String? = null,
+
     @SerializedName("email")
-    val email: String? = "",
-    
+    val email: String? = null,
+
     @SerializedName("bio")
-    val bio: String? = "",
-    
-    @SerializedName("public_repos")
-    val publicRepos: Int? = 0,
-    
+    val bio: String? = null,
+
     @SerializedName("followers")
-    val followers: Int? = 0,
-    
+    val followers: Int = 0,
+
     @SerializedName("following")
-    val following: Int? = 0,
+    val following: Int = 0,
+
     //TODO 当更换数据时，需要加上这个字段
     @SerializedName("watchRepos")
-    val watchRepos: Int? = 0,
+    val watchRepos: Int? = null,
+
     @SerializedName("followedByCurrentUser")
     val followedByCurrentUser: Boolean? = null,
-    
+
     @SerializedName("isCurrentUser")
     val isCurrentUser: Boolean? = null,
-    
+
     @SerializedName("totalStars")
-    val totalStars: Int? = 0,
-    
+    val totalStars: Int = 0,
+
     @SerializedName("totalCommits")
-    val totalCommits: Int? = 0,
-    
+    val totalCommits: Int = 0,
+
     @SerializedName("totalPRs")
-    val totalPRs: Int? = 0,
-    
+    val totalPRs: Int = 0,
+
+    @SerializedName("totalPRsMerged")
+    val totalPRsMerged: Int = 0,
+
+    @SerializedName("mergedPRsPercentage")
+    val mergedPRsPercentage: Double = 0.0,
+
+    @SerializedName("totalPRsReviewed")
+    val totalPRsReviewed: Int = 0,
+
     @SerializedName("totalIssues")
-    val totalIssues: Int? = 0,
-    
+    val totalIssues: Int = 0,
+
+    @SerializedName("totalDiscussionsStarted")
+    val totalDiscussionsStarted: Int = 0,
+
+    @SerializedName("totalDiscussionsAnswered")
+    val totalDiscussionsAnswered: Int = 0,
+
     @SerializedName("contributedTo")
-    val contributedTo: Int? = 0,
-    
+    val contributedTo: Int = 0,
+
     @SerializedName("grade")
-    val grade: String? = "",
-    
+    val grade: String = "",
+
     @SerializedName("score")
-    val score: BigDecimal? = BigDecimal(0),
-    
+    val score: Double = 0.0,
+
+    @SerializedName("majorDomains")
+    val majorDomains: List<String>? = null,
+
+    @SerializedName("domainWeights")
+    val domainWeights: Map<String, Double>? = null,
+
+    @SerializedName("nation")
+    val nation: String = "",
+
+    @SerializedName("avatar_url")
+    val avatarUrl: String = "",
+
+    @SerializedName("html_url")
+    val htmlUrl: String = "",
+
+    @SerializedName("public_repos")
+    val publicRepos: Int = 0,
+
     @SerializedName("created_at")
-    val createdAt: String? = "",
-    
+    val createdAt: String = "",
+
     @SerializedName("updated_at")
-    val updatedAt: String? = ""
+    val updatedAt: String = ""
 )

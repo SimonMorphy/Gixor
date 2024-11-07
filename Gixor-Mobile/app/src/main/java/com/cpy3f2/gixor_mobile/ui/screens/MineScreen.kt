@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,19 +19,21 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Engineering
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.PersonAdd
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +45,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -51,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,17 +66,57 @@ import com.cpy3f2.gixor_mobile.model.entity.GitHubRepository
 import com.cpy3f2.gixor_mobile.model.entity.GitHubUser
 import com.cpy3f2.gixor_mobile.model.entity.SimpleUser
 import com.cpy3f2.gixor_mobile.navigation.NavigationManager
+import com.cpy3f2.gixor_mobile.utils.PreferencesManager
 import com.cpy3f2.gixor_mobile.viewModels.MineViewModel
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @Composable
 fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
+
+    val context = LocalContext.current
+    val preferencesManager = remember { PreferencesManager(context) }
+    val hasToken = preferencesManager.hasToken()
+    if (!hasToken) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .background(MaterialTheme.colorScheme.surface), // 背景色
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Lock, // 添加锁图标
+                contentDescription = "Locked",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Please login to view activities",
+                style = MaterialTheme.typography.titleMedium, // 使用更大的标题样式
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(24.dp)) // 增加间距
+            Button(
+                onClick = { NavigationManager.navigateToLogin() },
+                colors = ButtonDefaults.buttonColors(contentColor = MaterialTheme.colorScheme.onPrimary), // 设置按钮文字颜色
+                shape = RoundedCornerShape(8.dp) // 圆角按钮
+            ) {
+                Text("Login")
+            }
+
+        }
+        return
+    }
+
     val userProfile by viewModel.userProfile.collectAsState()
     val reposState by viewModel.repositories.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val error by viewModel.error.collectAsState()
     val currentTab by viewModel.currentTab.collectAsState()
     val followers by viewModel.followers.collectAsState()
     val following by viewModel.following.collectAsState()
@@ -121,7 +164,7 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
                     .background(MaterialTheme.colorScheme.background)
             ) {
                 // 固定的头部内容
-                item { ProfileHeader(userProfile!!) }
+                item { ProfileHeader(userProfile!!, viewModel) }
                 item { Description(userProfile!!.bio) }
                 item { UserStats(userProfile!!, viewModel, userProfile!!.login) }
 
@@ -132,7 +175,7 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
                     }
                     "repositories" -> {
                         items(reposState.size) { index ->
-                            reposState[index].name?.let {
+                            reposState[index].name.let {
                                 RepositoryCard(
                                     name = it,
                                     description = reposState[index].description,
@@ -152,7 +195,7 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
                         items(followers.size) { index ->
                             UserListItem(followers[index])
                             if (index < followers.size - 1) {
-                                Divider()
+                                HorizontalDivider()
                             }
                         }
                     }
@@ -160,7 +203,7 @@ fun MineScreen(viewModel: MineViewModel = hiltViewModel()) {
                         items(following.size) { index ->
                             UserListItem(following[index])
                             if (index < following.size - 1) {
-                                Divider()
+                                HorizontalDivider()
                             }
                         }
                     }
@@ -230,9 +273,11 @@ private fun EmptyState(currentTab: String) {
         )
     }
 }
+
 @Composable
-fun ProfileHeader(userProfile: GitHubUser) {
+fun ProfileHeader(userProfile: GitHubUser,viewModel: MineViewModel) {
     var expanded by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Row(
         modifier = Modifier
@@ -256,18 +301,18 @@ fun ProfileHeader(userProfile: GitHubUser) {
                 .padding(start = 16.dp)
         ) {
             Text(
-                text = userProfile.name ?: "Unknown",
+                text = userProfile.name ?: "N/A",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = userProfile.login ?: "Unknown",
+                text = userProfile.login,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Box {
-            IconButton(onClick = { expanded = !expanded }) {
+            IconButton(onClick = { expanded =!expanded }) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = "More options"
@@ -278,27 +323,21 @@ fun ProfileHeader(userProfile: GitHubUser) {
                 onDismissRequest = { expanded = false }
             ) {
                 DropdownMenuItem(
-                    text = { Text("Messages") },
-                    leadingIcon = {
-                        Icon(Icons.Default.Email, contentDescription = "Messages")
-                    },
-                    onClick = {
-                        // Handle message click
-                        expanded = false
-                    }
-                )
-                DropdownMenuItem(
                     text = { Text("Sign out") },
                     leadingIcon = {
-                        Icon(Icons.Default.ExitToApp, contentDescription = "Sign out")
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Sign out")
                     },
                     onClick = {
-                        // Handle settings click
-                        expanded = false
+                        scope.launch {
+                            viewModel.logout()
+                            delay(1000)
+                            NavigationManager.navigateToMain()
+                        }
                     }
                 )
             }
         }
+
     }
 }
 
@@ -500,7 +539,7 @@ private fun RepositoryCard(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 只显示语言
@@ -595,7 +634,7 @@ fun RepositorySection(
         // 仓库列表
         if (reposState.isNotEmpty()) {
             reposState.forEach { repo ->
-                repo.name?.let {
+                repo.name.let {
                     RepositoryCard(
                         name = it,
                         description = repo.description,
@@ -690,7 +729,7 @@ private fun UserList(
                 items(users.size) { index ->
                     UserListItem(user = users[index])
                     if (index < users.size - 1) {
-                        Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
                 }
 
